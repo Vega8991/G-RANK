@@ -17,7 +17,7 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 
 let isUserLogged = true;
-let userRole = "USER";
+let userRole = "ADMIN";
 
 let publicRoutes = [
   { path: "/", element: React.createElement(LandingPage) },
