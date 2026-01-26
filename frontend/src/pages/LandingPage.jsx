@@ -1,0 +1,3 @@
+export default function LandingPage() {
+    return <h1 className="p-6 text-white text-3x1">Landing</h1>
+}
