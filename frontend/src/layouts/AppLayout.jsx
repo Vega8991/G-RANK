@@ -3,9 +3,9 @@ import { Crown, Home, Trophy, LayoutDashboard, Shield, User, ChevronDown } from 
 
 export default function AppLayout() {
     let getLinkClass = function (isActive) {
-        let baseClass = "flex items-center gap-2 text-sm font-medium transition pb-2 border-b-2";
-        let activeClass = "border-brand-primary text-neutral-text-primary";
-        let inactiveClass = "border-transparent text-neutral-text-secondary hover:text-neutral-text-primary";
+        let baseClass = "flex items-center gap-2 text-sm font-medium transition-colors pb-1 border-b-2";
+        let activeClass = "border-[#dc143c] text-white";
+        let inactiveClass = "border-transparent text-[#d1d5db] hover:text-white";
 
         if (isActive) {
             return baseClass + " " + activeClass;
@@ -14,53 +14,53 @@ export default function AppLayout() {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-bg text-neutral-text-primary">
-            <div className="sticky top-0 z-50 border-b border-neutral-border bg-neutral-bg">
-                <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-
-                    <div className="flex items-center gap-12">
-                        <div className="flex items-center gap-2">
-                            <Crown size={24} className="text-brand-primary" />
-                            <span className="text-lg font-bold">G-RANK</span>
+        <div className="min-h-screen bg-[#0a0a0a] text-white">
+            {/* Navbar */}
+            <nav className="border-b border-[#2a2a2a] sticky top-0 z-50 backdrop-blur-lg bg-[#0a0a0a]/95">
+                <div className="max-w-[1512px] mx-auto px-6 md:px-20">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center gap-12">
+                            <NavLink to="/" className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded bg-[#dc143c] flex items-center justify-center">
+                                    <Crown size={18} className="text-white" />
+                                </div>
+                                <span className="font-extrabold text-lg">G-RANK</span>
+                            </NavLink>
+                            
+                            <div className="hidden md:flex items-center gap-8">
+                                <NavLink to="/" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                    <Home size={16} /> Home
+                                </NavLink>
+                                <NavLink to="/tournaments" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                    <Trophy size={16} /> Tournaments
+                                </NavLink>
+                                <NavLink to="/leaderboard" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                    <Crown size={16} /> Leaderboard
+                                </NavLink>
+                                <NavLink to="/dashboard" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                    <User size={16} /> Dashboard
+                                </NavLink>
+                                <NavLink to="/admin" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                    <Shield size={16} /> Admin
+                                </NavLink>
+                            </div>
                         </div>
 
-                        <nav className="flex items-center gap-8">
-                            <NavLink to="/" className={function ({ isActive }) { return getLinkClass(isActive); }}>
-                                <Home size={18} /> Home
-                            </NavLink>
-
-                            <NavLink to="/tournaments" className={function ({ isActive }) { return getLinkClass(isActive); }}>
-                                <Trophy size={18} /> Tournaments
-                            </NavLink>
-
-                            <NavLink to="/leaderboard" className={function ({ isActive }) { return getLinkClass(isActive); }}>
-                                <Crown size={18} /> Leaderboard
-                            </NavLink>
-
-                            <NavLink to="/dashboard" className={function ({ isActive }) { return getLinkClass(isActive); }}>
-                                <LayoutDashboard size={18} /> Dashboard
-                            </NavLink>
-
-                            <NavLink to="/admin" className={function ({ isActive }) { return getLinkClass(isActive); }}>
-                                <Shield size={18} /> Admin
-                            </NavLink>
-                        </nav>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-2 hover:bg-neutral-surface p-2 rounded-md transition">
-                            <div className="w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center">
-                                <User size={18} className="text-white" />
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm font-semibold">ProPlayer</p>
-                                <p className="text-xs text-brand-primary font-bold">Elite</p>
-                            </div>
-                            <ChevronDown size={16} />
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button className="flex items-center gap-2 hover:bg-[#111111] px-3 py-2 rounded-lg transition-colors">
+                                <div className="w-8 h-8 bg-[#dc143c] rounded-full flex items-center justify-center">
+                                    <User size={16} className="text-white" />
+                                </div>
+                                <div className="hidden md:block text-left">
+                                    <p className="text-sm font-semibold">ProPlayer</p>
+                                    <p className="text-xs text-[#dc143c] font-bold">Elite</p>
+                                </div>
+                                <ChevronDown size={14} className="text-[#d1d5db]" />
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </nav>
 
             <main>
                 <Outlet />
