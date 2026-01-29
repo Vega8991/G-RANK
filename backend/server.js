@@ -10,7 +10,7 @@ let app = express();
 let port = process.env.PORT || 5000;
 
 app.use(cors());
-
+app.use(express.json());
 connectToDatabase();
 
 app.get('/', (req, res)=> {

@@ -1,5 +1,5 @@
 let mongoose = require('mongoose');
-require('dotoenv').config();
+require('dotenv').config();
 
 let mongoConnectionString = process.env.MONGO_URI;
 
