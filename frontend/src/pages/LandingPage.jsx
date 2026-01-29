@@ -5,7 +5,7 @@ import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, H
 
 export default function LandingPage() {
     let topPlayers = [
-        { rank: 1, name: "ShadowLegend", mmr: 3420, winRate: "82%", icon: Crown },
+        { rank: 1, name: "Garrax", mmr: 3420, winRate: "85%", icon: Crown },
         { rank: 2, name: "ProGamer99", mmr: 3280, winRate: "78%", icon: Star },
         { rank: 3, name: "NinjaStrike", mmr: 3150, winRate: "76%", icon: Flame }
     ];
@@ -365,7 +365,7 @@ export default function LandingPage() {
                         <div>
                             <h4 className="font-bold text-sm mb-4">GAMES</h4>
                             <div className="space-y-2">
-                                <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white transition-colors">Overwatch</NavLink>
+                                <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white transition-colors">Rocket League</NavLink>
                                 <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white transition-colors">League of Legends</NavLink>
                                 <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white transition-colors">Valorant</NavLink>
                             </div>
