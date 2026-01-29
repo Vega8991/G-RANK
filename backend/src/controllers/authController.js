@@ -102,4 +102,38 @@ async function loginUser(req, res) {
     }
 }
 
-module.exports = { registerUser, loginUser };
+async function getProfile(req, res) {
+    try {
+        let userId = req.userId;
+
+        let user = await User.findById(userId);
+
+        if (!user) {
+            res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+            return;
+        }
+
+        res.status(200).json({
+            success: true,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                rank: user.rank,
+                mmr: user.mmr,
+                winRate: user.winRate,
+                winStreak: user.winStreak
+            }
+        });
+    }catch(err){
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: err.message
+        });
+    }
+}
+module.exports = { registerUser, loginUser, getProfile};
