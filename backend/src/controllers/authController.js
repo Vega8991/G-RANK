@@ -1,6 +1,8 @@
 let User = require('../models/userModel');
 let bcrypt = require('bcryptjs');
 let jwt = require('jsonwebtoken');
+let crypto = require('crypto');
+let { sendVerificationEmail } = require('../services/emailService');
 
 async function registerUser(req, res) {
     try {
@@ -11,13 +13,16 @@ async function registerUser(req, res) {
         let salt = bcrypt.genSaltSync(10);
         let hashedPassword = bcrypt.hashSync(password, salt);
 
+        let verificationToken = crypto.randomBytes(32).toString('hex');
         let newUser = new User({
             username: username,
             email: email,
-            password: hashedPassword
+            password: hashedPassword,
+            emailVerificationToken: verificationToken
         });
 
         let savedUser = await newUser.save();
+        sendVerificationEmail(savedUser.email, savedUser.username, verificationToken);
 
         res.status(201).json({
             success: true,
@@ -61,6 +66,14 @@ async function loginUser(req, res) {
             res.status(401).json({
                 success: false,
                 message: 'Invalid password'
+            });
+            return;
+        }
+
+        if (!foundUser.isEmailVerified) {
+            res.status(403).json({
+                success: false,
+                message: 'Please verify your email before logging in'
             });
             return;
         }
@@ -128,7 +141,7 @@ async function getProfile(req, res) {
                 winStreak: user.winStreak
             }
         });
-    }catch(err){
+    } catch (err) {
         res.status(500).json({
             success: false,
             message: 'Server error',
@@ -136,4 +149,36 @@ async function getProfile(req, res) {
         });
     }
 }
-module.exports = { registerUser, loginUser, getProfile};
+
+async function verifyEmail(req, res) {
+    try {
+        let token = req.query.token;
+
+        let user = await User.findOne({ emailVerificationToken: token });
+
+        if (!user) {
+            res.status(404).json({
+                success: false,
+                message: 'Invalid or expired token'
+            });
+            return;
+        }
+
+        user.isEmailVerified = true;
+        user.emailVerificationToken = null;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Email verified successfully! You can now login.'
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error.message
+        });
+    }
+}
+module.exports = { registerUser, loginUser, getProfile, verifyEmail };

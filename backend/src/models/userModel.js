@@ -62,6 +62,15 @@ let userSchema = new mongoose.Schema({
     losses: {
         type: Number,
         default: 0
+    },
+    
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationToken: {
+        type: String,
+        default: null
     }
 });
 
