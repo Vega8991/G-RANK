@@ -1,10 +1,10 @@
-import { createTransport } from 'nodemailer';
+let nodemailer = require('nodemailer');
 
 let emailUser = process.env.EMAIL_USER;
 let emailPass = process.env.EMAIL_PASS;
 let emailFrom = process.env.EMAIL_FROM;
 
-let transporter = createTransport({
+let transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: emailUser,
@@ -62,7 +62,7 @@ function sendPasswordResetEmail(userEmail, userName, resetToken) {
     });
 }
 
-export default {
+module.exports = {
     sendVerificationEmail,
     sendPasswordResetEmail
 };
