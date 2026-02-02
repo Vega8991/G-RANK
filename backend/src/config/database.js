@@ -13,10 +13,6 @@ function connectToDatabase() {
     })
     .catch((err) => {
         console.log('Error connecting to MongoDB:', err.message);
-        console.log('\nPor favor verifica:');
-        console.log('1. Tu IP está en la lista blanca de MongoDB Atlas');
-        console.log('2. Tu usuario y contraseña son correctos');
-        console.log('3. Tu conexión a internet funciona correctamente');
     });
 }
 
