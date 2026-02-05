@@ -1,10 +1,12 @@
-let express = require('express');
-let cors = require('cors');
+const express = require('express');
+const cors = require('cors');
 require('dotenv').config();
 
-let connectToDatabase = require('./src/config/database');
-let authRoutes = require('./src/routes/authRoutes');
-let tournamentRoutes = require('./src/routes/tournamentRoutes');
+const connectToDatabase = require('./src/config/database');
+const authRoutes = require('./src/routes/authRoutes');
+const tournamentRoutes = require('./src/routes/tournamentRoutes');
+const tournamentParticipantRoutes = require('./src/routes/tournamentParticipantRoutes');
+const TournamentParticipant = require('./src/models/tournamentParticipantModel');
 
 let app = express();
 let port = process.env.PORT || 5000;
@@ -24,6 +26,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tournaments', tournamentRoutes);
+app.use('/api/tournament-participants', tournamentParticipantRoutes);
 
 app.listen(port, () => {
     console.log('Server is running on port: ', port);
