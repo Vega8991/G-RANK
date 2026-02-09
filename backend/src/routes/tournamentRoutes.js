@@ -7,5 +7,6 @@ router.post('/create', verifyToken, tournamentController.createTournament);
 router.get('/all', tournamentController.getAllTournaments);
 router.get('/my-created', verifyToken, tournamentController.getMyCreatedTournaments);
 router.get('/:id', tournamentController.getTournamentById);
+router.patch('/:id/status', verifyToken, tournamentController.updateTournamentStatus);
 
 module.exports = router;
