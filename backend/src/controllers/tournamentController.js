@@ -101,9 +101,59 @@ const getMyCreatedTournaments = async function (req, res) {
     }
 };
 
+const updateTournamentStatus = async function (req, res) {
+    try {
+        const userId = req.userId;
+        const tournamentId = req.params.id;
+        const { status } = req.body;
+
+        const tournament = await Tournament.findById(tournamentId);
+
+        if (!tournament) {
+            return res.status(404).json({
+                success: false,
+                message: 'Tournament not found'
+            });
+        }
+
+        if (tournament.createdBy.toString() !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only the tournament creator can update its status'
+            });
+        }
+
+        const validStatuses = ['open', 'pending', 'completed', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status. Must be: open, pending, completed, or cancelled'
+            });
+        }
+
+        tournament.status = status;
+        await tournament.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Tournament status updated successfully',
+            tournament: tournament
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error updating tournament status',
+            error: error.message
+        });
+    }
+};
+
+
 module.exports = {
     createTournament,
     getAllTournaments,
     getTournamentById,
-    getMyCreatedTournaments
+    getMyCreatedTournaments,
+    updateTournamentStatus
 };
