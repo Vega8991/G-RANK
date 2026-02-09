@@ -8,7 +8,8 @@ const tournamentSchema = new mongoose.Schema({
     game: {
         type: String,
         required: true,
-        enum: ['rocket_league', 'pokemon_showdown', 'valorant']
+        enum: ['pokemon_showdown'],
+        default: 'pokemon_showdown'
     },
     description: {
         type: String,
@@ -24,7 +25,7 @@ const tournamentSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'pending', 'verifying', 'completed', 'cancelled'],
+        enum: ['open', 'pending', 'completed', 'cancelled'],
         default: 'open'
     },
     maxParticipants: {
