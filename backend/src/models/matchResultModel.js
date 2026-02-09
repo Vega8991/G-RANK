@@ -6,43 +6,42 @@ const matchResultSchema = new mongoose.Schema({
         ref: 'Tournament',
         required: true
     },
-    userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    game: {
+    replayUrl: {
         type: String,
         required: true,
-        enum: ['rocket_league', 'pokemon_showdown', 'valorant']
+        validate: {
+            validator: function (v) {
+                return /^https:\/\/replay\.pokemonshowdown\.com\//.test(v);
+            },
+            message: 'Must be a valid Pokemon Showdown replay URL'
+        }
     },
-    statsData: {
+    winnerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    loserId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
+    },
+    replayData: {
         type: mongoose.Schema.Types.Mixed,
-        required: true
+        default: null
     },
-    proofImageUrl: {
-        type: String,
+    verified: {
+        type: Boolean,
+        default: false
+    },
+    submittedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
         required: true
     },
     submittedAt: {
         type: Date,
         default: Date.now
-    },
-    verifiedByAI: {
-        type: Boolean,
-        default: false
-    },
-    aiVerificationResult: {
-        type: mongoose.Schema.Types.Mixed,
-        default: null
-    },
-    isWinner: {
-        type: Boolean,
-        default: false
-    },
-    verifiedAt: {
-        type: Date,
-        default: null
     }
 });
 
