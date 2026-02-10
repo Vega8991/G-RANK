@@ -10,7 +10,6 @@ const submitReplay = async function (req, res) {
         const { tournamentId, replayUrl } = req.body;
 
         const tournament = await Tournament.findById(tournamentId);
-
         if (!tournament) {
             return res.status(404).json({
                 success: false,
@@ -64,6 +63,14 @@ const submitReplay = async function (req, res) {
             tournamentId: tournamentId
         }).populate('userId', 'username mmr');
 
+        // Verificar que hay exactamente 2 participantes
+        if (allParticipants.length !== 2) {
+            return res.status(400).json({
+                success: false,
+                message: `Tournament must have exactly 2 participants. Found: ${allParticipants.length}`
+            });
+        }
+
         let winnerId = null;
         let loserId = null;
 
@@ -73,6 +80,18 @@ const submitReplay = async function (req, res) {
             } else {
                 loserId = participant.userId._id;
             }
+        }
+
+        // Validación de que encontramos ganador y perdedor
+        if (!winnerId || !loserId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Could not match replay participants with tournament participants',
+                debug: {
+                    replayWinner: winner,
+                    tournamentParticipants: allParticipants.map(p => p.userId.username)
+                }
+            });
         }
 
         const matchResult = await MatchResult.create({
@@ -139,7 +158,6 @@ const getTournamentResults = async function (req, res) {
         const tournamentId = req.params.tournamentId;
 
         const tournament = await Tournament.findById(tournamentId);
-
         if (!tournament) {
             return res.status(404).json({
                 success: false,
@@ -171,4 +189,3 @@ module.exports = {
     submitReplay,
     getTournamentResults
 };
-
