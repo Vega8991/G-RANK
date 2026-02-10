@@ -47,16 +47,31 @@ export default function AppLayout() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <button className="flex items-center gap-2 hover:bg-[#111111] px-3 py-2 rounded-lg transition-colors">
-                                <div className="w-8 h-8 bg-[#dc143c] rounded-full flex items-center justify-center">
-                                    <User size={16} className="text-white" />
+                            {false ? (
+                                <button className="flex items-center gap-2 hover:bg-[#111111] px-3 py-2 rounded-lg transition-colors">
+                                    <div className="w-8 h-8 bg-[#dc143c] rounded-full flex items-center justify-center">
+                                        <User size={16} className="text-white" />
+                                    </div>
+                                    <div className="hidden md:block text-left">
+                                        <p className="text-sm font-semibold">ProPlayer</p>
+                                        <p className="text-xs text-[#dc143c] font-bold">Elite</p>
+                                    </div>
+                                    <ChevronDown size={14} className="text-[#d1d5db]" />
+                                </button>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <NavLink to="/login">
+                                        <button className="px-4 py-2 text-sm font-medium text-white hover:bg-[#111111] rounded-lg transition-colors">
+                                            Login
+                                        </button>
+                                    </NavLink>
+                                    <NavLink to="/register">
+                                        <button className="px-4 py-2 text-sm font-medium bg-[#dc143c] text-white rounded-lg hover:bg-[#b01030] transition-colors">
+                                            Sign Up
+                                        </button>
+                                    </NavLink>
                                 </div>
-                                <div className="hidden md:block text-left">
-                                    <p className="text-sm font-semibold">ProPlayer</p>
-                                    <p className="text-xs text-[#dc143c] font-bold">Elite</p>
-                                </div>
-                                <ChevronDown size={14} className="text-[#d1d5db]" />
-                            </button>
+                            )}
                         </div>
                     </div>
                 </div>
