@@ -2,6 +2,7 @@ const MatchResult = require('../models/matchResultModel');
 const Tournament = require('../models/tournamentModel');
 const TournamentParticipant = require('../models/tournamentParticipantModel');
 const axios = require('axios');
+const { calculateMMRChange, updateUserStats } = require('../services/mmrService');
 
 const submitReplay = async function (req, res) {
     try {
@@ -61,7 +62,7 @@ const submitReplay = async function (req, res) {
 
         const allParticipants = await TournamentParticipant.find({
             tournamentId: tournamentId
-        }).populate('userId', 'username');
+        }).populate('userId', 'username mmr');
 
         let winnerId = null;
         let loserId = null;
@@ -84,6 +85,23 @@ const submitReplay = async function (req, res) {
             submittedBy: userId
         });
 
+        const winnerParticipant = allParticipants.find(p => p.userId._id.toString() === winnerId.toString());
+        const loserParticipant = allParticipants.find(p => p.userId._id.toString() === loserId.toString());
+
+        const winnerMMRChange = calculateMMRChange(winnerParticipant.userId.mmr, true);
+        const loserMMRChange = calculateMMRChange(loserParticipant.userId.mmr, false);
+
+        const updatedWinner = await updateUserStats(winnerId, true, winnerMMRChange);
+        const updatedLoser = await updateUserStats(loserId, false, loserMMRChange);
+
+        winnerParticipant.mmrAfter = updatedWinner.mmr;
+        winnerParticipant.mmrChange = winnerMMRChange;
+        await winnerParticipant.save();
+
+        loserParticipant.mmrAfter = updatedLoser.mmr;
+        loserParticipant.mmrChange = loserMMRChange;
+        await loserParticipant.save();
+
         participant.hasSubmittedResults = true;
         await participant.save();
 
@@ -94,7 +112,17 @@ const submitReplay = async function (req, res) {
             success: true,
             message: 'Replay submitted and verified successfully',
             result: matchResult,
-            winner: winner
+            winner: {
+                username: winner,
+                mmrChange: winnerMMRChange,
+                newMMR: updatedWinner.mmr,
+                newRank: updatedWinner.rank
+            },
+            loser: {
+                mmrChange: loserMMRChange,
+                newMMR: updatedLoser.mmr,
+                newRank: updatedLoser.rank
+            }
         });
 
     } catch (error) {
@@ -143,3 +171,4 @@ module.exports = {
     submitReplay,
     getTournamentResults
 };
+
