@@ -57,13 +57,25 @@ const submitReplay = async function (req, res) {
             });
         }
 
-        const winner = replayData.winner;
+        let winner = null;
+        if (replayData.log) {
+            const winMatch = replayData.log.match(/\|win\|(.+)/);
+            if (winMatch && winMatch[1]) {
+                winner = winMatch[1].trim();
+            }
+        }
+
+        if (!winner) {
+            return res.status(400).json({
+                success: false,
+                message: 'Could not find winner in replay data'
+            });
+        }
 
         const allParticipants = await TournamentParticipant.find({
             tournamentId: tournamentId
         }).populate('userId', 'username mmr');
 
-        // Verificar que hay exactamente 2 participantes
         if (allParticipants.length !== 2) {
             return res.status(400).json({
                 success: false,
@@ -75,14 +87,13 @@ const submitReplay = async function (req, res) {
         let loserId = null;
 
         for (let participant of allParticipants) {
-            if (participant.userId.username === winner) {
+            if (participant.userId.username.toLowerCase() === winner.toLowerCase()) {
                 winnerId = participant.userId._id;
             } else {
                 loserId = participant.userId._id;
             }
         }
 
-        // Validación de que encontramos ganador y perdedor
         if (!winnerId || !loserId) {
             return res.status(400).json({
                 success: false,
@@ -107,11 +118,17 @@ const submitReplay = async function (req, res) {
         const winnerParticipant = allParticipants.find(p => p.userId._id.toString() === winnerId.toString());
         const loserParticipant = allParticipants.find(p => p.userId._id.toString() === loserId.toString());
 
-        const winnerMMRChange = calculateMMRChange(winnerParticipant.userId.mmr, true);
-        const loserMMRChange = calculateMMRChange(loserParticipant.userId.mmr, false);
+        const winnerMMRBefore = winnerParticipant.userId.mmr;
+        const loserMMRBefore = loserParticipant.userId.mmr;
 
-        const updatedWinner = await updateUserStats(winnerId, true, winnerMMRChange);
-        const updatedLoser = await updateUserStats(loserId, false, loserMMRChange);
+        const winnerMMRChange = calculateMMRChange(winnerMMRBefore, true);
+        const loserMMRChange = calculateMMRChange(loserMMRBefore, false);
+
+        const winnerUpdateResult = await updateUserStats(winnerId, true, winnerMMRChange);
+        const loserUpdateResult = await updateUserStats(loserId, false, loserMMRChange);
+
+        const updatedWinner = winnerUpdateResult.user;
+        const updatedLoser = loserUpdateResult.user;
 
         winnerParticipant.mmrAfter = updatedWinner.mmr;
         winnerParticipant.mmrChange = winnerMMRChange;
@@ -132,15 +149,26 @@ const submitReplay = async function (req, res) {
             message: 'Replay submitted and verified successfully',
             result: matchResult,
             winner: {
-                username: winner,
+                username: winnerParticipant.userId.username,
+                mmrBefore: winnerMMRBefore,
                 mmrChange: winnerMMRChange,
-                newMMR: updatedWinner.mmr,
-                newRank: updatedWinner.rank
+                mmrAfter: updatedWinner.mmr,
+                newRank: updatedWinner.rank,
+                wins: updatedWinner.wins,
+                losses: updatedWinner.losses,
+                winRate: updatedWinner.winRate,
+                winStreak: updatedWinner.winStreak
             },
             loser: {
+                username: loserParticipant.userId.username,
+                mmrBefore: loserMMRBefore,
                 mmrChange: loserMMRChange,
-                newMMR: updatedLoser.mmr,
-                newRank: updatedLoser.rank
+                mmrAfter: updatedLoser.mmr,
+                newRank: updatedLoser.rank,
+                wins: updatedLoser.wins,
+                losses: updatedLoser.losses,
+                winRate: updatedLoser.winRate,
+                winStreak: updatedLoser.winStreak
             }
         });
 
