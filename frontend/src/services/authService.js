@@ -15,11 +15,11 @@ export const login = async (email, password) => {
         email,
         password
     });
-    if(response.data.token) {
+    if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    return response.data
+    return response.data;
 };
 
 export const logout = () => {
@@ -35,10 +35,6 @@ export const getProfile = async () => {
         }
     });
     return response.data;
-};
-
-export const isAuthenticated = () => {
-    return localStorage.getItem('token') !== null;
 };
 
 export const getToken = () => {
