@@ -7,7 +7,7 @@ export const createTournament = async (title, description) => {
     const response = await axios.post(`${API_URL}/tournaments`, {
         name: title,
         description,
-        game: 'Pokemon Showdown',
+        game: 'pokemon_showdown',
         maxParticipants: 2,
         registrationDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
         matchDateTime: new Date(Date.now() + 48 * 60 * 60 * 1000)
