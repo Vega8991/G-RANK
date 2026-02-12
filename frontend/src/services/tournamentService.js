@@ -4,7 +4,7 @@ import { getToken } from './authService';
 
 export const createTournament = async (title, description) => {
     const token = getToken();
-    const response = await axios.post(`${API_URL}/tournaments`, {
+    const response = await axios.post(`${API_URL}/tournaments/create`, {  // Cambia aquí
         title,
         description,
         game: 'Pokemon Showdown',
@@ -18,9 +18,10 @@ export const createTournament = async (title, description) => {
 };
 
 export const getAllTournaments = async () => {
-    const response = await axios.get(`${API_URL}/tournaments`);
+    const response = await axios.get(`${API_URL}/tournaments/all`);  // Cambia aquí
     return response.data;
 };
+
 
 export const registerToTournament = async (tournamentId) => {
     const token = getToken();
