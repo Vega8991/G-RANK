@@ -1,4 +1,5 @@
 const Tournament = require('../models/tournamentModel');
+const TournamentParticipant = require('../models/tournamentParticipantModel');
 
 const createTournament = async function (req, res) {
     try {
@@ -32,17 +33,24 @@ const createTournament = async function (req, res) {
     }
 };
 
-const getAllTournaments = async function (req, res) {
+const getAllTournaments = async (req, res) => {
     try {
-        const tournaments = await Tournament.find({ status: 'open' })
-            .populate('createdBy', 'username')
-            .sort({ matchDateTime: 1 });
+        const tournaments = await Tournament.find();
+
+        const tournamentsWithCount = await Promise.all(
+            tournaments.map(async (tournament) => {
+                const count = await TournamentParticipant.countDocuments({
+                    tournamentId: tournament._id
+                });
+                tournament.currentParticipants = count;
+                return tournament;
+            })
+        );
 
         return res.status(200).json({
             success: true,
-            tournaments: tournaments
+            tournaments: tournamentsWithCount
         });
-
     } catch (error) {
         return res.status(500).json({
             success: false,
@@ -51,6 +59,7 @@ const getAllTournaments = async function (req, res) {
         });
     }
 };
+
 
 const getTournamentById = async function (req, res) {
     try {
