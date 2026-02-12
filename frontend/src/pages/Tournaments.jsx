@@ -5,7 +5,7 @@ import { submitReplay } from '../services/matchService';
 export default function Tournaments() {
     const [tournaments, setTournaments] = useState([]);
     const [myTournaments, setMyTournaments] = useState([]);
-    const [title, setTitle] = useState('');
+    const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [selectedTournament, setSelectedTournament] = useState('');
     const [replayUrl, setReplayUrl] = useState('');
@@ -30,9 +30,9 @@ export default function Tournaments() {
     const handleCreate = async (e) => {
         e.preventDefault();
         try {
-            await createTournament(title, description);
+            await createTournament(name, description);
             setMessage('Tournament created');
-            setTitle('');
+            setName('');
             setDescription('');
             loadData();
         } catch (err) {
@@ -68,7 +68,7 @@ export default function Tournaments() {
 
             <h2>Create</h2>
             <form onSubmit={handleCreate}>
-                <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+                <input type="text" placeholder="Title" value={name} onChange={(e) => setName(e.target.value)} />
                 <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
                 <button type="submit">Create</button>
             </form>
@@ -76,7 +76,7 @@ export default function Tournaments() {
             <h2>All Tournaments</h2>
             {tournaments.map((t) => (
                 <div key={t._id}>
-                    <p>{t.title} - {t.status} - {t.currentParticipants}/{t.maxParticipants}</p>
+                    <p>{t.name} - {t.status} - {t.currentParticipants}/{t.maxParticipants}</p>
                     <button onClick={() => handleRegister(t._id)}>Register</button>
                 </div>
             ))}
@@ -86,7 +86,7 @@ export default function Tournaments() {
                 <select value={selectedTournament} onChange={(e) => setSelectedTournament(e.target.value)}>
                     <option value="">Select Tournament</option>
                     {myTournaments.map((t) => (
-                        <option key={t._id} value={t._id}>{t.title}</option>
+                        <option key={t._id} value={t._id}>{t.name}</option>
                     ))}
                 </select>
                 <input type="text" placeholder="Replay URL" value={replayUrl} onChange={(e) => setReplayUrl(e.target.value)} />
