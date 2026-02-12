@@ -5,7 +5,7 @@ import { getToken } from './authService';
 export const createTournament = async (title, description) => {
     const token = getToken();
     const response = await axios.post(`${API_URL}/tournaments`, {
-        title,
+        name: title,
         description,
         game: 'Pokemon Showdown',
         maxParticipants: 2
