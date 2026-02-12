@@ -80,9 +80,30 @@ export default function Tournaments() {
                 <p>{t.description}</p>
                 <p>Status: {t.status}</p>
                 <p>Participants: {t.currentParticipants}/{t.maxParticipants}</p>
-                <button onClick={}></button>
+                <button onClick={() => handleRegister(t._id)}>Register</button>
                 </div>
             ))}
+
+            <h2>Submit replay</h2>
+            <form onSubmit={handleSubmit}>
+                <select value={selectedTournament} onChange={(e) => setSelectedTournaments(e.target.value)} required>
+                    <option value="">Select tournament</option>
+                    {myTournaments.map((t) => (
+                        <option key={t._id} value={t._id}>{t.title}</option>
+                    ))}
+                </select>
+                <input type="text" placeholder='Replay URL' value={replayUrl} onChange={(e) => setReplayUrl(e.target.value)} required />
+                <button type='submit'>Submit replay</button>
+            </form>
+
+            {result && (
+                <div>
+                    <h3>Replay result</h3>
+                    <p>Winner: {result.winner?.username} | MMR: {result.winner?.mmrAfter}(+{result.loser?.mmrChange})</p>
+                </div>
+            )}
+
+            {message && <p>{message}</p>}
         </div>
     )
 }
