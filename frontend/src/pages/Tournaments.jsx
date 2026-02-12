@@ -63,6 +63,26 @@ export default function Tournaments() {
     };
 
     return(
-        <div>hello</div>
+        <div>
+            <h1>Tournaments</h1>
+
+            <h2>Create tournament</h2>
+            <form onSubmit={handleCreate}>
+                <input type="text" placeholder='Title' value={title} onChange={(e) => setTitle(e.target.value)} required />
+                <input type="text" placeholder='Description' value={description} onChange={(e) => setDescription(e.target.value)} required />
+                <button type='submit'>Create tournament</button>
+            </form>
+
+            <h2>All tournaments</h2>
+            {tournaments.map((t) => (
+                <div key={t._id}>
+                <h3>{t.title}</h3>
+                <p>{t.description}</p>
+                <p>Status: {t.status}</p>
+                <p>Participants: {t.currentParticipants}/{t.maxParticipants}</p>
+                <button onClick={}></button>
+                </div>
+            ))}
+        </div>
     )
 }
