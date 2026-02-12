@@ -8,7 +8,9 @@ export const createTournament = async (title, description) => {
         name: title,
         description,
         game: 'Pokemon Showdown',
-        maxParticipants: 2
+        maxParticipants: 2,
+        registrationDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        matchDateTime: new Date(Date.now() + 48 * 60 * 60 * 1000)
     }, {
         headers: {
             Authorization: `Bearer ${token}`
