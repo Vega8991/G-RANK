@@ -9,7 +9,7 @@ function connectToDatabase() {
         socketTimeoutMS: 45000,
     })
     .then(() => {
-        console.log('Connected to MongoDB successfully!🍃');
+        console.log('Connected to MongoDB successfully!');
     })
     .catch((err) => {
         console.log('Error connecting to MongoDB:', err.message);
