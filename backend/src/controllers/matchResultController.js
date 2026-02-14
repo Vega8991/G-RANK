@@ -2,6 +2,7 @@ const MatchResult = require('../models/matchResultModel');
 const Tournament = require('../models/tournamentModel');
 const TournamentParticipant = require('../models/tournamentParticipantModel');
 const axios = require('axios');
+const { calculateMMRChange, updateUserStats } = require('../services/mmrService');
 
 const submitReplay = async function (req, res) {
     try {
@@ -9,7 +10,6 @@ const submitReplay = async function (req, res) {
         const { tournamentId, replayUrl } = req.body;
 
         const tournament = await Tournament.findById(tournamentId);
-
         if (!tournament) {
             return res.status(404).json({
                 success: false,
@@ -57,21 +57,52 @@ const submitReplay = async function (req, res) {
             });
         }
 
-        const winner = replayData.winner;
+        let winner = null;
+        if (replayData.log) {
+            const winMatch = replayData.log.match(/\|win\|(.+)/);
+            if (winMatch && winMatch[1]) {
+                winner = winMatch[1].trim();
+            }
+        }
+
+        if (!winner) {
+            return res.status(400).json({
+                success: false,
+                message: 'Could not find winner in replay data'
+            });
+        }
 
         const allParticipants = await TournamentParticipant.find({
             tournamentId: tournamentId
-        }).populate('userId', 'username');
+        }).populate('userId', 'username mmr');
+
+        if (allParticipants.length !== 2) {
+            return res.status(400).json({
+                success: false,
+                message: `Tournament must have exactly 2 participants. Found: ${allParticipants.length}`
+            });
+        }
 
         let winnerId = null;
         let loserId = null;
 
         for (let participant of allParticipants) {
-            if (participant.userId.username === winner) {
+            if (participant.userId.username.toLowerCase() === winner.toLowerCase()) {
                 winnerId = participant.userId._id;
             } else {
                 loserId = participant.userId._id;
             }
+        }
+
+        if (!winnerId || !loserId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Could not match replay participants with tournament participants',
+                debug: {
+                    replayWinner: winner,
+                    tournamentParticipants: allParticipants.map(p => p.userId.username)
+                }
+            });
         }
 
         const matchResult = await MatchResult.create({
@@ -84,6 +115,29 @@ const submitReplay = async function (req, res) {
             submittedBy: userId
         });
 
+        const winnerParticipant = allParticipants.find(p => p.userId._id.toString() === winnerId.toString());
+        const loserParticipant = allParticipants.find(p => p.userId._id.toString() === loserId.toString());
+
+        const winnerMMRBefore = winnerParticipant.userId.mmr;
+        const loserMMRBefore = loserParticipant.userId.mmr;
+
+        const winnerMMRChange = calculateMMRChange(winnerMMRBefore, true);
+        const loserMMRChange = calculateMMRChange(loserMMRBefore, false);
+
+        const winnerUpdateResult = await updateUserStats(winnerId, true, winnerMMRChange);
+        const loserUpdateResult = await updateUserStats(loserId, false, loserMMRChange);
+
+        const updatedWinner = winnerUpdateResult.user;
+        const updatedLoser = loserUpdateResult.user;
+
+        winnerParticipant.mmrAfter = updatedWinner.mmr;
+        winnerParticipant.mmrChange = winnerMMRChange;
+        await winnerParticipant.save();
+
+        loserParticipant.mmrAfter = updatedLoser.mmr;
+        loserParticipant.mmrChange = loserMMRChange;
+        await loserParticipant.save();
+
         participant.hasSubmittedResults = true;
         await participant.save();
 
@@ -94,7 +148,28 @@ const submitReplay = async function (req, res) {
             success: true,
             message: 'Replay submitted and verified successfully',
             result: matchResult,
-            winner: winner
+            winner: {
+                username: winnerParticipant.userId.username,
+                mmrBefore: winnerMMRBefore,
+                mmrChange: winnerMMRChange,
+                mmrAfter: updatedWinner.mmr,
+                newRank: updatedWinner.rank,
+                wins: updatedWinner.wins,
+                losses: updatedWinner.losses,
+                winRate: updatedWinner.winRate,
+                winStreak: updatedWinner.winStreak
+            },
+            loser: {
+                username: loserParticipant.userId.username,
+                mmrBefore: loserMMRBefore,
+                mmrChange: loserMMRChange,
+                mmrAfter: updatedLoser.mmr,
+                newRank: updatedLoser.rank,
+                wins: updatedLoser.wins,
+                losses: updatedLoser.losses,
+                winRate: updatedLoser.winRate,
+                winStreak: updatedLoser.winStreak
+            }
         });
 
     } catch (error) {
@@ -111,7 +186,6 @@ const getTournamentResults = async function (req, res) {
         const tournamentId = req.params.tournamentId;
 
         const tournament = await Tournament.findById(tournamentId);
-
         if (!tournament) {
             return res.status(404).json({
                 success: false,
