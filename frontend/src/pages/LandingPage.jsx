@@ -89,6 +89,11 @@ export default function LandingPage() {
                                         <Zap size={18} /> Start Competing
                                     </Button>
                                 </NavLink>
+                                <NavLink to="/login">
+                                    <Button variant="outline" className="px-8 py-3">
+                                        Login
+                                    </Button>
+                                </NavLink>
                                 <NavLink to="/leaderboard">
                                     <Button variant="outline" className="px-8 py-3">
                                         <ArrowRight size={18} /> View Rankings
