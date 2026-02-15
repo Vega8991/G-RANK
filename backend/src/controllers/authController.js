@@ -14,6 +14,7 @@ async function registerUser(req, res) {
         let hashedPassword = bcrypt.hashSync(password, salt);
 
         let verificationToken = crypto.randomBytes(32).toString('hex');
+
         let newUser = new User({
             username: username,
             email: email,
@@ -35,7 +36,6 @@ async function registerUser(req, res) {
                 mmr: savedUser.mmr
             }
         });
-
     } catch (error) {
         res.status(400).json({
             success: false,
@@ -102,10 +102,11 @@ async function loginUser(req, res) {
                 rank: foundUser.rank,
                 mmr: foundUser.mmr,
                 winRate: foundUser.winRate,
-                winStreak: foundUser.winStreak
+                winStreak: foundUser.winStreak,
+                wins: foundUser.wins,
+                losses: foundUser.losses
             }
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -118,7 +119,6 @@ async function loginUser(req, res) {
 async function getProfile(req, res) {
     try {
         let userId = req.userId;
-
         let user = await User.findById(userId);
 
         if (!user) {
@@ -138,7 +138,9 @@ async function getProfile(req, res) {
                 rank: user.rank,
                 mmr: user.mmr,
                 winRate: user.winRate,
-                winStreak: user.winStreak
+                winStreak: user.winStreak,
+                wins: user.wins,
+                losses: user.losses
             }
         });
     } catch (err) {
@@ -153,7 +155,6 @@ async function getProfile(req, res) {
 async function verifyEmail(req, res) {
     try {
         let token = req.query.token;
-
         let user = await User.findOne({ emailVerificationToken: token });
 
         if (!user) {
@@ -172,7 +173,6 @@ async function verifyEmail(req, res) {
             success: true,
             message: 'Email verified successfully! You can now login.'
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -181,4 +181,5 @@ async function verifyEmail(req, res) {
         });
     }
 }
+
 module.exports = { registerUser, loginUser, getProfile, verifyEmail };

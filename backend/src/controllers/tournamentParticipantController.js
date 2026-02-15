@@ -32,7 +32,11 @@ const registerToTournament = async (req, res) => {
             });
         }
 
-        if (tournament.currentParticipants >= tournament.maxParticipants) {
+        const participantCount = await TournamentParticipant.countDocuments({
+            tournamentId: tournamentId
+        });
+
+        if (participantCount >= tournament.maxParticipants) {
             return res.status(400).json({
                 success: false,
                 message: 'Tournament is full'
@@ -59,7 +63,7 @@ const registerToTournament = async (req, res) => {
             mmrBefore: user.mmr
         });
 
-        tournament.currentParticipants = tournament.currentParticipants + 1;
+        tournament.currentParticipants = participantCount + 1;
         await tournament.save();
 
         return res.status(201).json({
