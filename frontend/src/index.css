@@ -29,7 +29,6 @@
 }
 
 :root {
-  /* CSS Variables for inline styles */
   --brand-primary: #dc143c;
   --brand-primary-hover: #b0102d;
   --brand-primary-pressed: #8f0c23;

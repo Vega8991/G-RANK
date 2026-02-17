@@ -24,11 +24,12 @@ export default function Tournaments() {
     const loadData = async () => {
         try {
             const t = await getAllTournaments();
-            setTournaments(t.tournaments);
+            setTournaments(t.tournaments || []);
             const my = await getMyTournaments();
-            setMyTournaments(my.tournaments);
+            setMyTournaments(my.tournaments || []);
         } catch (err) {
-            console.log(err);
+            console.error('Error loading tournaments:', err);
+            setMessage(err.response?.data?.message || 'Error loading tournaments');
         }
     };
 
