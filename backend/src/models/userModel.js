@@ -71,6 +71,11 @@ let userSchema = new mongoose.Schema({
     emailVerificationToken: {
         type: String,
         default: null
+    },
+    role: {
+        type: String,
+        enum: ['USER', 'ADMIN'],
+        default: 'USER'
     }
 });
 

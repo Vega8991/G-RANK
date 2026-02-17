@@ -40,9 +40,11 @@ function calculateMMRChange(currentMMR, isWinner) {
     }
 }
 
-async function updateUserStats(userId, isWinner, mmrChange) {
+async function updateUserStats(userId, isWinner, mmrChange, session = null) {
     try {
-        const user = await User.findById(userId);
+        const query = User.findById(userId);
+        if (session) query.session(session);
+        const user = await query;
 
         if (!user) {
             throw new Error('User not found');
@@ -71,7 +73,11 @@ async function updateUserStats(userId, isWinner, mmrChange) {
             user.winStreak = 0;
         }
 
-        await user.save();
+        if (session) {
+            await user.save({ session: session });
+        } else {
+            await user.save();
+        }
 
         return {
             success: true,
