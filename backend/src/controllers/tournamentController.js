@@ -83,19 +83,9 @@ const getAllTournaments = async (req, res) => {
     try {
         const tournaments = await Tournament.find();
 
-        const tournamentsWithCount = await Promise.all(
-            tournaments.map(async (tournament) => {
-                const count = await TournamentParticipant.countDocuments({
-                    tournamentId: tournament._id
-                });
-                tournament.currentParticipants = count;
-                return tournament;
-            })
-        );
-
         return res.status(200).json({
             success: true,
-            tournaments: tournamentsWithCount
+            tournaments: tournaments
         });
     } catch (error) {
         return res.status(500).json({
