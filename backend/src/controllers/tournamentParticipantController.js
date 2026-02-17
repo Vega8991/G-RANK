@@ -1,86 +1,104 @@
 const Tournament = require('../models/tournamentModel');
 const TournamentParticipant = require('../models/tournamentParticipantModel');
 const User = require('../models/userModel');
+const mongoose = require('mongoose');
 
 const registerToTournament = async (req, res) => {
+    const session = await mongoose.startSession();
+    
     try {
-        const userId = req.userId;
-        const { tournamentId } = req.body;
+        let result;
+        await session.withTransaction(async () => {
+            const userId = req.userId;
+            const { tournamentId } = req.body;
 
-        const tournament = await Tournament.findById(tournamentId);
+            const tournament = await Tournament.findById(tournamentId).session(session);
 
-        if (!tournament) {
-            return res.status(404).json({
-                success: false,
-                message: 'Tournament not found'
-            });
-        }
+            if (!tournament) {
+                throw new Error('TOURNAMENT_NOT_FOUND');
+            }
 
-        if (tournament.status !== 'open') {
-            return res.status(400).json({
-                success: false,
-                message: 'Tournament is not open for registration'
-            });
-        }
+            if (tournament.status !== 'open') {
+                throw new Error('TOURNAMENT_NOT_OPEN');
+            }
 
-        const currentDate = new Date();
+            const currentDate = new Date();
 
-        if (currentDate > tournament.registrationDeadline) {
-            return res.status(400).json({
-                success: false,
-                message: 'Registration deadline has passed'
-            });
-        }
+            if (currentDate > tournament.registrationDeadline) {
+                throw new Error('DEADLINE_PASSED');
+            }
 
-        const participantCount = await TournamentParticipant.countDocuments({
-            tournamentId: tournamentId
+            const existingParticipant = await TournamentParticipant.findOne({
+                tournamentId: tournamentId,
+                userId: userId
+            }).session(session);
+
+            if (existingParticipant) {
+                throw new Error('ALREADY_REGISTERED');
+            }
+
+            const participantCount = await TournamentParticipant.countDocuments({
+                tournamentId: tournamentId
+            }).session(session);
+
+            if (participantCount >= tournament.maxParticipants) {
+                throw new Error('TOURNAMENT_FULL');
+            }
+
+            const user = await User.findById(userId).session(session);
+            
+            if (!user) {
+                throw new Error('USER_NOT_FOUND');
+            }
+
+            const newParticipant = await TournamentParticipant.create([{
+                tournamentId: tournamentId,
+                userId: userId,
+                mmrBefore: user.mmr
+            }], { session: session });
+
+            tournament.currentParticipants = participantCount + 1;
+            await tournament.save({ session: session });
+
+            result = {
+                success: true,
+                message: 'Registered to tournament successfully',
+                participant: newParticipant[0]
+            };
         });
 
-        if (participantCount >= tournament.maxParticipants) {
-            return res.status(400).json({
-                success: false,
-                message: 'Tournament is full'
-            });
-        }
-
-        const existingParticipant = await TournamentParticipant.findOne({
-            tournamentId: tournamentId,
-            userId: userId
-        });
-
-        if (existingParticipant) {
-            return res.status(400).json({
-                success: false,
-                message: 'You are already registered in this tournament'
-            });
-        }
-
-        const user = await User.findById(userId);
-        
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
-        }
-
-        const newParticipant = await TournamentParticipant.create({
-            tournamentId: tournamentId,
-            userId: userId,
-            mmrBefore: user.mmr
-        });
-
-        return res.status(201).json({
-            success: true,
-            message: 'Registered to tournament successfully',
-            participant: newParticipant
-        });
+        return res.status(201).json(result);
     } catch (error) {
-        return res.status(500).json({
+        const errorCode = error.message || 'UNKNOWN_ERROR';
+        let statusCode = 500;
+        let message = 'Error registering to tournament';
+
+        switch (errorCode) {
+            case 'TOURNAMENT_NOT_FOUND':
+            case 'USER_NOT_FOUND':
+                statusCode = 404;
+                message = errorCode === 'TOURNAMENT_NOT_FOUND' ? 'Tournament not found' : 'User not found';
+                break;
+            case 'ALREADY_REGISTERED':
+            case 'TOURNAMENT_FULL':
+            case 'TOURNAMENT_NOT_OPEN':
+            case 'DEADLINE_PASSED':
+                statusCode = 400;
+                message = errorCode === 'ALREADY_REGISTERED' ? 'You are already registered in this tournament' :
+                         errorCode === 'TOURNAMENT_FULL' ? 'Tournament is full' :
+                         errorCode === 'TOURNAMENT_NOT_OPEN' ? 'Tournament is not open for registration' :
+                         'Registration deadline has passed';
+                break;
+            default:
+                message = error.message || message;
+        }
+
+        return res.status(statusCode).json({
             success: false,
-            message: 'Error registering to tournament',
-            error: error.message
+            message: message
         });
+    } finally {
+        await session.endSession();
     }
 };
 

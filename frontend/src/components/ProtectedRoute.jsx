@@ -11,7 +11,7 @@ function checkAuthStatus() {
     
     try {
         const user = JSON.parse(userStr);
-        return { isLoggedIn: true, userRole: user.role || null };
+        return { isLoggedIn: true, userRole: user.role || 'USER' };
     } catch (error) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
