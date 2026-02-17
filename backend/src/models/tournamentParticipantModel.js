@@ -42,6 +42,8 @@ const tournamentParticipantSchema = new mongoose.Schema({
     }
 });
 
+tournamentParticipantSchema.index({ tournamentId: 1, userId: 1 }, { unique: true });
+
 const TournamentParticipant = mongoose.model('TournamentParticipant', tournamentParticipantSchema);
 
 module.exports = TournamentParticipant;

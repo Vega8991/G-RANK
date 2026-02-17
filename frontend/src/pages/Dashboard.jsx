@@ -15,7 +15,11 @@ export default function Dashboard() {
             const response = await getProfile();
             setUser(response.user);
         } catch (err) {
-            console.log(err);
+            console.error('Error loading profile:', err);
+            if (err.response?.status === 401 || err.response?.status === 403) {
+                logout();
+                navigate('/login');
+            }
         }
     };
 
@@ -24,7 +28,7 @@ export default function Dashboard() {
         navigate('/login');
     };
 
-    if (!user) return <div>Loading...</div>
+    if (!user) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Loading...</div>
     return (
         <div>
             <h1>Dashboard</h1>
