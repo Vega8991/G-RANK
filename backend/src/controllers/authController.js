@@ -55,7 +55,8 @@ async function registerUser(req, res) {
                 username: savedUser.username,
                 email: savedUser.email,
                 rank: savedUser.rank,
-                mmr: savedUser.mmr
+                mmr: savedUser.mmr,
+                role: savedUser.role || 'USER'
             }
         });
     } catch (error) {
@@ -114,7 +115,8 @@ async function loginUser(req, res) {
             {
                 userId: foundUser._id,
                 email: foundUser.email,
-                username: foundUser.username
+                username: foundUser.username,
+                role: foundUser.role || 'USER'
             },
             secretKey,
             { expiresIn: expirationTime }
@@ -133,7 +135,8 @@ async function loginUser(req, res) {
                 winRate: foundUser.winRate,
                 winStreak: foundUser.winStreak,
                 wins: foundUser.wins,
-                losses: foundUser.losses
+                losses: foundUser.losses,
+                role: foundUser.role || 'USER'
             }
         });
     } catch (error) {
@@ -169,7 +172,8 @@ async function getProfile(req, res) {
                 winRate: user.winRate,
                 winStreak: user.winStreak,
                 wins: user.wins,
-                losses: user.losses
+                losses: user.losses,
+                role: user.role || 'USER'
             }
         });
     } catch (err) {

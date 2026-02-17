@@ -44,6 +44,7 @@ function verifyToken(req, res, next){
         req.userId = decoded.userId;
         req.userEmail = decoded.email;
         req.username = decoded.username;
+        req.userRole = decoded.role || 'USER';
 
         next();
     });
