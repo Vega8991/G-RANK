@@ -70,3 +70,12 @@ export const getMyTournaments = async () => {
         throw error;
     }
 };
+
+export const syncParticipantCounts = async () => {
+    try {
+        const response = await axios.post(`${API_URL}/tournaments/sync-counts`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
