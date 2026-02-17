@@ -5,13 +5,59 @@ const createTournament = async function (req, res) {
     try {
         const userId = req.userId;
 
+        if (!req.body.name || !req.body.description) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name and description are required'
+            });
+        }
+
+        if (!req.body.registrationDeadline || !req.body.matchDateTime) {
+            return res.status(400).json({
+                success: false,
+                message: 'Registration deadline and match date are required'
+            });
+        }
+
+        const registrationDeadline = new Date(req.body.registrationDeadline);
+        const matchDateTime = new Date(req.body.matchDateTime);
+        const now = new Date();
+
+        if (isNaN(registrationDeadline.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid registration deadline date format'
+            });
+        }
+
+        if (isNaN(matchDateTime.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid match date format'
+            });
+        }
+
+        if (registrationDeadline <= now) {
+            return res.status(400).json({
+                success: false,
+                message: 'Registration deadline must be in the future'
+            });
+        }
+
+        if (matchDateTime <= registrationDeadline) {
+            return res.status(400).json({
+                success: false,
+                message: 'Match date must be after registration deadline'
+            });
+        }
+
         const tournamentData = {
             name: req.body.name,
-            game: req.body.game,
+            game: req.body.game || 'pokemon_showdown',
             description: req.body.description,
-            registrationDeadline: req.body.registrationDeadline,
-            matchDateTime: req.body.matchDateTime,
-            maxParticipants: req.body.maxParticipants,
+            registrationDeadline: registrationDeadline,
+            matchDateTime: matchDateTime,
+            maxParticipants: req.body.maxParticipants || 2,
             prizePool: req.body.prizePool || 0,
             createdBy: userId
         };
@@ -37,19 +83,9 @@ const getAllTournaments = async (req, res) => {
     try {
         const tournaments = await Tournament.find();
 
-        const tournamentsWithCount = await Promise.all(
-            tournaments.map(async (tournament) => {
-                const count = await TournamentParticipant.countDocuments({
-                    tournamentId: tournament._id
-                });
-                tournament.currentParticipants = count;
-                return tournament;
-            })
-        );
-
         return res.status(200).json({
             success: true,
-            tournaments: tournamentsWithCount
+            tournaments: tournaments
         });
     } catch (error) {
         return res.status(500).json({

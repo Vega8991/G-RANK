@@ -11,8 +11,26 @@ function verifyToken(req, res, next){
         return;
     }
 
-    let token = authHeader.replace('Bearer ', '');
+    let tokenParts = authHeader.split(' ');
+    let token = tokenParts.length > 1 ? tokenParts[1] : tokenParts[0];
+    
+    if (!token) {
+        res.status(403).json({
+            success: false,
+            message: 'Invalid token format'
+        });
+        return;
+    }
+
     let secretKey = process.env.JWT_SECRET;
+    
+    if (!secretKey) {
+        res.status(500).json({
+            success: false,
+            message: 'Server configuration error'
+        });
+        return;
+    }
 
     jwt.verify(token, secretKey, (err, decoded) => {
         if(err){
@@ -26,6 +44,7 @@ function verifyToken(req, res, next){
         req.userId = decoded.userId;
         req.userEmail = decoded.email;
         req.username = decoded.username;
+        req.userRole = decoded.role || 'USER';
 
         next();
     });
