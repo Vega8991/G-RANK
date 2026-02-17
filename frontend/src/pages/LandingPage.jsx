@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import Button from "../components/Button";
 import Card from "../components/Card";
-import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Home, Shield, CheckCircle2, Crown, Flame, Star } from "lucide-react";
+import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Home, Shield, CheckCircle2, Crown, Flame, Star, Gem } from "lucide-react";
 
 export default function LandingPage() {
     let topPlayers = [
@@ -11,11 +11,11 @@ export default function LandingPage() {
     ];
 
     let ranks = [
-        { name: "Bronze", mmr: "0-500 MMR", color: "var(--rank-bronze)", icon: Shield },
-        { name: "Silver", mmr: "500-1000 MMR", color: "var(--rank-silver)", icon: Shield },
-        { name: "Gold", mmr: "1000-1500 MMR", color: "var(--rank-gold)", icon: Shield },
-        { name: "Platinum", mmr: "1500-2000 MMR", color: "var(--rank-platinum)", icon: Shield },
-        { name: "Diamond", mmr: "2000-2500 MMR", color: "var(--rank-diamond)", icon: Shield },
+        { name: "Bronze", mmr: "0-500 MMR", color: "var(--rank-bronze)", icon: Award },
+        { name: "Silver", mmr: "500-1000 MMR", color: "var(--rank-silver)", icon: Star },
+        { name: "Gold", mmr: "1000-1500 MMR", color: "var(--rank-gold)", icon: Trophy },
+        { name: "Platinum", mmr: "1500-2000 MMR", color: "var(--rank-platinum)", icon: Gem },
+        { name: "Diamond", mmr: "2000-2500 MMR", color: "var(--rank-diamond)", icon: Gem },
         { name: "Master", mmr: "2500-3000 MMR", color: "var(--rank-master)", icon: Crown },
         { name: "Elite", mmr: "3000+ MMR", color: "var(--rank-elite)", icon: Flame }
     ];
@@ -173,9 +173,10 @@ export default function LandingPage() {
 
                                 <div className="flex justify-center gap-2 pt-4 border-t border-[var(--neutral-border)]">
                                     {ranks.map(function (rank, idx) {
+                                        let RankIcon = rank.icon;
                                         return (
                                             <div key={idx} className="w-10 h-10 rounded border border-[var(--neutral-border)] flex items-center justify-center hover:scale-110 transition-transform" style={{ color: rank.color }}>
-                                                <Shield size={16} />
+                                                <RankIcon size={16} />
                                             </div>
                                         );
                                     })}
