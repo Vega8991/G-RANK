@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 
 let Card = forwardRef(function CardComponent({ className = "", children }, ref) {
-    let baseClass = "bg-neutral-surface border border-neutral-border rounded-lg p-6";
+    let baseClass = "bg-[var(--neutral-surface)]/40 backdrop-blur-lg border border-[var(--neutral-border)]/40 rounded-lg p-6 shadow-lg hover:shadow-xl transition-all duration-300";
 
     return (
         <div ref={ref} className={baseClass + " " + className}>
@@ -17,11 +17,11 @@ let CardHeader = function CardHeader({ className = "", children }) {
 };
 
 let CardTitle = function CardTitle({ className = "", children }) {
-    return <h2 className={"text-2xl font-bold " + className}>{children}</h2>;
+    return <h2 className={"text-2xl font-bold text-[var(--neutral-text)] " + className}>{children}</h2>;
 };
 
 let CardDescription = function CardDescription({ className = "", children }) {
-    return <p className={"text-neutral-text-secondary text-sm " + className}>{children}</p>;
+    return <p className={"text-[var(--neutral-text-secondary)] text-sm leading-relaxed " + className}>{children}</p>;
 };
 
 let CardContent = function CardContent({ className = "", children }) {
