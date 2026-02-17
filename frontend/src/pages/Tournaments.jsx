@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getAllTournaments, createTournament, registerToTournament, getMyTournaments } from '../services/tournamentService';
 import { submitReplay } from '../services/matchService';
+import { Calendar } from 'lucide-react';
 
 export default function Tournaments() {
     const [tournaments, setTournaments] = useState([]);
@@ -13,6 +14,8 @@ export default function Tournaments() {
     const [replayUrl, setReplayUrl] = useState('');
     const [message, setMessage] = useState('');
     const [result, setResult] = useState(null);
+    const registrationDeadlineRef = useRef(null);
+    const matchDateTimeRef = useRef(null);
 
     useEffect(() => {
         loadData();
@@ -74,21 +77,35 @@ export default function Tournaments() {
             <form onSubmit={handleCreate}>
                 <input type="text" placeholder="Title" value={name} onChange={(e) => setName(e.target.value)} required />
                 <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-                <label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <Calendar 
+                        size={18} 
+                        onClick={() => registrationDeadlineRef.current?.showPicker()} 
+                        style={{ cursor: 'pointer' }}
+                    />
                     Registration Deadline:
                     <input 
+                        ref={registrationDeadlineRef}
                         type="datetime-local" 
                         value={registrationDeadline} 
                         onChange={(e) => setRegistrationDeadline(e.target.value)} 
+                        style={{ cursor: 'pointer', padding: '4px 8px' }}
                         required 
                     />
                 </label>
-                <label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                    <Calendar 
+                        size={18} 
+                        onClick={() => matchDateTimeRef.current?.showPicker()} 
+                        style={{ cursor: 'pointer' }}
+                    />
                     Match Date & Time:
                     <input 
+                        ref={matchDateTimeRef}
                         type="datetime-local" 
                         value={matchDateTime} 
                         onChange={(e) => setMatchDateTime(e.target.value)} 
+                        style={{ cursor: 'pointer', padding: '4px 8px' }}
                         required 
                     />
                 </label>
