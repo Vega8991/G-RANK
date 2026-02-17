@@ -16,9 +16,6 @@ import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 
-let isUserLogged = true;
-let userRole = "ADMIN";
-
 let publicRoutes = [
   { path: "/", element: React.createElement(LandingPage) },
   { path: "/login", element: React.createElement(Login) },
@@ -38,12 +35,12 @@ let adminRoutes = [
 ];
 
 let adminProtection = {
-  element: React.createElement(ProtectedRoute, { isAllowed: userRole === "ADMIN", redirectTo: "/dashboard" }),
+  element: React.createElement(ProtectedRoute, { requireAdmin: true, redirectTo: "/dashboard" }),
   children: adminRoutes
 };
 
 let userProtection = {
-  element: React.createElement(ProtectedRoute, { isAllowed: isUserLogged }),
+  element: React.createElement(ProtectedRoute),
   children: protectedRoutes.concat([adminProtection])
 };
 
