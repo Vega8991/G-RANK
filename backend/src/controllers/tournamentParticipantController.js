@@ -56,15 +56,19 @@ const registerToTournament = async (req, res) => {
         }
 
         const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
 
         const newParticipant = await TournamentParticipant.create({
             tournamentId: tournamentId,
             userId: userId,
             mmrBefore: user.mmr
         });
-
-        tournament.currentParticipants = participantCount + 1;
-        await tournament.save();
 
         return res.status(201).json({
             success: true,

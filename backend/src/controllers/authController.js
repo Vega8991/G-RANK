@@ -10,6 +10,28 @@ async function registerUser(req, res) {
         let email = req.body.email;
         let password = req.body.password;
 
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required'
+            });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email format'
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters long'
+            });
+        }
+
         let salt = bcrypt.genSaltSync(10);
         let hashedPassword = bcrypt.hashSync(password, salt);
 
@@ -49,6 +71,13 @@ async function loginUser(req, res) {
     try {
         let email = req.body.email;
         let password = req.body.password;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email and password are required'
+            });
+        }
 
         let foundUser = await User.findOne({ email: email });
 
