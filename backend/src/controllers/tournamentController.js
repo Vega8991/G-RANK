@@ -194,11 +194,45 @@ const updateTournamentStatus = async function (req, res) {
     }
 };
 
+const syncParticipantCounts = async function (req, res) {
+    try {
+        const tournaments = await Tournament.find();
+        let updatedCount = 0;
+
+        for (const tournament of tournaments) {
+            const actualCount = await TournamentParticipant.countDocuments({
+                tournamentId: tournament._id
+            });
+
+            if (tournament.currentParticipants !== actualCount) {
+                tournament.currentParticipants = actualCount;
+                await tournament.save();
+                updatedCount++;
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: `Synchronized ${updatedCount} tournament(s)`,
+            totalTournaments: tournaments.length,
+            updated: updatedCount
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Error synchronizing participant counts',
+            error: error.message
+        });
+    }
+};
+
 
 module.exports = {
     createTournament,
     getAllTournaments,
     getTournamentById,
     getMyCreatedTournaments,
-    updateTournamentStatus
+    updateTournamentStatus,
+    syncParticipantCounts
 };

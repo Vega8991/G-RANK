@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAllTournaments, createTournament, registerToTournament, getMyTournaments } from '../services/tournamentService';
+import { getAllTournaments, createTournament, registerToTournament, getMyTournaments, syncParticipantCounts } from '../services/tournamentService';
 import { submitReplay } from '../services/matchService';
 import { Calendar } from 'lucide-react';
 
@@ -23,6 +23,7 @@ export default function Tournaments() {
 
     const loadData = async () => {
         try {
+            await syncParticipantCounts();
             const t = await getAllTournaments();
             setTournaments(t.tournaments || []);
             const my = await getMyTournaments();
