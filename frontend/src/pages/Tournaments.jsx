@@ -7,6 +7,8 @@ export default function Tournaments() {
     const [myTournaments, setMyTournaments] = useState([]);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [registrationDeadline, setRegistrationDeadline] = useState('');
+    const [matchDateTime, setMatchDateTime] = useState('');
     const [selectedTournament, setSelectedTournament] = useState('');
     const [replayUrl, setReplayUrl] = useState('');
     const [message, setMessage] = useState('');
@@ -30,10 +32,12 @@ export default function Tournaments() {
     const handleCreate = async (e) => {
         e.preventDefault();
         try {
-            await createTournament(name, description);
+            await createTournament(name, description, registrationDeadline, matchDateTime);
             setMessage('Tournament created');
             setName('');
             setDescription('');
+            setRegistrationDeadline('');
+            setMatchDateTime('');
             loadData();
         } catch (err) {
             setMessage(err.response?.data?.message || 'Error');
@@ -68,8 +72,26 @@ export default function Tournaments() {
 
             <h2>Create</h2>
             <form onSubmit={handleCreate}>
-                <input type="text" placeholder="Title" value={name} onChange={(e) => setName(e.target.value)} />
-                <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+                <input type="text" placeholder="Title" value={name} onChange={(e) => setName(e.target.value)} required />
+                <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
+                <label>
+                    Registration Deadline:
+                    <input 
+                        type="datetime-local" 
+                        value={registrationDeadline} 
+                        onChange={(e) => setRegistrationDeadline(e.target.value)} 
+                        required 
+                    />
+                </label>
+                <label>
+                    Match Date & Time:
+                    <input 
+                        type="datetime-local" 
+                        value={matchDateTime} 
+                        onChange={(e) => setMatchDateTime(e.target.value)} 
+                        required 
+                    />
+                </label>
                 <button type="submit">Create</button>
             </form>
 

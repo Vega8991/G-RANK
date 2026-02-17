@@ -2,15 +2,15 @@ import axios from 'axios';
 import { API_URL } from '../config/api';
 import { getToken } from './authService';
 
-export const createTournament = async (title, description) => {
+export const createTournament = async (title, description, registrationDeadline, matchDateTime) => {
     const token = getToken();
     const response = await axios.post(`${API_URL}/tournaments`, {
         name: title,
         description,
         game: 'pokemon_showdown',
         maxParticipants: 2,
-        registrationDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        matchDateTime: new Date(Date.now() + 48 * 60 * 60 * 1000)
+        registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : new Date(Date.now() + 24 * 60 * 60 * 1000),
+        matchDateTime: matchDateTime ? new Date(matchDateTime) : new Date(Date.now() + 48 * 60 * 60 * 1000)
     }, {
         headers: {
             Authorization: `Bearer ${token}`
