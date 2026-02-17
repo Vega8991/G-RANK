@@ -53,7 +53,7 @@ export default function HeroSection() {
 
     return (
         <section
-            className="relative py-20 md:py-32 px-4 md:px-20 overflow-hidden"
+            className="relative py-20 md:py-32 px-4 md:px-20 overflow-hidden bg-[var(--neutral-bg)]"
             onMouseMove={handleMouseMove}
         >
             <ReactiveBackground mousePos={mousePos} />
@@ -63,7 +63,7 @@ export default function HeroSection() {
                         className="space-y-8"
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div className="space-y-6">
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--neutral-surface)] border border-[var(--neutral-border)]">
@@ -77,7 +77,7 @@ export default function HeroSection() {
                                 className="inline-block relative"
                                 initial={{ opacity: 0, y: 40 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+                                transition={{ delay: 0.2, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
                             >
                                 <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-r from-[var(--brand-primary)]/40 via-[var(--rank-elite)]/40 to-[var(--brand-primary)]/40 blur-xl opacity-60 animate-pulse"></div>
                                 <h1 className="relative text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
@@ -98,7 +98,7 @@ export default function HeroSection() {
                             className="flex flex-wrap gap-4"
                             initial={{ opacity: 0, y: 24 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.25, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+                            transition={{ delay: 0.35, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                         >
                             <NavLink to="/register">
                                 <Button className="group px-8 py-3 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg">
@@ -130,7 +130,7 @@ export default function HeroSection() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{
-                                delay: 0.35,
+                                delay: 0.5,
                                 duration: 0.9,
                                 ease: [0.16, 1, 0.3, 1]
                             }}
@@ -171,7 +171,7 @@ export default function HeroSection() {
                         className="relative"
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div
                             className="bg-[var(--neutral-surface)] border border-[var(--neutral-border)] rounded-2xl p-8 backdrop-blur-sm will-change-transform"

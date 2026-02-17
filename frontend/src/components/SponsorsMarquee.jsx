@@ -13,7 +13,12 @@ export default function SponsorsMarquee() {
     let sequence = items.concat(items);
 
     return (
-        <div className="border-y border-[var(--neutral-border)] bg-[var(--neutral-bg)]/70 backdrop-blur-sm">
+        <motion.div 
+            className="border-y border-[var(--neutral-border)]/40 bg-[var(--neutral-bg)]/50 backdrop-blur-lg shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
             <div className="max-w-[1512px] mx-auto px-4 md:px-20 py-4 flex items-center gap-4 overflow-hidden">
                 <span className="text-[10px] md:text-xs font-semibold tracking-[0.3em] text-[var(--neutral-text-muted)] uppercase">
                     FEATURED QUEUES
@@ -36,7 +41,7 @@ export default function SponsorsMarquee() {
                             return (
                                 <div
                                     key={idx}
-                                    className="inline-flex items-center gap-2 text-xs md:text-sm text-[var(--neutral-text-secondary)] px-3 py-1 rounded-full border border-[var(--neutral-border)] bg-[var(--neutral-surface)]/70"
+                                    className="inline-flex items-center gap-2 text-xs md:text-sm text-[var(--neutral-text-secondary)] px-4 py-2 rounded-full border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/50 backdrop-blur-md shadow-sm hover:shadow-md hover:border-[var(--brand-primary)]/30 transition-all duration-300"
                                 >
                                     <Icon size={14} className="text-[var(--brand-primary)]" />
                                     <span>{item.label}</span>
@@ -46,7 +51,7 @@ export default function SponsorsMarquee() {
                     </motion.div>
                 </motion.div>
             </div>
-        </div>
+        </motion.div>
     );
 }
 

@@ -2,22 +2,20 @@ import { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
 /**
- * LightPillar Component - WebGL-based volumetric light effect using Three.js
- * 
  * @param {Object} props
- * @param {string} [props.topColor="#5227FF"] - Top gradient color
- * @param {string} [props.bottomColor="#FF9FFC"] - Bottom gradient color
- * @param {number} [props.intensity=1.0] - Light intensity (0-2)
- * @param {number} [props.rotationSpeed=0.3] - Rotation animation speed
- * @param {boolean} [props.interactive=false] - Enable mouse interaction
- * @param {string} [props.className=""] - Additional CSS classes
- * @param {number} [props.glowAmount=0.005] - Glow intensity
- * @param {number} [props.pillarWidth=3.0] - Width of the pillar
- * @param {number} [props.pillarHeight=0.4] - Height stretching factor
- * @param {number} [props.noiseIntensity=0.5] - Film grain intensity
- * @param {string} [props.mixBlendMode="screen"] - CSS blend mode
- * @param {number} [props.pillarRotation=0] - Pillar rotation in degrees
- * @param {'low'|'medium'|'high'} [props.quality="high"] - Rendering quality
+ * @param {string} [props.topColor="#5227FF"]
+ * @param {string} [props.bottomColor="#FF9FFC"]
+ * @param {number} [props.intensity=1.0]
+ * @param {number} [props.rotationSpeed=0.3]
+ * @param {boolean} [props.interactive=false]
+ * @param {string} [props.className=""]
+ * @param {number} [props.glowAmount=0.005]
+ * @param {number} [props.pillarWidth=3.0]
+ * @param {number} [props.pillarHeight=0.4]
+ * @param {number} [props.noiseIntensity=0.5]
+ * @param {string} [props.mixBlendMode="screen"]
+ * @param {number} [props.pillarRotation=0]
+ * @param {'low'|'medium'|'high'} [props.quality="high"]
  */
 const LightPillar = ({
     topColor = '#5227FF',
@@ -45,7 +43,6 @@ const LightPillar = ({
     const timeRef = useRef(0);
     const [webGLSupported, setWebGLSupported] = useState(true);
 
-    // Check WebGL support
     useEffect(() => {
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -61,7 +58,6 @@ const LightPillar = ({
         const width = container.clientWidth;
         const height = container.clientHeight;
 
-        // Scene setup
         const scene = new THREE.Scene();
         sceneRef.current = scene;
         const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -359,58 +355,6 @@ const LightPillar = ({
     return (
         <div ref={containerRef} className={`w-full h-full absolute top-0 left-0 ${className}`} style={{ mixBlendMode }} />
     );
-};
-
-// Preset configurations for common use cases
-export const LightPillarPresets = {
-    crimson: {
-        topColor: "#ad1a37",
-        bottomColor: "#f7697e",
-        intensity: 1,
-        rotationSpeed: 0.6,
-        glowAmount: 0.003,
-        pillarWidth: 4.7,
-        pillarHeight: 0.8,
-        noiseIntensity: 1.4,
-        pillarRotation: 241,
-        quality: "high"
-    },
-    neon: {
-        topColor: "#5227FF",
-        bottomColor: "#FF9FFC",
-        intensity: 1.2,
-        rotationSpeed: 0.4,
-        glowAmount: 0.006,
-        pillarWidth: 3.5,
-        pillarHeight: 0.5,
-        noiseIntensity: 0.8,
-        pillarRotation: 180,
-        quality: "high"
-    },
-    ocean: {
-        topColor: "#0ea5e9",
-        bottomColor: "#06b6d4",
-        intensity: 0.9,
-        rotationSpeed: 0.3,
-        glowAmount: 0.004,
-        pillarWidth: 4.0,
-        pillarHeight: 0.6,
-        noiseIntensity: 1.0,
-        pillarRotation: 120,
-        quality: "high"
-    },
-    aurora: {
-        topColor: "#8b5cf6",
-        bottomColor: "#ec4899",
-        intensity: 1.1,
-        rotationSpeed: 0.5,
-        glowAmount: 0.005,
-        pillarWidth: 3.8,
-        pillarHeight: 0.7,
-        noiseIntensity: 1.2,
-        pillarRotation: 90,
-        quality: "high"
-    }
 };
 
 export default LightPillar;

@@ -7,28 +7,31 @@ const RankCard = memo(function RankCard({ rank, isSelected, onSelect }) {
         <div
             onClick={onSelect}
             className={
-                "group bg-[var(--neutral-bg)] rounded-xl p-6 text-center cursor-pointer transition-all duration-300 ease-out " +
+                "group bg-[var(--neutral-bg)]/60 backdrop-blur-md rounded-xl p-6 text-center cursor-pointer transition-all duration-500 ease-out shadow-md hover:shadow-xl " +
                 (isSelected
-                    ? "border-[var(--brand-primary)] shadow-lg -translate-y-2 ring-2 ring-[var(--brand-primary)]/40"
-                    : "border border-[var(--neutral-border)] hover:border-[var(--neutral-border)] hover:-translate-y-1 hover:shadow-lg")
+                    ? "border-2 border-[var(--brand-primary)] shadow-2xl shadow-[var(--brand-primary)]/20 -translate-y-2 ring-4 ring-[var(--brand-primary)]/20 scale-105"
+                    : "border border-[var(--neutral-border)]/40 hover:border-[var(--brand-primary)]/50 hover:-translate-y-2 hover:scale-102")
             }
         >
-            <div className="relative w-12 h-12 mx-auto mb-4">
+            <div className="relative w-14 h-14 mx-auto mb-4">
                 <div
                     className={
-                        "absolute inset-0 rounded-xl border border-dashed opacity-40 group-hover:opacity-80 transition-opacity duration-300 " +
-                        (isSelected ? "border-[var(--brand-primary)]" : "border-[var(--neutral-border)]")
+                        "absolute inset-0 rounded-xl border border-dashed opacity-30 group-hover:opacity-70 group-hover:rotate-180 transition-all duration-700 " +
+                        (isSelected ? "border-[var(--brand-primary)] opacity-70 rotate-90" : "border-[var(--neutral-border)]")
                     }
                 ></div>
                 <div
-                    className="relative w-full h-full rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-                    style={{ backgroundColor: rank.color + "20" }}
+                    className="relative w-full h-full rounded-xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg"
+                    style={{ 
+                        background: `linear-gradient(135deg, ${rank.color}30, ${rank.color}10)`,
+                        boxShadow: isSelected ? `0 4px 20px ${rank.color}40` : 'none'
+                    }}
                 >
-                    <RankIcon size={24} style={{ color: rank.color }} />
+                    <RankIcon size={26} style={{ color: rank.color }} />
                 </div>
             </div>
-            <p className="text-sm font-bold mb-2">{rank.name}</p>
-            <p className="text-xs text-[var(--neutral-text-muted)]">{rank.mmr}</p>
+            <p className="text-sm font-bold mb-2 transition-colors duration-300 group-hover:text-white">{rank.name}</p>
+            <p className="text-xs text-[var(--neutral-text-muted)] transition-colors duration-300 group-hover:text-[var(--neutral-text-secondary)]">{rank.mmr}</p>
         </div>
     );
 });
