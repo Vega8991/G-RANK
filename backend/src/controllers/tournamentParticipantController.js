@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 const registerToTournament = async (req, res) => {
     const session = await mongoose.startSession();
-    
+
     try {
         let result;
         await session.withTransaction(async () => {
@@ -37,18 +37,28 @@ const registerToTournament = async (req, res) => {
                 throw new Error('ALREADY_REGISTERED');
             }
 
-            const participantCount = await TournamentParticipant.countDocuments({
-                tournamentId: tournamentId
-            }).session(session);
-
-            if (participantCount >= tournament.maxParticipants) {
-                throw new Error('TOURNAMENT_FULL');
-            }
-
             const user = await User.findById(userId).session(session);
-            
+
             if (!user) {
                 throw new Error('USER_NOT_FOUND');
+            }
+
+            const updatedTournament = await Tournament.findOneAndUpdate(
+                {
+                    _id: tournamentId,
+                    currentParticipants: { $lt: tournament.maxParticipants }
+                },
+                {
+                    $inc: { currentParticipants: 1 }
+                },
+                {
+                    new: true,
+                    session: session
+                }
+            );
+
+            if (!updatedTournament) {
+                throw new Error('TOURNAMENT_FULL');
             }
 
             const newParticipant = await TournamentParticipant.create([{
@@ -56,9 +66,6 @@ const registerToTournament = async (req, res) => {
                 userId: userId,
                 mmrBefore: user.mmr
             }], { session: session });
-
-            tournament.currentParticipants = participantCount + 1;
-            await tournament.save({ session: session });
 
             result = {
                 success: true,
@@ -85,9 +92,9 @@ const registerToTournament = async (req, res) => {
             case 'DEADLINE_PASSED':
                 statusCode = 400;
                 message = errorCode === 'ALREADY_REGISTERED' ? 'You are already registered in this tournament' :
-                         errorCode === 'TOURNAMENT_FULL' ? 'Tournament is full' :
-                         errorCode === 'TOURNAMENT_NOT_OPEN' ? 'Tournament is not open for registration' :
-                         'Registration deadline has passed';
+                    errorCode === 'TOURNAMENT_FULL' ? 'Tournament is full' :
+                        errorCode === 'TOURNAMENT_NOT_OPEN' ? 'Tournament is not open for registration' :
+                            'Registration deadline has passed';
                 break;
             default:
                 message = error.message || message;
