@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Crown, Home, Trophy, LayoutDashboard, Shield, User, ChevronDown } from "lucide-react";
+import CustomCursor from "../components/CustomCursor";
 
 export default function AppLayout() {
     let getLinkClass = function (isActive) {
@@ -14,8 +15,9 @@ export default function AppLayout() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white">
-            <nav className="border-b border-[#2a2a2a] sticky top-0 z-50 backdrop-blur-lg bg-[#0a0a0a]/95">
+        <div className="min-h-screen bg-[#0a0a0a] text-white relative">
+            <CustomCursor />
+            <nav className="border-b border-[#2a2a2a] sticky top-0 z-40 backdrop-blur-lg bg-[#0a0a0a]/95">
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-12">
