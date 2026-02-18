@@ -1,9 +1,9 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Crown, Home, Trophy, LayoutDashboard, Shield, User, ChevronDown } from "lucide-react";
+import { Crown, Home, Trophy, User, Shield, ChevronDown } from "lucide-react";
 import CustomCursor from "../components/cursor/CustomCursor";
 
 export default function AppLayout() {
-    let getLinkClass = function (isActive) {
+    let getLinkClass = function (isActive: boolean): string {
         let baseClass = "flex items-center gap-2 text-sm font-medium transition-colors pb-1 border-b-2";
         let activeClass = "border-[#dc143c] text-white";
         let inactiveClass = "border-transparent text-[#d1d5db] hover:text-white";
@@ -29,19 +29,19 @@ export default function AppLayout() {
                             </NavLink>
                             
                             <div className="hidden md:flex items-center gap-8">
-                                <NavLink to="/" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                <NavLink to="/" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }}>
                                     <Home size={16} /> Home
                                 </NavLink>
-                                <NavLink to="/tournaments" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                <NavLink to="/tournaments" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }}>
                                     <Trophy size={16} /> Tournaments
                                 </NavLink>
-                                <NavLink to="/leaderboard" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                <NavLink to="/leaderboard" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }}>
                                     <Crown size={16} /> Leaderboard
                                 </NavLink>
-                                <NavLink to="/dashboard" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                <NavLink to="/dashboard" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }}>
                                     <User size={16} /> Dashboard
                                 </NavLink>
-                                <NavLink to="/admin" className={function ({ isActive }) { return getLinkClass(isActive); }}>
+                                <NavLink to="/admin" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }}>
                                     <Shield size={16} /> Admin
                                 </NavLink>
                             </div>
