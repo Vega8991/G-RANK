@@ -1,5 +1,5 @@
-import LightPillar from './ui/LightPillar';
-import { LightPillarPresets } from './ui/lightPillarPresets';
+import LightPillar from '../ui/LightPillar';
+import { LightPillarPresets } from '../ui/lightPillarPresets';
 
 export default function ReactiveBackground({ mousePos }) {
     return (

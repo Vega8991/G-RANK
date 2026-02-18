@@ -46,11 +46,11 @@ export default function CustomCursor() {
             setIsHidden(false);
         };
 
-        window.addEventListener("mousemove", handleMove);
-        window.addEventListener("mousedown", handleDown);
-        window.addEventListener("mouseup", handleUp);
-        window.addEventListener("mouseleave", handleLeave);
-        window.addEventListener("mouseenter", handleEnter);
+        window.addEventListener("mousemove", handleMove, { passive: true });
+        window.addEventListener("mousedown", handleDown, { passive: true });
+        window.addEventListener("mouseup", handleUp, { passive: true });
+        window.addEventListener("mouseleave", handleLeave, { passive: true });
+        window.addEventListener("mouseenter", handleEnter, { passive: true });
 
         return function () {
             if (frameRef.current != null) {
@@ -88,17 +88,6 @@ export default function CustomCursor() {
                         }}
                         transition={{ type: "spring", stiffness: 350, damping: 26 }}
                     />
-                    <motion.div
-                        className="absolute inset-0 flex items-center justify-center"
-                        animate={{
-                            scaleX: isPressed ? 0.8 : 1,
-                            scaleY: isPressed ? 0.8 : 1
-                        }}
-                        transition={{ type: "spring", stiffness: 320, damping: 24 }}
-                    >
-                        <div className="w-0.5 h-6 bg-[var(--brand-primary)] rounded-full" />
-                        <div className="w-6 h-0.5 bg-[var(--brand-primary)] rounded-full absolute" />
-                    </motion.div>
                     <motion.div
                         className="absolute inset-0"
                         animate={{

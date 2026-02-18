@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
-import Button from "./Button";
+import Button from "../common/Button";
 import ReactiveBackground from "./ReactiveBackground";
 import { Zap, ArrowRight, Trophy, Users, Award, TrendingUp, Flame, Crown, Star } from "lucide-react";
 
 export default function HeroSection() {
-    let [activeTournaments, setActiveTournaments] = useState(0);
-    let [activePlayers, setActivePlayers] = useState(0);
-    let [proTeams, setProTeams] = useState(0);
-    let [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    let [counters, setCounters] = useState({ tournaments: 0, players: 0, teams: 0 });
+    let mainCardRef = useRef(null);
+    let topFloatRef = useRef(null);
+    let bottomFloatRef = useRef(null);
 
     let topPlayers = [
         { rank: 1, name: "Garrax", mmr: 3420, winRate: "85%", icon: Crown },
@@ -26,9 +26,11 @@ export default function HeroSection() {
             const elapsed = time - start;
             const progress = Math.min(1, elapsed / duration);
 
-            setActiveTournaments(Math.round(3 * progress));
-            setActivePlayers(Math.round(1200 * progress));
-            setProTeams(Math.round(9 * progress));
+            setCounters({
+                tournaments: Math.round(3 * progress),
+                players: Math.round(1200 * progress),
+                teams: Math.round(9 * progress)
+            });
 
             if (progress < 1) {
                 animationFrame = requestAnimationFrame(animate);
@@ -48,7 +50,22 @@ export default function HeroSection() {
         const rect = event.currentTarget.getBoundingClientRect();
         const x = (event.clientX - (rect.left + rect.width / 2)) / rect.width;
         const y = (event.clientY - (rect.top + rect.height / 2)) / rect.height;
-        setMousePos({ x, y });
+
+        if (mainCardRef.current) {
+            mainCardRef.current.style.transform =
+                "perspective(1000px) rotateX(" + (y * -8) +
+                "deg) rotateY(" + (x * 8) +
+                "deg) translate3d(" + (x * 16) +
+                "px, " + (y * 16) + "px, 0)";
+        }
+        if (topFloatRef.current) {
+            topFloatRef.current.style.transform =
+                "translate3d(" + (x * 24) + "px, " + (y * -12) + "px, 0)";
+        }
+        if (bottomFloatRef.current) {
+            bottomFloatRef.current.style.transform =
+                "translate3d(" + (x * -18) + "px, " + (y * 16) + "px, 0)";
+        }
     }
 
     return (
@@ -56,7 +73,7 @@ export default function HeroSection() {
             className="relative py-20 md:py-32 px-4 md:px-20 overflow-hidden bg-[var(--neutral-bg)]"
             onMouseMove={handleMouseMove}
         >
-            <ReactiveBackground mousePos={mousePos} />
+            <ReactiveBackground />
             <div className="relative max-w-[1512px] mx-auto">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
                     <motion.div
@@ -140,7 +157,7 @@ export default function HeroSection() {
                                     <Trophy size={20} className="text-[var(--brand-primary)]" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-extrabold">{activeTournaments}</p>
+                                    <p className="text-2xl font-extrabold">{counters.tournaments}</p>
                                     <p className="text-xs text-[var(--neutral-text-secondary)]">Active Tournaments</p>
                                 </div>
                             </div>
@@ -150,7 +167,7 @@ export default function HeroSection() {
                                 </div>
                                 <div>
                                     <p className="text-2xl font-extrabold">
-                                        {activePlayers ? activePlayers.toLocaleString() : "0"}
+                                        {counters.players ? counters.players.toLocaleString() : "0"}
                                     </p>
                                     <p className="text-xs text-[var(--neutral-text-secondary)]">Active Players</p>
                                 </div>
@@ -160,7 +177,7 @@ export default function HeroSection() {
                                     <Award size={20} className="text-[var(--status-warning)]" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-extrabold">{proTeams}</p>
+                                    <p className="text-2xl font-extrabold">{counters.teams}</p>
                                     <p className="text-xs text-[var(--neutral-text-secondary)]">Pro Teams</p>
                                 </div>
                             </div>
@@ -174,19 +191,10 @@ export default function HeroSection() {
                         transition={{ delay: 0.3, duration: 1, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div
+                            ref={mainCardRef}
                             className="bg-[var(--neutral-surface)] border border-[var(--neutral-border)] rounded-2xl p-8 backdrop-blur-sm will-change-transform"
                             style={{
                                 boxShadow: "var(--shadow-card)",
-                                transform:
-                                    "perspective(1000px) rotateX(" +
-                                    mousePos.y * -8 +
-                                    "deg) rotateY(" +
-                                    mousePos.x * 8 +
-                                    "deg) translate3d(" +
-                                    mousePos.x * 16 +
-                                    "px, " +
-                                    mousePos.y * 16 +
-                                    "px, 0)",
                                 transition: "transform 200ms ease-out"
                             }}
                         >
@@ -274,15 +282,10 @@ export default function HeroSection() {
                         </div>
 
                         <div
+                            ref={topFloatRef}
                             className="hidden lg:block absolute -top-6 -right-6 bg-[var(--neutral-surface)] border border-[var(--neutral-border)] rounded-xl p-4 backdrop-blur-sm will-change-transform"
                             style={{
                                 boxShadow: "var(--shadow-soft)",
-                                transform:
-                                    "translate3d(" +
-                                    mousePos.x * 24 +
-                                    "px, " +
-                                    mousePos.y * -12 +
-                                    "px, 0)",
                                 transition: "transform 250ms ease-out"
                             }}
                         >
@@ -298,15 +301,10 @@ export default function HeroSection() {
                         </div>
 
                         <div
+                            ref={bottomFloatRef}
                             className="hidden lg:block absolute -bottom-6 -left-6 bg-[var(--neutral-surface)] border border-[var(--neutral-border)] rounded-xl p-4 backdrop-blur-sm will-change-transform"
                             style={{
                                 boxShadow: "var(--shadow-soft)",
-                                transform:
-                                    "translate3d(" +
-                                    mousePos.x * -18 +
-                                    "px, " +
-                                    mousePos.y * 16 +
-                                    "px, 0)",
                                 transition: "transform 250ms ease-out"
                             }}
                         >

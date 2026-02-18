@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Gamepad2, Joystick, Rocket, Crosshair } from "lucide-react";
 
@@ -9,7 +10,7 @@ let items = [
     { label: "Clutch Plays", icon: Joystick }
 ];
 
-export default function SponsorsMarquee() {
+const SponsorsMarquee = memo(function SponsorsMarquee() {
     let sequence = items.concat(items);
 
     return (
@@ -53,5 +54,7 @@ export default function SponsorsMarquee() {
             </div>
         </motion.div>
     );
-}
+});
+
+export default SponsorsMarquee;
 

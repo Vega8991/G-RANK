@@ -1,37 +1,38 @@
-import React from "react";
+import React, { Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "./index.css";
 
 import AppLayout from "./layouts/AppLayout";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 import LandingPage from "./pages/LandingPage";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import Dashboard from "./pages/Dashboard";
-import Tournaments from "./pages/Tournaments";
-import Leaderboard from "./pages/Leaderboard";
-import Profile from "./pages/Profile";
-import Admin from "./pages/Admin";
+
+let Login = React.lazy(function () { return import("./pages/Login"); });
+let Register = React.lazy(function () { return import("./pages/Register"); });
+let ForgotPassword = React.lazy(function () { return import("./pages/ForgotPassword"); });
+let Dashboard = React.lazy(function () { return import("./pages/Dashboard"); });
+let Tournaments = React.lazy(function () { return import("./pages/Tournaments"); });
+let Leaderboard = React.lazy(function () { return import("./pages/Leaderboard"); });
+let Profile = React.lazy(function () { return import("./pages/Profile"); });
+let Admin = React.lazy(function () { return import("./pages/Admin"); });
 
 let publicRoutes = [
   { path: "/", element: React.createElement(LandingPage) },
-  { path: "/login", element: React.createElement(Login) },
-  { path: "/register", element: React.createElement(Register) },
-  { path: "/forgot", element: React.createElement(ForgotPassword) }
+  { path: "/login", element: React.createElement(Suspense, { fallback: null }, React.createElement(Login)) },
+  { path: "/register", element: React.createElement(Suspense, { fallback: null }, React.createElement(Register)) },
+  { path: "/forgot", element: React.createElement(Suspense, { fallback: null }, React.createElement(ForgotPassword)) }
 ];
 
 let protectedRoutes = [
-  { path: "/dashboard", element: React.createElement(Dashboard) },
-  { path: "/tournaments", element: React.createElement(Tournaments) },
-  { path: "/leaderboard", element: React.createElement(Leaderboard) },
-  { path: "/profile/:username", element: React.createElement(Profile) }
+  { path: "/dashboard", element: React.createElement(Suspense, { fallback: null }, React.createElement(Dashboard)) },
+  { path: "/tournaments", element: React.createElement(Suspense, { fallback: null }, React.createElement(Tournaments)) },
+  { path: "/leaderboard", element: React.createElement(Suspense, { fallback: null }, React.createElement(Leaderboard)) },
+  { path: "/profile/:username", element: React.createElement(Suspense, { fallback: null }, React.createElement(Profile)) }
 ];
 
 let adminRoutes = [
-  { path: "/admin", element: React.createElement(Admin) }
+  { path: "/admin", element: React.createElement(Suspense, { fallback: null }, React.createElement(Admin)) }
 ];
 
 let adminProtection = {
