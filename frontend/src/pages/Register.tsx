@@ -1,27 +1,36 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { login } from '../services/authService';
+import { register } from '../services/authService';
+import { AxiosError } from 'axios';
 
-export default function Login() {
+export default function Register() {
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
-    const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            await login(email, password);
-            navigate('/dashboard');
+            const response = await register(username, email, password);
+            setMessage((response as { message?: string }).message || 'Registered successfully');
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Error');
+            const axiosErr = err as AxiosError<{ message?: string }>;
+            setMessage(axiosErr.response?.data?.message || 'Error');
         }
     };
 
     return (
         <div>
-            <h1>Login</h1>
+            <h1>Register</h1>
             <form onSubmit={handleSubmit}>
+                <div>
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
+                </div>
                 <div>
                     <input
                         type="email"
@@ -38,7 +47,7 @@ export default function Login() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
-                <button type="submit">Login</button>
+                <button type="submit">Register</button>
             </form>
             {message && <p>{message}</p>}
         </div>

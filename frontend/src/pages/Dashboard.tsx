@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProfile, logout } from '../services/authService';
+import type { User } from '../types';
+import { AxiosError } from 'axios';
 
 export default function Dashboard() {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState<User | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -16,7 +18,8 @@ export default function Dashboard() {
             setUser(response.user);
         } catch (err) {
             console.error('Error loading profile:', err);
-            if (err.response?.status === 401 || err.response?.status === 403) {
+            const axiosErr = err as AxiosError;
+            if (axiosErr.response?.status === 401 || axiosErr.response?.status === 403) {
                 logout();
                 navigate('/login');
             }
@@ -35,8 +38,8 @@ export default function Dashboard() {
             <p>Username: {user.username}</p>
             <p>MMR: {user.mmr}</p>
             <p>Rank: {user.rank}</p>
-            <p>Wins: {user.wins} | Losses: {user.losses}</p>
-            <p>Winrate%: {user.winRate}%</p>
+            <p>Wins: {(user as User & { wins?: number }).wins} | Losses: {(user as User & { losses?: number }).losses}</p>
+            <p>Winrate%: {(user as User & { winRate?: number }).winRate}%</p>
             <button onClick={() => navigate('/tournaments')}>Tournaments</button>
             <button onClick={handleLogout}>Logout</button>
         </div>

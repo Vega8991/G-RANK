@@ -38,7 +38,7 @@ export const logout = (): void => {
     window.dispatchEvent(new Event('auth-change'));
 };
 
-export const getProfile = async (): Promise<User> => {
+export const getProfile = async (): Promise<{ user: User }> => {
     try {
         const token = localStorage.getItem('token');
         if (!token) {

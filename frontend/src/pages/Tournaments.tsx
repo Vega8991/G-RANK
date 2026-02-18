@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { getAllTournaments, createTournament, registerToTournament, getMyTournaments, syncParticipantCounts } from '../services/tournamentService';
 import { submitReplay } from '../services/matchService';
 import { Calendar } from 'lucide-react';
+import type { Tournament, MatchResultResponse } from '../types';
+import { AxiosError } from 'axios';
 
 export default function Tournaments() {
-    const [tournaments, setTournaments] = useState([]);
-    const [myTournaments, setMyTournaments] = useState([]);
+    const [tournaments, setTournaments] = useState<Tournament[]>([]);
+    const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [registrationDeadline, setRegistrationDeadline] = useState('');
@@ -13,9 +15,9 @@ export default function Tournaments() {
     const [selectedTournament, setSelectedTournament] = useState('');
     const [replayUrl, setReplayUrl] = useState('');
     const [message, setMessage] = useState('');
-    const [result, setResult] = useState(null);
-    const registrationDeadlineRef = useRef(null);
-    const matchDateTimeRef = useRef(null);
+    const [result, setResult] = useState<MatchResultResponse | null>(null);
+    const registrationDeadlineRef = useRef<HTMLInputElement>(null);
+    const matchDateTimeRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         loadData();
@@ -30,11 +32,12 @@ export default function Tournaments() {
             setMyTournaments(my.tournaments || []);
         } catch (err) {
             console.error('Error loading tournaments:', err);
-            setMessage(err.response?.data?.message || 'Error loading tournaments');
+            const axiosErr = err as AxiosError<{ message?: string }>;
+            setMessage(axiosErr.response?.data?.message || 'Error loading tournaments');
         }
     };
 
-    const handleCreate = async (e) => {
+    const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
             await createTournament(name, description, registrationDeadline, matchDateTime);
@@ -45,21 +48,23 @@ export default function Tournaments() {
             setMatchDateTime('');
             loadData();
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Error');
+            const axiosErr = err as AxiosError<{ message?: string }>;
+            setMessage(axiosErr.response?.data?.message || 'Error');
         }
     };
 
-    const handleRegister = async (id) => {
+    const handleRegister = async (id: string) => {
         try {
             await registerToTournament(id);
             setMessage('Registered');
             loadData();
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Error');
+            const axiosErr = err as AxiosError<{ message?: string }>;
+            setMessage(axiosErr.response?.data?.message || 'Error');
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
             const res = await submitReplay(selectedTournament, replayUrl);
@@ -67,7 +72,8 @@ export default function Tournaments() {
             setMessage('Replay submitted');
             loadData();
         } catch (err) {
-            setMessage(err.response?.data?.message || 'Error');
+            const axiosErr = err as AxiosError<{ message?: string }>;
+            setMessage(axiosErr.response?.data?.message || 'Error');
         }
     };
 
@@ -137,8 +143,8 @@ export default function Tournaments() {
             {result && (
                 <div>
                     <h3>Result</h3>
-                    <p>Winner: {result.winner?.username} | MMR: {result.winner?.mmrAfter} (+{result.winner?.mmrChange})</p>
-                    <p>Loser: {result.loser?.username} | MMR: {result.loser?.mmrAfter} ({result.loser?.mmrChange})</p>
+                    <p>Winner: {result.result?.winner?.username} | MMR: {result.result?.winner?.mmrChange?.after} (+{result.result?.winner?.mmrChange?.change})</p>
+                    <p>Loser: {result.result?.loser?.username} | MMR: {result.result?.loser?.mmrChange?.after} ({result.result?.loser?.mmrChange?.change})</p>
                 </div>
             )}
 
