@@ -79,7 +79,6 @@ export default function CustomCursor() {
                 }}
             >
                 <div className="relative -translate-x-1/2 -translate-y-1/2">
-                    {/* Dot center */}
                     <motion.div
                         className="w-3 h-3 rounded-full bg-white"
                         style={{ boxShadow: "0 0 10px rgba(255,255,255,1), 0 0 4px rgba(255,255,255,0.9), 0 0 2px rgba(0,0,0,0.6)" }}
@@ -88,7 +87,6 @@ export default function CustomCursor() {
                         }}
                         transition={{ type: "spring", stiffness: 400, damping: 22 }}
                     />
-                    {/* Ring */}
                     <motion.div
                         className="absolute rounded-full"
                         style={{
