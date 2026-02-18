@@ -79,25 +79,32 @@ export default function CustomCursor() {
                 }}
             >
                 <div className="relative -translate-x-1/2 -translate-y-1/2">
+                    {/* Dot center */}
                     <motion.div
-                        className="w-8 h-8 rounded-full border border-[var(--brand-primary)]/80 bg-[var(--brand-primary)]/15 backdrop-blur-[2px]"
+                        className="w-3 h-3 rounded-full bg-white"
+                        style={{ boxShadow: "0 0 10px rgba(255,255,255,1), 0 0 4px rgba(255,255,255,0.9), 0 0 2px rgba(0,0,0,0.6)" }}
                         animate={{
-                            scale: isPressed ? 0.7 : 1,
-                            borderColor: isPressed ? "rgba(220, 20, 60, 1)" : "rgba(220, 20, 60, 0.8)",
-                            backgroundColor: isPressed ? "rgba(220, 20, 60, 0.35)" : "rgba(220, 20, 60, 0.15)"
+                            scale: isPressed ? 0.5 : 1
                         }}
-                        transition={{ type: "spring", stiffness: 350, damping: 26 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 22 }}
                     />
+                    {/* Ring */}
                     <motion.div
-                        className="absolute inset-0"
-                        animate={{
-                            opacity: isPressed ? 0.3 : 0.16,
-                            scale: isPressed ? 1.8 : 1.3
+                        className="absolute rounded-full"
+                        style={{
+                            width: 28,
+                            height: 28,
+                            top: -8,
+                            left: -8,
+                            border: "2px solid rgba(255,255,255,0.85)",
+                            boxShadow: "0 0 8px rgba(255,255,255,0.4), inset 0 0 4px rgba(255,255,255,0.1), 0 0 3px rgba(0,0,0,0.5)"
                         }}
-                        transition={{ duration: 0.22 }}
-                    >
-                        <div className="w-10 h-10 rounded-full border border-[var(--brand-primary)]/80 blur-[1px] mx-auto my-auto" />
-                    </motion.div>
+                        animate={{
+                            scale: isPressed ? 0.6 : 1,
+                            opacity: isPressed ? 1 : 0.85
+                        }}
+                        transition={{ type: "spring", stiffness: 350, damping: 24 }}
+                    />
                 </div>
             </div>
         </div>
