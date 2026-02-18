@@ -1,7 +1,14 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
+import type { AuthStatus } from "../../types";
 
-function checkAuthStatus() {
+interface ProtectedRouteProps {
+    isAllowed?: boolean;
+    redirectTo?: string;
+    requireAdmin?: boolean;
+}
+
+function checkAuthStatus(): AuthStatus {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
     
@@ -19,8 +26,8 @@ function checkAuthStatus() {
     }
 }
 
-export default function ProtectedRoute({ isAllowed: staticIsAllowed, redirectTo = "/login", requireAdmin = false }) {
-    const [authStatus, setAuthStatus] = useState(checkAuthStatus());
+export default function ProtectedRoute({ isAllowed: staticIsAllowed, redirectTo = "/login", requireAdmin = false }: ProtectedRouteProps) {
+    const [authStatus, setAuthStatus] = useState<AuthStatus>(checkAuthStatus());
     
     useEffect(() => {
         const updateAuthStatus = () => {
