@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { API_URL } from '../config/api';
+import type { AuthResponse, User } from '../types';
 
-export const register = async (username, email, password) => {
+export const register = async (username: string, email: string, password: string): Promise<AuthResponse> => {
     try {
         const response = await axios.post(`${API_URL}/auth/register`, {
             username,
@@ -14,7 +15,7 @@ export const register = async (username, email, password) => {
     }
 };
 
-export const login = async (email, password) => {
+export const login = async (email: string, password: string): Promise<AuthResponse> => {
     try {
         const response = await axios.post(`${API_URL}/auth/login`, {
             email,
@@ -31,13 +32,13 @@ export const login = async (email, password) => {
     }
 };
 
-export const logout = () => {
+export const logout = (): void => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.dispatchEvent(new Event('auth-change'));
 };
 
-export const getProfile = async () => {
+export const getProfile = async (): Promise<User> => {
     try {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -54,6 +55,6 @@ export const getProfile = async () => {
     }
 };
 
-export const getToken = () => {
+export const getToken = (): string | null => {
     return localStorage.getItem('token');
 };

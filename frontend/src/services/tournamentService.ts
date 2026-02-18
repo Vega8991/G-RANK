@@ -1,8 +1,14 @@
 import axios from 'axios';
 import { API_URL } from '../config/api';
 import { getToken } from './authService';
+import type { Tournament } from '../types';
 
-export const createTournament = async (title, description, registrationDeadline, matchDateTime) => {
+export const createTournament = async (
+    title: string,
+    description: string,
+    registrationDeadline?: string,
+    matchDateTime?: string
+): Promise<{ tournament: Tournament }> => {
     try {
         const token = getToken();
         if (!token) {
@@ -26,7 +32,7 @@ export const createTournament = async (title, description, registrationDeadline,
     }
 };
 
-export const getAllTournaments = async () => {
+export const getAllTournaments = async (): Promise<{ tournaments: Tournament[] }> => {
     try {
         const response = await axios.get(`${API_URL}/tournaments`);
         return response.data;
@@ -35,7 +41,7 @@ export const getAllTournaments = async () => {
     }
 };
 
-export const registerToTournament = async (tournamentId) => {
+export const registerToTournament = async (tournamentId: string): Promise<{ message: string }> => {
     try {
         const token = getToken();
         if (!token) {
@@ -54,7 +60,7 @@ export const registerToTournament = async (tournamentId) => {
     }
 };
 
-export const getMyTournaments = async () => {
+export const getMyTournaments = async (): Promise<{ tournaments: Tournament[] }> => {
     try {
         const token = getToken();
         if (!token) {
@@ -71,7 +77,7 @@ export const getMyTournaments = async () => {
     }
 };
 
-export const syncParticipantCounts = async () => {
+export const syncParticipantCounts = async (): Promise<{ message: string }> => {
     try {
         const response = await axios.post(`${API_URL}/tournaments/sync-counts`);
         return response.data;
