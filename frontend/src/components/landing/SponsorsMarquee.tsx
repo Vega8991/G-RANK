@@ -1,8 +1,13 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { Trophy, Gamepad2, Joystick, Rocket, Crosshair } from "lucide-react";
+import { Trophy, Gamepad2, Joystick, Rocket, Crosshair, type LucideIcon } from "lucide-react";
 
-let items = [
+interface MarqueeItem {
+    label: string;
+    icon: LucideIcon;
+}
+
+let items: MarqueeItem[] = [
     { label: "Rocket League", icon: Rocket },
     { label: "League of Legends", icon: Gamepad2 },
     { label: "Valorant", icon: Crosshair },
@@ -57,4 +62,3 @@ const SponsorsMarquee = memo(function SponsorsMarquee() {
 });
 
 export default SponsorsMarquee;
-

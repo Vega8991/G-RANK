@@ -1,8 +1,20 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, type LucideIcon } from "lucide-react";
 
-const FeatureCard = memo(function FeatureCard({ feature, index }) {
+export interface Feature {
+    icon: LucideIcon;
+    title: string;
+    desc: string;
+    color: string;
+}
+
+interface FeatureCardProps {
+    feature: Feature;
+    index: number;
+}
+
+const FeatureCard = memo(function FeatureCard({ feature, index }: FeatureCardProps) {
     const IconComponent = feature.icon;
 
     return (

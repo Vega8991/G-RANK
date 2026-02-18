@@ -1,7 +1,11 @@
 import LightPillar from '../ui/LightPillar';
 import { LightPillarPresets } from '../ui/lightPillarPresets';
 
-export default function ReactiveBackground({ mousePos }) {
+interface ReactiveBackgroundProps {
+    mousePos?: { x: number; y: number };
+}
+
+export default function ReactiveBackground({ mousePos }: ReactiveBackgroundProps) {
     return (
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(220,20,60,0.15),transparent_50%),radial-gradient(circle_at_100%_0%,rgba(147,51,234,0.12),transparent_50%),radial-gradient(circle_at_0%_100%,rgba(14,165,233,0.12),transparent_50%),radial-gradient(circle_at_100%_100%,rgba(220,20,60,0.10),transparent_50%)] opacity-60 mix-blend-screen" />
@@ -33,4 +37,3 @@ export default function ReactiveBackground({ mousePos }) {
         </div>
     );
 }
-

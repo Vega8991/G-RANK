@@ -1,8 +1,14 @@
 import { useState, useEffect, memo } from "react";
 import { motion } from "framer-motion";
-import FeatureCard from "./FeatureCard";
+import FeatureCard, { type Feature } from "./FeatureCard";
 
-const FeatureSpotlight = memo(function FeatureSpotlight({ features, featureIndex, onFeatureSelect }) {
+interface FeatureSpotlightProps {
+    features: Feature[];
+    featureIndex: number;
+    onFeatureSelect: (idx: number) => void;
+}
+
+const FeatureSpotlight = memo(function FeatureSpotlight({ features, featureIndex, onFeatureSelect }: FeatureSpotlightProps) {
     return (
         <div className="max-w-3xl mx-auto">
             <motion.div
@@ -77,7 +83,11 @@ const FeatureSpotlight = memo(function FeatureSpotlight({ features, featureIndex
     );
 });
 
-const FeaturesSection = memo(function FeaturesSection({ features }) {
+interface FeaturesSectionProps {
+    features: Feature[];
+}
+
+const FeaturesSection = memo(function FeaturesSection({ features }: FeaturesSectionProps) {
     const [featureIndex, setFeatureIndex] = useState(0);
 
     useEffect(function () {

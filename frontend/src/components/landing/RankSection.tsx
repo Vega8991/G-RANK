@@ -1,10 +1,14 @@
 import { useState, memo } from "react";
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
-import RankCard from "./RankCard";
+import RankCard, { type Rank } from "./RankCard";
 
-const RankSection = memo(function RankSection({ ranks }) {
-    const [selectedRank, setSelectedRank] = useState(ranks[4]);
+interface RankSectionProps {
+    ranks: Rank[];
+}
+
+const RankSection = memo(function RankSection({ ranks }: RankSectionProps) {
+    const [selectedRank, setSelectedRank] = useState<Rank>(ranks[4]);
 
     const selectedRankIndex = ranks.findIndex(function (rank) {
         return rank.name === selectedRank.name;

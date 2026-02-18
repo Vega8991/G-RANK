@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { Zap, Trophy, Crown, CheckCircle2 } from "lucide-react";
 import Button from "../common/Button";
 
-const benefits = [
+const benefits: string[] = [
     "Competitive ranking system",
     "Weekly tournament schedule",
     "Real-time match tracking",

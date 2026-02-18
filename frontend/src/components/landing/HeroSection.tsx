@@ -1,28 +1,42 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import Button from "../common/Button";
 import ReactiveBackground from "./ReactiveBackground";
-import { Zap, ArrowRight, Trophy, Users, Award, TrendingUp, Flame, Crown, Star } from "lucide-react";
+import { Zap, ArrowRight, Trophy, Users, Award, TrendingUp, Flame, Crown, Star, type LucideIcon } from "lucide-react";
+
+interface TopPlayer {
+    rank: number;
+    name: string;
+    mmr: number;
+    winRate: string;
+    icon: LucideIcon;
+}
+
+interface Counters {
+    tournaments: number;
+    players: number;
+    teams: number;
+}
 
 export default function HeroSection() {
-    let [counters, setCounters] = useState({ tournaments: 0, players: 0, teams: 0 });
-    let mainCardRef = useRef(null);
-    let topFloatRef = useRef(null);
-    let bottomFloatRef = useRef(null);
+    let [counters, setCounters] = useState<Counters>({ tournaments: 0, players: 0, teams: 0 });
+    let mainCardRef = useRef<HTMLDivElement>(null);
+    let topFloatRef = useRef<HTMLDivElement>(null);
+    let bottomFloatRef = useRef<HTMLDivElement>(null);
 
-    let topPlayers = [
+    let topPlayers: TopPlayer[] = [
         { rank: 1, name: "Garrax", mmr: 3420, winRate: "85%", icon: Crown },
         { rank: 2, name: "ProGamer99", mmr: 3280, winRate: "78%", icon: Star },
         { rank: 3, name: "NinjaStrike", mmr: 3150, winRate: "76%", icon: Flame }
     ];
 
     useEffect(function () {
-        let animationFrame;
+        let animationFrame: number;
         const start = performance.now();
         const duration = 1100;
 
-        function animate(time) {
+        function animate(time: number) {
             const elapsed = time - start;
             const progress = Math.min(1, elapsed / duration);
 
@@ -46,7 +60,7 @@ export default function HeroSection() {
         };
     }, []);
 
-    function handleMouseMove(event) {
+    function handleMouseMove(event: MouseEvent<HTMLElement>) {
         const rect = event.currentTarget.getBoundingClientRect();
         const x = (event.clientX - (rect.left + rect.width / 2)) / rect.width;
         const y = (event.clientY - (rect.top + rect.height / 2)) / rect.height;
@@ -325,4 +339,3 @@ export default function HeroSection() {
         </section>
     );
 }
-
