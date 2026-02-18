@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
-import Button from "../components/Button";
-import Card from "../components/Card";
-import HeroSection from "../components/HeroSection";
-import SponsorsMarquee from "../components/SponsorsMarquee";
+import Button from "../components/common/Button";
+import Card from "../components/common/Card";
+import HeroSection from "../components/landing/HeroSection";
+import SponsorsMarquee from "../components/landing/SponsorsMarquee";
 import LiquidEther from "../components/ui/LiquidEther";
 import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Home, Shield, CheckCircle2, Crown, Flame, Star, Gem } from "lucide-react";
 

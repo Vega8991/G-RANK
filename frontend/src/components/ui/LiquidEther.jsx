@@ -290,10 +290,6 @@ export default function LiquidEther({
                     if (this.active) this.forceStop();
                     return;
                 }
-                if (this.mouse.isHoverInside) {
-                    if (this.active) this.forceStop();
-                    return;
-                }
                 if (!this.active) {
                     this.active = true;
                     this.current.copy(this.mouse.coords);
@@ -1105,56 +1101,6 @@ export default function LiquidEther({
         resolution,
         viscous,
         colors,
-        autoDemo,
-        autoSpeed,
-        autoIntensity,
-        takeoverDuration,
-        autoResumeDelay,
-        autoRampDuration
-    ]);
-
-    useEffect(() => {
-        const webgl = webglRef.current;
-        if (!webgl) return;
-        const sim = webgl.output?.simulation;
-        if (!sim) return;
-        const prevRes = sim.options.resolution;
-        Object.assign(sim.options, {
-            mouse_force: mouseForce,
-            cursor_size: cursorSize,
-            isViscous,
-            viscous,
-            iterations_viscous: iterationsViscous,
-            iterations_poisson: iterationsPoisson,
-            dt,
-            BFECC,
-            resolution,
-            isBounce
-        });
-        if (webgl.autoDriver) {
-            webgl.autoDriver.enabled = autoDemo;
-            webgl.autoDriver.speed = autoSpeed;
-            webgl.autoDriver.resumeDelay = autoResumeDelay;
-            webgl.autoDriver.rampDurationMs = autoRampDuration * 1000;
-            if (webgl.autoDriver.mouse) {
-                webgl.autoDriver.mouse.autoIntensity = autoIntensity;
-                webgl.autoDriver.mouse.takeoverDuration = takeoverDuration;
-            }
-        }
-        if (resolution !== prevRes) {
-            sim.resize();
-        }
-    }, [
-        mouseForce,
-        cursorSize,
-        isViscous,
-        viscous,
-        iterationsViscous,
-        iterationsPoisson,
-        dt,
-        BFECC,
-        resolution,
-        isBounce,
         autoDemo,
         autoSpeed,
         autoIntensity,

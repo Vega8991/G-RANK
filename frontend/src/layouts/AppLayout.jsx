@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Crown, Home, Trophy, LayoutDashboard, Shield, User, ChevronDown } from "lucide-react";
-import CustomCursor from "../components/CustomCursor";
+import CustomCursor from "../components/cursor/CustomCursor";
 
 export default function AppLayout() {
     let getLinkClass = function (isActive) {
