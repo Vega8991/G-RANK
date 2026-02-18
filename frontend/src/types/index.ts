@@ -1,7 +1,3 @@
-// ========================
-// User & Auth Types
-// ========================
-
 export interface User {
   _id: string;
   username: string;
@@ -23,10 +19,6 @@ export interface AuthStatus {
   userRole: string | null;
 }
 
-// ========================
-// Tournament Types
-// ========================
-
 export interface Tournament {
   _id: string;
   name: string;
@@ -46,10 +38,6 @@ export interface Tournament {
 export interface TournamentListResponse {
   tournaments: Tournament[];
 }
-
-// ========================
-// Match Result Types
-// ========================
 
 export interface MmrChange {
   before: number;
@@ -75,10 +63,6 @@ export interface MatchResultResponse {
   message: string;
   result: MatchResult;
 }
-
-// ========================
-// API Response Wrappers
-// ========================
 
 export interface ApiResponse<T = unknown> {
   message?: string;
