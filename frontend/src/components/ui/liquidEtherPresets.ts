@@ -1,4 +1,13 @@
-export const LiquidEtherPresets = {
+export interface LiquidEtherPreset {
+    primaryColor: string;
+    secondaryColor: string;
+    accentColor: string;
+    intensity: number;
+    blur: number;
+    animationSpeed: number;
+}
+
+export const LiquidEtherPresets: Record<string, LiquidEtherPreset> = {
     crimson: {
         primaryColor: '#DC143C',
         secondaryColor: '#9333EA',

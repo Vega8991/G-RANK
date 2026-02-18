@@ -6,10 +6,24 @@ import Card from "../components/common/Card";
 import HeroSection from "../components/landing/HeroSection";
 import SponsorsMarquee from "../components/landing/SponsorsMarquee";
 import LiquidEther from "../components/ui/LiquidEther";
-import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Home, Shield, CheckCircle2, Crown, Flame, Star, Gem } from "lucide-react";
+import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Home, Shield, CheckCircle2, Crown, Flame, Star, Gem, type LucideIcon } from "lucide-react";
+
+interface RankItem {
+    name: string;
+    mmr: string;
+    color: string;
+    icon: LucideIcon;
+}
+
+interface FeatureItem {
+    icon: LucideIcon;
+    title: string;
+    desc: string;
+    color: string;
+}
 
 export default function LandingPage() {
-    let ranks = [
+    let ranks: RankItem[] = [
         { name: "Bronze", mmr: "0-500 MMR", color: "var(--rank-bronze)", icon: Award },
         { name: "Silver", mmr: "500-1000 MMR", color: "var(--rank-silver)", icon: Star },
         { name: "Gold", mmr: "1000-1500 MMR", color: "var(--rank-gold)", icon: Trophy },
@@ -19,7 +33,7 @@ export default function LandingPage() {
         { name: "Elite", mmr: "3000+ MMR", color: "var(--rank-elite)", icon: Flame }
     ];
 
-    let features = [
+    let features: FeatureItem[] = [
         { 
             icon: Trophy, 
             title: "Weekly Tournaments", 
@@ -58,7 +72,7 @@ export default function LandingPage() {
         }
     ];
 
-    const [selectedRank, setSelectedRank] = useState(ranks[4]);
+    const [selectedRank, setSelectedRank] = useState<RankItem>(ranks[4]);
     const [featureIndex, setFeatureIndex] = useState(0);
 
     const selectedRankIndex = ranks.findIndex(function (rank) {

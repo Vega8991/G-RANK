@@ -1,4 +1,17 @@
-export const LightPillarPresets = {
+export interface LightPillarPreset {
+    topColor: string;
+    bottomColor: string;
+    intensity: number;
+    rotationSpeed: number;
+    glowAmount: number;
+    pillarWidth: number;
+    pillarHeight: number;
+    noiseIntensity: number;
+    pillarRotation: number;
+    quality: "low" | "medium" | "high";
+}
+
+export const LightPillarPresets: Record<string, LightPillarPreset> = {
     crimson: {
         topColor: "#b12020",
         bottomColor: "#ff242f",

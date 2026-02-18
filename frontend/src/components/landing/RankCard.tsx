@@ -1,6 +1,20 @@
 import { memo } from "react";
+import type { LucideIcon } from "lucide-react";
 
-const RankCard = memo(function RankCard({ rank, isSelected, onSelect }) {
+export interface Rank {
+    name: string;
+    mmr: string;
+    color: string;
+    icon: LucideIcon;
+}
+
+interface RankCardProps {
+    rank: Rank;
+    isSelected: boolean;
+    onSelect: () => void;
+}
+
+const RankCard = memo(function RankCard({ rank, isSelected, onSelect }: RankCardProps) {
     const RankIcon = rank.icon;
 
     return (
