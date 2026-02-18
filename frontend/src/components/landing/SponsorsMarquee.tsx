@@ -20,7 +20,7 @@ const SponsorsMarquee = memo(function SponsorsMarquee() {
 
     return (
         <motion.div 
-            className="border-y border-[var(--neutral-border)]/40 bg-[var(--neutral-bg)]/50 backdrop-blur-lg shadow-lg"
+            className="border-y border-[var(--neutral-border)]/40 bg-[var(--neutral-bg)] shadow-lg"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
@@ -47,7 +47,7 @@ const SponsorsMarquee = memo(function SponsorsMarquee() {
                             return (
                                 <div
                                     key={idx}
-                                    className="inline-flex items-center gap-2 text-xs md:text-sm text-[var(--neutral-text-secondary)] px-4 py-2 rounded-full border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/50 backdrop-blur-md shadow-sm hover:shadow-md hover:border-[var(--brand-primary)]/30 transition-all duration-300"
+                                    className="inline-flex items-center gap-2 text-xs md:text-sm text-[var(--neutral-text-secondary)] px-4 py-2 rounded-full border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)] shadow-sm hover:shadow-md hover:border-[var(--brand-primary)]/30 transition-all duration-300"
                                 >
                                     <Icon size={14} className="text-[var(--brand-primary)]" />
                                     <span>{item.label}</span>
