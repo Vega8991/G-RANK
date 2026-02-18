@@ -144,6 +144,7 @@ export default function LiquidEther({
                 el.style.width = '100%';
                 el.style.height = '100%';
                 el.style.display = 'block';
+                el.style.pointerEvents = 'none';
                 this.clock = new THREE.Clock();
                 this.clock.start();
             }
@@ -250,6 +251,7 @@ export default function LiquidEther({
                 if (this.isAutoActive && !this.hasUserControl && !this.takeoverActive) {
                     if (!this.container) return;
                     const rect = this.container.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) return;
                     const nx = (event.clientX - rect.left) / rect.width;
                     const ny = (event.clientY - rect.top) / rect.height;
                     this.takeoverFrom.copy(this.coords);
@@ -345,10 +347,6 @@ export default function LiquidEther({
                 const now = performance.now();
                 const idle = now - this.manager.lastUserInteraction;
                 if (idle < this.resumeDelay) {
-                    if (this.active) this.forceStop();
-                    return;
-                }
-                if (this.mouse.isHoverInside) {
                     if (this.active) this.forceStop();
                     return;
                 }
@@ -1242,8 +1240,11 @@ export default function LiquidEther({
     return (
         <div
             ref={mountRef}
-            className={`w-full h-full relative overflow-hidden pointer-events-none touch-none ${className || ''}`}
-            style={style}
+            className={`w-full h-full overflow-hidden ${className || ''}`}
+            style={{
+                willChange: 'transform',
+                ...style
+            }}
         />
     );
 }
