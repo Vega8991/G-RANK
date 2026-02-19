@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { motion } from "framer-motion";
 import { Trophy, Gamepad2, Joystick, Rocket, Crosshair, type LucideIcon } from "lucide-react";
 
@@ -7,7 +6,7 @@ interface MarqueeItem {
     icon: LucideIcon;
 }
 
-let items: MarqueeItem[] = [
+const items: MarqueeItem[] = [
     { label: "Rocket League", icon: Rocket },
     { label: "League of Legends", icon: Gamepad2 },
     { label: "Valorant", icon: Crosshair },
@@ -15,8 +14,8 @@ let items: MarqueeItem[] = [
     { label: "Clutch Plays", icon: Joystick }
 ];
 
-const SponsorsMarquee = memo(function SponsorsMarquee() {
-    let sequence = items.concat(items);
+export default function SponsorsMarquee() {
+    const sequence = items.concat(items);
 
     return (
         <motion.div 
@@ -43,7 +42,7 @@ const SponsorsMarquee = memo(function SponsorsMarquee() {
                         }}
                     >
                         {sequence.map(function (item, idx) {
-                            let Icon = item.icon;
+                            const Icon = item.icon;
                             return (
                                 <div
                                     key={idx}
@@ -59,6 +58,4 @@ const SponsorsMarquee = memo(function SponsorsMarquee() {
             </div>
         </motion.div>
     );
-});
-
-export default SponsorsMarquee;
+}

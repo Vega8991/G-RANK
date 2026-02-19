@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import { StrictMode, Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider, type RouteObject } from "react-router-dom";
 import "./index.css";
@@ -6,63 +6,61 @@ import "./index.css";
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-let LandingPage = React.lazy(function () { return import("./pages/LandingPage"); });
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Tournaments = lazy(() => import("./pages/Tournaments"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Admin = lazy(() => import("./pages/Admin"));
 
-let Login = React.lazy(function () { return import("./pages/Login"); });
-let Register = React.lazy(function () { return import("./pages/Register"); });
-let ForgotPassword = React.lazy(function () { return import("./pages/ForgotPassword"); });
-let Dashboard = React.lazy(function () { return import("./pages/Dashboard"); });
-let Tournaments = React.lazy(function () { return import("./pages/Tournaments"); });
-let Leaderboard = React.lazy(function () { return import("./pages/Leaderboard"); });
-let Profile = React.lazy(function () { return import("./pages/Profile"); });
-let Admin = React.lazy(function () { return import("./pages/Admin"); });
-
-function withSuspense(element: React.ReactElement) {
-  return React.createElement(Suspense, { fallback: null }, element);
+function withSuspense(element: JSX.Element) {
+  return <Suspense fallback={null}>{element}</Suspense>;
 }
 
-let publicRoutes: RouteObject[] = [
-  { path: "/", element: withSuspense(React.createElement(LandingPage)) },
-  { path: "/login", element: withSuspense(React.createElement(Login)) },
-  { path: "/register", element: withSuspense(React.createElement(Register)) },
-  { path: "/forgot", element: withSuspense(React.createElement(ForgotPassword)) }
+const publicRoutes: RouteObject[] = [
+  { path: "/", element: withSuspense(<LandingPage />) },
+  { path: "/login", element: withSuspense(<Login />) },
+  { path: "/register", element: withSuspense(<Register />) },
+  { path: "/forgot", element: withSuspense(<ForgotPassword />) }
 ];
 
-let protectedRoutes: RouteObject[] = [
-  { path: "/dashboard", element: withSuspense(React.createElement(Dashboard)) },
-  { path: "/tournaments", element: withSuspense(React.createElement(Tournaments)) },
-  { path: "/leaderboard", element: withSuspense(React.createElement(Leaderboard)) },
-  { path: "/profile/:username", element: withSuspense(React.createElement(Profile)) }
+const protectedRoutes: RouteObject[] = [
+  { path: "/dashboard", element: withSuspense(<Dashboard />) },
+  { path: "/tournaments", element: withSuspense(<Tournaments />) },
+  { path: "/leaderboard", element: withSuspense(<Leaderboard />) },
+  { path: "/profile/:username", element: withSuspense(<Profile />) }
 ];
 
-let adminRoutes: RouteObject[] = [
-  { path: "/admin", element: withSuspense(React.createElement(Admin)) }
+const adminRoutes: RouteObject[] = [
+  { path: "/admin", element: withSuspense(<Admin />) }
 ];
 
-let adminProtection: RouteObject = {
-  element: React.createElement(ProtectedRoute, { requireAdmin: true, redirectTo: "/dashboard" }),
+const adminProtection: RouteObject = {
+  element: <ProtectedRoute requireAdmin redirectTo="/dashboard" />,
   children: adminRoutes
 };
 
-let userProtection: RouteObject = {
-  element: React.createElement(ProtectedRoute),
+const userProtection: RouteObject = {
+  element: <ProtectedRoute />,
   children: protectedRoutes.concat([adminProtection])
 };
 
-let allRoutes: RouteObject[] = publicRoutes.concat([userProtection]);
+const allRoutes: RouteObject[] = publicRoutes.concat([userProtection]);
 
-let mainLayout: RouteObject = {
-  element: React.createElement(AppLayout),
+const mainLayout: RouteObject = {
+  element: <AppLayout />,
   children: allRoutes
 };
 
-let router = createBrowserRouter([mainLayout]);
+const router = createBrowserRouter([mainLayout]);
 
-let rootElement = document.getElementById("root") as HTMLElement;
-let root = ReactDOM.createRoot(rootElement);
+const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 
 root.render(
-  React.createElement(React.StrictMode, null,
-    React.createElement(RouterProvider, { router: router })
-  )
+  <StrictMode>
+    <RouterProvider router={router} />
+  </StrictMode>
 );

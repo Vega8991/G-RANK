@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import Button from "../components/common/Button";
@@ -84,7 +84,7 @@ const BENEFITS = [
     "Team coordination tools"
 ];
 
-const LandingBackground = memo(function LandingBackground() {
+function LandingBackground() {
     return (
         <div className="fixed inset-0 z-0 w-screen h-screen overflow-hidden" style={{ pointerEvents: "none" }}>
             <Suspense fallback={null}>
@@ -109,7 +109,7 @@ const LandingBackground = memo(function LandingBackground() {
             </Suspense>
         </div>
     );
-});
+}
 
 function getPrefetchProps(route: "register" | "tournaments") {
     return {
@@ -126,11 +126,11 @@ export default function LandingPage() {
     const [selectedRankName, setSelectedRankName] = useState<string>(RANKS[4].name);
     const [featureIndex, setFeatureIndex] = useState(0);
 
-    const selectedRankIndex = useMemo(function () {
+    const selectedRankIndex = (function () {
         return RANKS.findIndex(function (rank) {
             return rank.name === selectedRankName;
         });
-    }, [selectedRankName]);
+    })();
 
     const safeSelectedRankIndex = selectedRankIndex >= 0 ? selectedRankIndex : 0;
     const selectedRank = RANKS[safeSelectedRankIndex] ?? RANKS[0];

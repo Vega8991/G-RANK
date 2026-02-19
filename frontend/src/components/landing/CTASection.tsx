@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import { Zap, Trophy, Crown, CheckCircle2 } from "lucide-react";
@@ -13,7 +12,7 @@ const benefits: string[] = [
     "Team coordination tools"
 ];
 
-const CTASection = memo(function CTASection() {
+export default function CTASection() {
     return (
         <section className="relative py-20 md:py-28 px-4 md:px-20 overflow-hidden">
             <div className="max-w-[1512px] mx-auto relative z-10">
@@ -99,6 +98,4 @@ const CTASection = memo(function CTASection() {
             <div className="absolute bottom-0 right-1/3 w-96 h-96 bg-[var(--rank-elite)] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
         </section>
     );
-});
-
-export default CTASection;
+}

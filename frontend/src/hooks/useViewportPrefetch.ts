@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type RefCallback } from "react";
+import { useEffect, useRef, type RefCallback } from "react";
 import { prefetchRoute, type RouteKey } from "../services/routePrefetch";
 
 const OBSERVER_OPTIONS: IntersectionObserverInit = {
@@ -8,15 +8,15 @@ const OBSERVER_OPTIONS: IntersectionObserverInit = {
 };
 
 export function useViewportPrefetch<T extends Element = HTMLAnchorElement>(route: RouteKey): RefCallback<T> {
-    const elementRef = useRef<T | null>(null);
     const observerRef = useRef<IntersectionObserver | null>(null);
+    const observedElementRef = useRef<T | null>(null);
 
-    const setRef = useCallback<RefCallback<T>>(function (node) {
-        if (observerRef.current && elementRef.current) {
-            observerRef.current.unobserve(elementRef.current);
+    const setRef: RefCallback<T> = function (node) {
+        if (observerRef.current && observedElementRef.current) {
+            observerRef.current.unobserve(observedElementRef.current);
         }
 
-        elementRef.current = node;
+        observedElementRef.current = node;
 
         if (!node) {
             return;
@@ -40,13 +40,13 @@ export function useViewportPrefetch<T extends Element = HTMLAnchorElement>(route
         }
 
         observerRef.current.observe(node);
-    }, [route]);
+    };
 
     useEffect(function () {
         return function () {
             observerRef.current?.disconnect();
             observerRef.current = null;
-            elementRef.current = null;
+            observedElementRef.current = null;
         };
     }, []);
 

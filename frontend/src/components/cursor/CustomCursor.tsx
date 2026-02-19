@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-let isTouchDevice = function (): boolean {
+const isTouchDevice = function (): boolean {
     if (typeof window === "undefined") return false;
     return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 };
 
 export default function CustomCursor() {
-    let [position, setPosition] = useState({ x: 0, y: 0 });
-    let [isPressed, setIsPressed] = useState(false);
-    let [isHidden, setIsHidden] = useState(isTouchDevice());
-    let frameRef = useRef<number | null>(null);
-    let latestPositionRef = useRef({ x: 0, y: 0 });
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isPressed, setIsPressed] = useState(false);
+    const [isHidden, setIsHidden] = useState(isTouchDevice());
+    const frameRef = useRef<number | null>(null);
+    const latestPositionRef = useRef({ x: 0, y: 0 });
 
     useEffect(function () {
         if (isTouchDevice()) {

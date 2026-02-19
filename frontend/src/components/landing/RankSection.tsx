@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
 import RankCard, { type Rank } from "./RankCard";
@@ -7,7 +7,7 @@ interface RankSectionProps {
     ranks: Rank[];
 }
 
-const RankSection = memo(function RankSection({ ranks }: RankSectionProps) {
+export default function RankSection({ ranks }: RankSectionProps) {
     const [selectedRank, setSelectedRank] = useState<Rank>(ranks[4]);
 
     const selectedRankIndex = ranks.findIndex(function (rank) {
@@ -88,6 +88,4 @@ const RankSection = memo(function RankSection({ ranks }: RankSectionProps) {
             </div>
         </section>
     );
-});
-
-export default RankSection;
+}

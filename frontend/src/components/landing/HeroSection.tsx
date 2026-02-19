@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import Button from "../common/Button";
@@ -35,16 +35,16 @@ function getPrefetchProps(route: "login" | "register" | "leaderboard") {
     };
 }
 
-const HeroSection = memo(function HeroSection() {
+export default function HeroSection() {
     const registerViewportRef = useViewportPrefetch("register");
     const loginViewportRef = useViewportPrefetch("login");
     const leaderboardViewportRef = useViewportPrefetch("leaderboard");
 
-    let [counters, setCounters] = useState<Counters>({ tournaments: 0, players: 0, teams: 0 });
-    let mainCardRef = useRef<HTMLDivElement>(null);
-    let topFloatRef = useRef<HTMLDivElement>(null);
-    let bottomFloatRef = useRef<HTMLDivElement>(null);
-    let mouseRafRef = useRef<number | null>(null);
+    const [counters, setCounters] = useState<Counters>({ tournaments: 0, players: 0, teams: 0 });
+    const mainCardRef = useRef<HTMLDivElement>(null);
+    const topFloatRef = useRef<HTMLDivElement>(null);
+    const bottomFloatRef = useRef<HTMLDivElement>(null);
+    const mouseRafRef = useRef<number | null>(null);
 
     useEffect(function () {
         let animationFrame: number;
@@ -263,9 +263,9 @@ const HeroSection = memo(function HeroSection() {
 
                             <div className="space-y-3 mb-6">
                                 {TOP_PLAYERS.map(function (player) {
-                                    let IconComponent = player.icon;
-                                    let isFirst = player.rank === 1;
-                                    let cardClass =
+                                    const IconComponent = player.icon;
+                                    const isFirst = player.rank === 1;
+                                    const cardClass =
                                         isFirst
                                             ? "bg-gradient-to-r from-[var(--brand-primary)]/20 to-transparent border-[var(--brand-primary)]/40"
                                             : "bg-[var(--neutral-bg)] border-[var(--neutral-border)]";
@@ -379,6 +379,4 @@ const HeroSection = memo(function HeroSection() {
 
         </section>
     );
-});
-
-export default HeroSection;
+}

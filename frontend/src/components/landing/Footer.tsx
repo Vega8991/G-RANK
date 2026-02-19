@@ -1,7 +1,6 @@
-import { memo } from "react";
 import { NavLink } from "react-router-dom";
 
-const Footer = memo(function Footer() {
+export default function Footer() {
     return (
         <footer className="border-t border-[var(--neutral-border)] bg-[var(--neutral-surface)]">
             <div className="max-w-[1512px] mx-auto px-6 md:px-20 py-12">
@@ -66,6 +65,4 @@ const Footer = memo(function Footer() {
             </div>
         </footer>
     );
-});
-
-export default Footer;
+}

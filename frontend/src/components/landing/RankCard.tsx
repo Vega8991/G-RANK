@@ -1,4 +1,3 @@
-import { memo } from "react";
 import type { LucideIcon } from "lucide-react";
 
 export interface Rank {
@@ -14,7 +13,7 @@ interface RankCardProps {
     onSelect: () => void;
 }
 
-const RankCard = memo(function RankCard({ rank, isSelected, onSelect }: RankCardProps) {
+export default function RankCard({ rank, isSelected, onSelect }: RankCardProps) {
     const RankIcon = rank.icon;
 
     return (
@@ -48,6 +47,4 @@ const RankCard = memo(function RankCard({ rank, isSelected, onSelect }: RankCard
             <p className="text-xs text-[var(--neutral-text-muted)] transition-colors duration-300 group-hover:text-[var(--neutral-text-secondary)]">{rank.mmr}</p>
         </div>
     );
-});
-
-export default RankCard;
+}
