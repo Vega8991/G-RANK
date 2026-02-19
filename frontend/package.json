@@ -35,5 +35,9 @@
     "globals": "^16.5.0",
     "typescript": "^5.9.3",
     "vite": "^7.2.4"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1",
+    "ajv": "^8.18.0"
   }
 }
