@@ -61,10 +61,10 @@ export default function Register() {
         <div className="min-h-screen text-white relative flex">
             <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
                 <Aurora
-                    colorStops={["#d12929", "#1a0a0a", "#e12d2d"]}
-                    blend={0.52}
-                    amplitude={1.0}
-                    speed={0.8}
+                    colorStops={["#ff1a1a", "#0a0000", "#ff3333"]}
+                    blend={0.75}
+                    amplitude={1.4}
+                    speed={1.3}
                 />
             </div>
 
@@ -81,14 +81,9 @@ export default function Register() {
                     }}
                 />
 
-                <NavLink to="/" className="relative z-10 flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)] flex items-center justify-center shadow-lg shadow-[var(--brand-primary)]/30 group-hover:shadow-[var(--brand-primary)]/50 transition-shadow duration-300">
-                        <Crown size={20} className="text-white" />
-                    </div>
-                    <span className="text-xl font-extrabold tracking-tight">G-RANK</span>
-                </NavLink>
+                <div className="relative z-10"></div>
 
-                <div className="relative z-10 space-y-8 -mt-12">
+                <div className="relative z-10 space-y-8 -mt-20">
                     <motion.h1
                         className="text-4xl xl:text-5xl font-extrabold leading-[1.15] tracking-tight"
                         initial={{ opacity: 0, y: 20 }}

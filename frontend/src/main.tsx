@@ -6,7 +6,7 @@ import "./index.css";
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-import LandingPage from "./pages/LandingPage";
+let LandingPage = React.lazy(function () { return import("./pages/LandingPage"); });
 
 let Login = React.lazy(function () { return import("./pages/Login"); });
 let Register = React.lazy(function () { return import("./pages/Register"); });
@@ -17,22 +17,26 @@ let Leaderboard = React.lazy(function () { return import("./pages/Leaderboard");
 let Profile = React.lazy(function () { return import("./pages/Profile"); });
 let Admin = React.lazy(function () { return import("./pages/Admin"); });
 
+function withSuspense(element: React.ReactElement) {
+  return React.createElement(Suspense, { fallback: null }, element);
+}
+
 let publicRoutes: RouteObject[] = [
-  { path: "/", element: React.createElement(LandingPage) },
-  { path: "/login", element: React.createElement(Suspense, { fallback: null }, React.createElement(Login)) },
-  { path: "/register", element: React.createElement(Suspense, { fallback: null }, React.createElement(Register)) },
-  { path: "/forgot", element: React.createElement(Suspense, { fallback: null }, React.createElement(ForgotPassword)) }
+  { path: "/", element: withSuspense(React.createElement(LandingPage)) },
+  { path: "/login", element: withSuspense(React.createElement(Login)) },
+  { path: "/register", element: withSuspense(React.createElement(Register)) },
+  { path: "/forgot", element: withSuspense(React.createElement(ForgotPassword)) }
 ];
 
 let protectedRoutes: RouteObject[] = [
-  { path: "/dashboard", element: React.createElement(Suspense, { fallback: null }, React.createElement(Dashboard)) },
-  { path: "/tournaments", element: React.createElement(Suspense, { fallback: null }, React.createElement(Tournaments)) },
-  { path: "/leaderboard", element: React.createElement(Suspense, { fallback: null }, React.createElement(Leaderboard)) },
-  { path: "/profile/:username", element: React.createElement(Suspense, { fallback: null }, React.createElement(Profile)) }
+  { path: "/dashboard", element: withSuspense(React.createElement(Dashboard)) },
+  { path: "/tournaments", element: withSuspense(React.createElement(Tournaments)) },
+  { path: "/leaderboard", element: withSuspense(React.createElement(Leaderboard)) },
+  { path: "/profile/:username", element: withSuspense(React.createElement(Profile)) }
 ];
 
 let adminRoutes: RouteObject[] = [
-  { path: "/admin", element: React.createElement(Suspense, { fallback: null }, React.createElement(Admin)) }
+  { path: "/admin", element: withSuspense(React.createElement(Admin)) }
 ];
 
 let adminProtection: RouteObject = {

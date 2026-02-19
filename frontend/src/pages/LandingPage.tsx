@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { lazy, memo, Suspense, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import Button from "../components/common/Button";
-import Card from "../components/common/Card";
 import HeroSection from "../components/landing/HeroSection";
 import SponsorsMarquee from "../components/landing/SponsorsMarquee";
-import LiquidEther from "../components/ui/LiquidEther";
-import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Home, Shield, CheckCircle2, Crown, Flame, Star, Gem, type LucideIcon } from "lucide-react";
+import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
+import { prefetchRoute } from "../services/routePrefetch";
+import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Shield, CheckCircle2, Crown, Flame, Star, Gem, type LucideIcon } from "lucide-react";
+
+const LiquidEther = lazy(function () {
+    return import("../components/ui/LiquidEther");
+});
 
 interface RankItem {
     name: string;
@@ -22,86 +26,71 @@ interface FeatureItem {
     color: string;
 }
 
-export default function LandingPage() {
-    let ranks: RankItem[] = [
-        { name: "Bronze", mmr: "0-500 MMR", color: "var(--rank-bronze)", icon: Award },
-        { name: "Silver", mmr: "500-1000 MMR", color: "var(--rank-silver)", icon: Star },
-        { name: "Gold", mmr: "1000-1500 MMR", color: "var(--rank-gold)", icon: Trophy },
-        { name: "Platinum", mmr: "1500-2000 MMR", color: "var(--rank-platinum)", icon: Gem },
-        { name: "Diamond", mmr: "2000-2500 MMR", color: "var(--rank-diamond)", icon: Gem },
-        { name: "Master", mmr: "2500-3000 MMR", color: "var(--rank-master)", icon: Crown },
-        { name: "Elite", mmr: "3000+ MMR", color: "var(--rank-elite)", icon: Flame }
-    ];
+const RANKS: RankItem[] = [
+    { name: "Bronze", mmr: "0-500 MMR", color: "var(--rank-bronze)", icon: Award },
+    { name: "Silver", mmr: "500-1000 MMR", color: "var(--rank-silver)", icon: Star },
+    { name: "Gold", mmr: "1000-1500 MMR", color: "var(--rank-gold)", icon: Trophy },
+    { name: "Platinum", mmr: "1500-2000 MMR", color: "var(--rank-platinum)", icon: Gem },
+    { name: "Diamond", mmr: "2000-2500 MMR", color: "var(--rank-diamond)", icon: Gem },
+    { name: "Master", mmr: "2500-3000 MMR", color: "var(--rank-master)", icon: Crown },
+    { name: "Elite", mmr: "3000+ MMR", color: "var(--rank-elite)", icon: Flame }
+];
 
-    let features: FeatureItem[] = [
-        { 
-            icon: Trophy, 
-            title: "Weekly Tournaments", 
-            desc: "Compete in structured tournaments with prize pools. Track brackets, schedules, and results in real-time.",
-            color: "var(--brand-primary)"
-        },
-        { 
-            icon: Target, 
-            title: "MMR System", 
-            desc: "Fair matchmaking based on skill rating. Climb ranks with every win and improve your competitive standing.",
-            color: "var(--status-warning)"
-        },
-        { 
-            icon: TrendingUp, 
-            title: "Global Rankings", 
-            desc: "Compare your performance against the best players worldwide. Detailed stats and leaderboards.",
-            color: "var(--status-success)"
-        },
-        { 
-            icon: BarChart3, 
-            title: "Performance Analytics", 
-            desc: "Track your progress with detailed statistics, match history, and performance metrics.",
-            color: "#9333EA"
-        },
-        { 
-            icon: Users, 
-            title: "Team Management", 
-            desc: "Create or join teams, coordinate strategies, and compete together in team tournaments.",
-            color: "#0EA5E9"
-        },
-        { 
-            icon: Award, 
-            title: "Achievement System", 
-            desc: "Unlock exclusive achievements, showcase your accomplishments, and earn special rewards.",
-            color: "var(--status-warning)"
-        }
-    ];
+const FEATURES: FeatureItem[] = [
+    {
+        icon: Trophy,
+        title: "Weekly Tournaments",
+        desc: "Compete in structured tournaments with prize pools. Track brackets, schedules, and results in real-time.",
+        color: "var(--brand-primary)"
+    },
+    {
+        icon: Target,
+        title: "MMR System",
+        desc: "Fair matchmaking based on skill rating. Climb ranks with every win and improve your competitive standing.",
+        color: "var(--status-warning)"
+    },
+    {
+        icon: TrendingUp,
+        title: "Global Rankings",
+        desc: "Compare your performance against the best players worldwide. Detailed stats and leaderboards.",
+        color: "var(--status-success)"
+    },
+    {
+        icon: BarChart3,
+        title: "Performance Analytics",
+        desc: "Track your progress with detailed statistics, match history, and performance metrics.",
+        color: "#9333EA"
+    },
+    {
+        icon: Users,
+        title: "Team Management",
+        desc: "Create or join teams, coordinate strategies, and compete together in team tournaments.",
+        color: "#0EA5E9"
+    },
+    {
+        icon: Award,
+        title: "Achievement System",
+        desc: "Unlock exclusive achievements, showcase your accomplishments, and earn special rewards.",
+        color: "var(--status-warning)"
+    }
+];
 
-    const [selectedRank, setSelectedRank] = useState<RankItem>(ranks[4]);
-    const [featureIndex, setFeatureIndex] = useState(0);
+const BENEFITS = [
+    "Competitive ranking system",
+    "Weekly tournament schedule",
+    "Real-time match tracking",
+    "Detailed performance stats",
+    "Global leaderboards",
+    "Team coordination tools"
+];
 
-    const selectedRankIndex = ranks.findIndex(function (rank) {
-        return rank.name === selectedRank.name;
-    });
-    const selectedRankProgress = ((selectedRankIndex + 1) / ranks.length) * 100;
-
-    useEffect(function () {
-        if (features.length <= 1) {
-            return;
-        }
-
-        const interval = setInterval(function () {
-            setFeatureIndex(function (prev) {
-                return (prev + 1) % features.length;
-            });
-        }, 4500);
-
-        return function () {
-            clearInterval(interval);
-        };
-    }, []);
-
+const LandingBackground = memo(function LandingBackground() {
     return (
-        <div className="bg-[var(--neutral-bg)] text-white relative">
-            <div className="fixed inset-0 z-0 w-screen h-screen overflow-hidden" style={{ pointerEvents: 'none' }}>
-                <LiquidEther 
+        <div className="fixed inset-0 z-0 w-screen h-screen overflow-hidden" style={{ pointerEvents: "none" }}>
+            <Suspense fallback={null}>
+                <LiquidEther
                     className="opacity-100"
-                    colors={['#ff242f', '#b12020', '#d22828']}
+                    colors={["#ff242f", "#b12020", "#d22828"]}
                     mouseForce={35}
                     cursorSize={65}
                     isViscous={true}
@@ -117,7 +106,56 @@ export default function LandingPage() {
                     autoResumeDelay={3000}
                     autoRampDuration={0.6}
                 />
-            </div>
+            </Suspense>
+        </div>
+    );
+});
+
+function getPrefetchProps(route: "register" | "tournaments") {
+    return {
+        onMouseEnter: function () { prefetchRoute(route); },
+        onFocus: function () { prefetchRoute(route); },
+        onTouchStart: function () { prefetchRoute(route); }
+    };
+}
+
+export default function LandingPage() {
+    const registerViewportRef = useViewportPrefetch("register");
+    const tournamentsViewportRef = useViewportPrefetch("tournaments");
+
+    const [selectedRankName, setSelectedRankName] = useState<string>(RANKS[4].name);
+    const [featureIndex, setFeatureIndex] = useState(0);
+
+    const selectedRankIndex = useMemo(function () {
+        return RANKS.findIndex(function (rank) {
+            return rank.name === selectedRankName;
+        });
+    }, [selectedRankName]);
+
+    const safeSelectedRankIndex = selectedRankIndex >= 0 ? selectedRankIndex : 0;
+    const selectedRank = RANKS[safeSelectedRankIndex] ?? RANKS[0];
+    const selectedRankProgress = ((safeSelectedRankIndex + 1) / RANKS.length) * 100;
+    const activeFeature = FEATURES[featureIndex] ?? FEATURES[0];
+
+    useEffect(function () {
+        if (FEATURES.length <= 1) {
+            return;
+        }
+
+        const interval = setInterval(function () {
+            setFeatureIndex(function (prev) {
+                return (prev + 1) % FEATURES.length;
+            });
+        }, 4500);
+
+        return function () {
+            clearInterval(interval);
+        };
+    }, []);
+
+    return (
+        <div className="bg-[var(--neutral-bg)] text-white relative">
+            <LandingBackground />
             <div className="relative z-10 pointer-events-auto">
                 <HeroSection />
                 <SponsorsMarquee />
@@ -151,15 +189,15 @@ export default function LandingPage() {
                         viewport={{ amount: 0.2 }}
                         transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        {ranks.map(function (rank) {
+                        {RANKS.map(function (rank) {
                             let RankIcon = rank.icon;
-                            let isSelected = selectedRank.name === rank.name;
+                            let isSelected = selectedRankName === rank.name;
 
                             return (
                                 <div
                                     key={rank.name}
                                     onClick={function () {
-                                        setSelectedRank(rank);
+                                        setSelectedRankName(rank.name);
                                     }}
                                     className={
                                         "group bg-[var(--neutral-bg)]/60 backdrop-blur-md rounded-xl p-6 text-center cursor-pointer transition-all duration-300 ease-out " +
@@ -254,11 +292,11 @@ export default function LandingPage() {
                             }
                         }}
                     >
-                        {features.map(function (feature, idx) {
+                        {FEATURES.map(function (feature, idx) {
                             let IconComponent = feature.icon;
                             return (
                                 <motion.div
-                                    key={idx}
+                                    key={feature.title}
                                     className="group bg-[var(--neutral-surface)]/40 backdrop-blur-lg border border-[var(--neutral-border)]/40 rounded-2xl p-8 hover:border-[var(--brand-primary)]/40 hover:-translate-y-3 hover:shadow-2xl hover:shadow-[var(--brand-primary)]/10 hover:bg-[var(--neutral-surface)]/60 transition-all duration-500 ease-out"
                                     variants={{
                                         hidden: { opacity: 0, y: 40 },
@@ -318,33 +356,28 @@ export default function LandingPage() {
                                         transform: "translate3d(0, 0, 0)"
                                     }}
                                 >
-                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg" style={{ background: "linear-gradient(135deg, " + features[featureIndex].color + "30, " + features[featureIndex].color + "10)" }}>
-                                        {(() => {
-                                            const IconComponent = features[featureIndex].icon;
-                                            return (
-                                                <IconComponent
-                                                    size={28}
-                                                    style={{ color: features[featureIndex].color }}
-                                                />
-                                            );
-                                        })()}
+                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg" style={{ background: "linear-gradient(135deg, " + activeFeature.color + "30, " + activeFeature.color + "10)" }}>
+                                        <activeFeature.icon
+                                            size={28}
+                                            style={{ color: activeFeature.color }}
+                                        />
                                     </div>
                                     <div className="text-left">
                                         <h3 className="text-lg md:text-xl font-bold mb-1">
-                                            {features[featureIndex].title}
+                                            {activeFeature.title}
                                         </h3>
                                         <p className="text-xs md:text-sm text-[var(--neutral-text-secondary)] leading-relaxed">
-                                            {features[featureIndex].desc}
+                                            {activeFeature.desc}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                             <div className="flex gap-2 mt-4 justify-center">
-                                {features.map(function (_feature, idx) {
+                                {FEATURES.map(function (feature, idx) {
                                     const isActive = idx === featureIndex;
                                     return (
                                         <button
-                                            key={idx}
+                                            key={feature.title}
                                             type="button"
                                             onClick={function () {
                                                 setFeatureIndex(idx);
@@ -400,14 +433,7 @@ export default function LandingPage() {
                                 }
                             }}
                         >
-                            {[
-                                "Competitive ranking system",
-                                "Weekly tournament schedule",
-                                "Real-time match tracking",
-                                "Detailed performance stats",
-                                "Global leaderboards",
-                                "Team coordination tools"
-                            ].map(function (benefit, idx) {
+                            {BENEFITS.map(function (benefit, idx) {
                                 return (
                                     <motion.div
                                         key={idx}
@@ -434,12 +460,12 @@ export default function LandingPage() {
                             viewport={{ amount: 0.4 }}
                             transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
                         >
-                            <NavLink to="/register">
+                            <NavLink to="/register" {...getPrefetchProps("register")} ref={registerViewportRef}>
                                 <Button className="px-8 py-3">
                                     <Zap size={18} /> Create Free Account
                                 </Button>
                             </NavLink>
-                            <NavLink to="/tournaments">
+                            <NavLink to="/tournaments" {...getPrefetchProps("tournaments")} ref={tournamentsViewportRef}>
                                 <Button variant="outline" className="px-8 py-3">
                                     <Trophy size={18} /> View Tournaments
                                 </Button>
