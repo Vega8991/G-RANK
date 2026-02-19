@@ -167,6 +167,8 @@ export default function LiquidEther({
             coords = new THREE.Vector2();
             coords_old = new THREE.Vector2();
             diff = new THREE.Vector2();
+            bounds = { left: 0, top: 0, width: 1, height: 1 };
+            lastBoundsUpdate = 0;
             timer: number | null = null;
             container: HTMLElement | null = null;
             docTarget: Document | null = null;
@@ -186,13 +188,16 @@ export default function LiquidEther({
             private _onTouchMove = this.onDocumentTouchMove.bind(this);
             private _onTouchEnd = this.onTouchEnd.bind(this);
             private _onDocumentLeave = this.onDocumentLeave.bind(this);
+            private _onWindowResize: EventListener = () => this.refreshBounds();
             init(container: HTMLElement) {
                 this.container = container;
                 this.docTarget = container.ownerDocument || null;
                 const defaultView = this.docTarget?.defaultView || (typeof window !== 'undefined' ? window : null);
                 if (!defaultView) return;
                 this.listenerTarget = defaultView;
+                this.refreshBounds(true);
                 this.listenerTarget.addEventListener('mousemove', this._onMouseMove);
+                this.listenerTarget.addEventListener('resize', this._onWindowResize);
                 this.listenerTarget.addEventListener('touchstart', this._onTouchStart, {
                     passive: true
                 });
@@ -205,6 +210,7 @@ export default function LiquidEther({
             dispose() {
                 if (this.listenerTarget) {
                     this.listenerTarget.removeEventListener('mousemove', this._onMouseMove);
+                    this.listenerTarget.removeEventListener('resize', this._onWindowResize);
                     this.listenerTarget.removeEventListener('touchstart', this._onTouchStart);
                     this.listenerTarget.removeEventListener('touchmove', this._onTouchMove);
                     this.listenerTarget.removeEventListener('touchend', this._onTouchEnd);
@@ -216,11 +222,25 @@ export default function LiquidEther({
                 this.docTarget = null;
                 this.container = null;
             }
-            private isPointInside(clientX: number, clientY: number) {
-                if (!this.container) return false;
+            refreshBounds(force = false) {
+                if (!this.container) return;
+                const now = performance.now();
+                if (!force && now - this.lastBoundsUpdate < 120) return;
                 const rect = this.container.getBoundingClientRect();
-                if (rect.width === 0 || rect.height === 0) return false;
-                return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+                this.bounds.left = rect.left;
+                this.bounds.top = rect.top;
+                this.bounds.width = Math.max(1, rect.width);
+                this.bounds.height = Math.max(1, rect.height);
+                this.lastBoundsUpdate = now;
+            }
+            private isPointInside(clientX: number, clientY: number) {
+                this.refreshBounds();
+                return (
+                    clientX >= this.bounds.left &&
+                    clientX <= this.bounds.left + this.bounds.width &&
+                    clientY >= this.bounds.top &&
+                    clientY <= this.bounds.top + this.bounds.height
+                );
             }
             private updateHoverState(clientX: number, clientY: number) {
                 this.isHoverInside = this.isPointInside(clientX, clientY);
@@ -229,10 +249,9 @@ export default function LiquidEther({
             setCoords(x: number, y: number) {
                 if (!this.container) return;
                 if (this.timer) window.clearTimeout(this.timer);
-                const rect = this.container.getBoundingClientRect();
-                if (rect.width === 0 || rect.height === 0) return;
-                const nx = (x - rect.left) / rect.width;
-                const ny = (y - rect.top) / rect.height;
+                this.refreshBounds();
+                const nx = (x - this.bounds.left) / this.bounds.width;
+                const ny = (y - this.bounds.top) / this.bounds.height;
                 this.coords.set(nx * 2 - 1, -(ny * 2 - 1));
                 this.mouseMoved = true;
                 this.timer = window.setTimeout(() => {
@@ -247,11 +266,9 @@ export default function LiquidEther({
                 if (!this.updateHoverState(event.clientX, event.clientY)) return;
                 if (this.onInteract) this.onInteract();
                 if (this.isAutoActive && !this.hasUserControl && !this.takeoverActive) {
-                    if (!this.container) return;
-                    const rect = this.container.getBoundingClientRect();
-                    if (rect.width === 0 || rect.height === 0) return;
-                    const nx = (event.clientX - rect.left) / rect.width;
-                    const ny = (event.clientY - rect.top) / rect.height;
+                    this.refreshBounds(true);
+                    const nx = (event.clientX - this.bounds.left) / this.bounds.width;
+                    const ny = (event.clientY - this.bounds.top) / this.bounds.height;
                     this.takeoverFrom.copy(this.coords);
                     this.takeoverTo.set(nx * 2 - 1, -(ny * 2 - 1));
                     this.takeoverStartTime = performance.now();
@@ -633,6 +650,8 @@ export default function LiquidEther({
 
         class ExternalForce extends ShaderPass {
             mouse!: THREE.Mesh;
+            residualForce = new THREE.Vector2();
+            targetForce = new THREE.Vector2();
             constructor(simProps: any) {
                 super({ output: simProps.dst });
                 this.init(simProps);
@@ -659,6 +678,18 @@ export default function LiquidEther({
                 const props = args[0] || {};
                 const forceX = (Mouse.diff.x / 2) * (props.mouse_force || 0);
                 const forceY = (Mouse.diff.y / 2) * (props.mouse_force || 0);
+                this.targetForce.set(forceX, forceY);
+                const movement = Mouse.diff.length();
+                const follow = movement > 0.00008 ? 0.4 : 0.04;
+                this.residualForce.lerp(this.targetForce, follow);
+                if (movement <= 0.00008) {
+                    const dt = Math.max(0.001, props.dt || 0.014);
+                    const decay = Math.exp(-dt / 2.6);
+                    this.residualForce.multiplyScalar(decay);
+                    if (this.residualForce.lengthSq() < 1e-7) {
+                        this.residualForce.set(0, 0);
+                    }
+                }
                 const cellScale = props.cellScale || { x: 1, y: 1 };
                 const cursorSize = props.cursor_size || 0;
                 const cursorSizeX = cursorSize * cellScale.x;
@@ -672,7 +703,7 @@ export default function LiquidEther({
                     1 - cursorSizeY - cellScale.y * 2
                 );
                 const uniforms = (this.mouse.material as THREE.RawShaderMaterial).uniforms;
-                uniforms.force.value.set(forceX, forceY);
+                uniforms.force.value.copy(this.residualForce);
                 uniforms.center.value.set(centerX, centerY);
                 uniforms.scale.value.set(cursorSize, cursorSize);
                 super.update();
@@ -940,7 +971,8 @@ export default function LiquidEther({
                 this.externalForce.update({
                     cursor_size: this.options.cursor_size,
                     mouse_force: this.options.mouse_force,
-                    cellScale: this.cellScale
+                    cellScale: this.cellScale,
+                    dt: this.options.dt
                 });
                 let vel: any = this.fbos.vel_1;
                 if (this.options.isViscous) {
@@ -1040,6 +1072,7 @@ export default function LiquidEther({
             }
             resize() {
                 Common.resize();
+                Mouse.refreshBounds(true);
                 this.output.resize();
             }
             render() {

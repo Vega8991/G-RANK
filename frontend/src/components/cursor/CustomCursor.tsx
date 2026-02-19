@@ -12,6 +12,11 @@ export default function CustomCursor() {
     const [isHidden, setIsHidden] = useState(isTouchDevice());
     const frameRef = useRef<number | null>(null);
     const latestPositionRef = useRef({ x: 0, y: 0 });
+    const hiddenRef = useRef(isTouchDevice());
+
+    useEffect(function () {
+        hiddenRef.current = isHidden;
+    }, [isHidden]);
 
     useEffect(function () {
         if (isTouchDevice()) {
@@ -21,6 +26,9 @@ export default function CustomCursor() {
 
         let handleMove = function (event: MouseEvent) {
             latestPositionRef.current = { x: event.clientX, y: event.clientY };
+            if (hiddenRef.current) {
+                setIsHidden(false);
+            }
 
             if (frameRef.current == null) {
                 frameRef.current = requestAnimationFrame(function () {
@@ -38,19 +46,14 @@ export default function CustomCursor() {
             setIsPressed(false);
         };
 
-        let handleLeave = function () {
-            setIsHidden(true);
-        };
-
-        let handleEnter = function () {
-            setIsHidden(false);
+        let handleVisibility = function () {
+            setIsHidden(document.hidden);
         };
 
         window.addEventListener("mousemove", handleMove, { passive: true });
         window.addEventListener("mousedown", handleDown, { passive: true });
         window.addEventListener("mouseup", handleUp, { passive: true });
-        window.addEventListener("mouseleave", handleLeave, { passive: true });
-        window.addEventListener("mouseenter", handleEnter, { passive: true });
+        document.addEventListener("visibilitychange", handleVisibility);
 
         return function () {
             if (frameRef.current != null) {
@@ -60,8 +63,7 @@ export default function CustomCursor() {
             window.removeEventListener("mousemove", handleMove);
             window.removeEventListener("mousedown", handleDown);
             window.removeEventListener("mouseup", handleUp);
-            window.removeEventListener("mouseleave", handleLeave);
-            window.removeEventListener("mouseenter", handleEnter);
+            document.removeEventListener("visibilitychange", handleVisibility);
         };
     }, []);
 

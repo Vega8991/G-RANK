@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import Button from "../components/common/Button";
@@ -6,7 +6,7 @@ import HeroSection from "../components/landing/HeroSection";
 import SponsorsMarquee from "../components/landing/SponsorsMarquee";
 import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
 import { prefetchRoute } from "../services/routePrefetch";
-import { Zap, ArrowRight, Trophy, Target, TrendingUp, BarChart3, Users, Award, Shield, CheckCircle2, Crown, Flame, Star, Gem, type LucideIcon } from "lucide-react";
+import { Zap, Trophy, Target, TrendingUp, BarChart3, Users, Award, Shield, CheckCircle2, Crown, Flame, Star, Gem, type LucideIcon } from "lucide-react";
 
 const LiquidEther = lazy(function () {
     return import("../components/ui/LiquidEther");
@@ -91,20 +91,20 @@ function LandingBackground() {
                 <LiquidEther
                     className="opacity-100"
                     colors={["#ff242f", "#b12020", "#d22828"]}
-                    mouseForce={35}
-                    cursorSize={65}
+                    mouseForce={22}
+                    cursorSize={58}
                     isViscous={true}
-                    viscous={30}
+                    viscous={26}
                     iterationsViscous={32}
-                    iterationsPoisson={47}
+                    iterationsPoisson={36}
                     resolution={0.5}
                     isBounce={true}
-                    autoDemo={true}
-                    autoSpeed={0.5}
-                    autoIntensity={4}
+                    autoDemo={false}
+                    autoSpeed={0.4}
+                    autoIntensity={2.4}
                     takeoverDuration={0.25}
-                    autoResumeDelay={3000}
-                    autoRampDuration={0.6}
+                    autoResumeDelay={15000}
+                    autoRampDuration={1.6}
                 />
             </Suspense>
         </div>
@@ -124,7 +124,6 @@ export default function LandingPage() {
     const tournamentsViewportRef = useViewportPrefetch("tournaments");
 
     const [selectedRankName, setSelectedRankName] = useState<string>(RANKS[4].name);
-    const [featureIndex, setFeatureIndex] = useState(0);
 
     const selectedRankIndex = (function () {
         return RANKS.findIndex(function (rank) {
@@ -135,23 +134,6 @@ export default function LandingPage() {
     const safeSelectedRankIndex = selectedRankIndex >= 0 ? selectedRankIndex : 0;
     const selectedRank = RANKS[safeSelectedRankIndex] ?? RANKS[0];
     const selectedRankProgress = ((safeSelectedRankIndex + 1) / RANKS.length) * 100;
-    const activeFeature = FEATURES[featureIndex] ?? FEATURES[0];
-
-    useEffect(function () {
-        if (FEATURES.length <= 1) {
-            return;
-        }
-
-        const interval = setInterval(function () {
-            setFeatureIndex(function (prev) {
-                return (prev + 1) % FEATURES.length;
-            });
-        }, 4500);
-
-        return function () {
-            clearInterval(interval);
-        };
-    }, []);
 
     return (
         <div className="bg-[var(--neutral-bg)] text-white relative">
@@ -321,79 +303,11 @@ export default function LandingPage() {
                                     <p className="text-sm text-[var(--neutral-text-secondary)] leading-relaxed mb-4">
                                         {feature.desc}
                                     </p>
-                                    <button
-                                        className="flex items-center gap-2 text-sm font-semibold group-hover:gap-3 opacity-70 group-hover:opacity-100 transition-all duration-300"
-                                        style={{ color: feature.color }}
-                                    >
-                                        Learn more <ArrowRight size={16} className="group-hover:translate-x-0.5" />
-                                    </button>
                                 </motion.div>
                             );
                         })}
                     </motion.div>
 
-                    <div className="max-w-3xl mx-auto">
-                        <motion.div
-                            className="bg-[var(--neutral-surface)]/60 border border-[var(--neutral-border)]/50 rounded-2xl p-6 md:p-8 backdrop-blur-xl overflow-hidden shadow-xl hover:shadow-2xl hover:border-[var(--brand-primary)]/30 transition-all duration-500"
-                            initial={{ opacity: 0, y: 40, scaleY: 0.9 }}
-                            whileInView={{ opacity: 1, y: 0, scaleY: 1 }}
-                            style={{ originY: 0 }}
-                            viewport={{ amount: 0.4 }}
-                            transition={{ duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <span className="text-xs font-bold tracking-wider text-[var(--brand-primary)]">
-                                    FEATURE SPOTLIGHT
-                                </span>
-                                <span className="text-[10px] uppercase tracking-[0.2em] text-[var(--neutral-text-muted)]">
-                                    Auto-rotating
-                                </span>
-                            </div>
-                            <div className="relative h-32 md:h-24 overflow-hidden">
-                                <div
-                                    className="absolute inset-0 flex items-center gap-4 transition-transform duration-500 ease-out"
-                                    style={{
-                                        transform: "translate3d(0, 0, 0)"
-                                    }}
-                                >
-                                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg" style={{ background: "linear-gradient(135deg, " + activeFeature.color + "30, " + activeFeature.color + "10)" }}>
-                                        <activeFeature.icon
-                                            size={28}
-                                            style={{ color: activeFeature.color }}
-                                        />
-                                    </div>
-                                    <div className="text-left">
-                                        <h3 className="text-lg md:text-xl font-bold mb-1">
-                                            {activeFeature.title}
-                                        </h3>
-                                        <p className="text-xs md:text-sm text-[var(--neutral-text-secondary)] leading-relaxed">
-                                            {activeFeature.desc}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 mt-4 justify-center">
-                                {FEATURES.map(function (feature, idx) {
-                                    const isActive = idx === featureIndex;
-                                    return (
-                                        <button
-                                            key={feature.title}
-                                            type="button"
-                                            onClick={function () {
-                                                setFeatureIndex(idx);
-                                            }}
-                                            className={
-                                                "h-1.5 rounded-full transition-all duration-300 " +
-                                                (isActive
-                                                    ? "w-6 bg-[var(--brand-primary)]"
-                                                    : "w-2 bg-[var(--neutral-border)] hover:bg-[var(--neutral-text-secondary)]")
-                                            }
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </motion.div>
-                    </div>
                 </div>
             </section>
 
