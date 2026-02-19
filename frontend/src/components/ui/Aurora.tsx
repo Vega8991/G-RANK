@@ -84,24 +84,48 @@ struct ColorStop {
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uResolution;
+    vec2 p = uv;
+    p.x *= uResolution.x / max(1.0, uResolution.y);
+  float topFlow = 1.0 - uv.y;
   
   ColorStop colors[3];
   colors[0] = ColorStop(uColorStops[0], 0.0);
   colors[1] = ColorStop(uColorStops[1], 0.5);
   colors[2] = ColorStop(uColorStops[2], 1.0);
   
-  vec3 rampColor;
-  COLOR_RAMP(colors, uv.x, rampColor);
+    vec3 rampNear;
+    vec3 rampMid;
+    vec3 rampFar;
+    COLOR_RAMP(colors, clamp(uv.x + snoise(vec2(p.x * 0.6 - uTime * 0.12, p.y * 0.25)) * 0.12, 0.0, 1.0), rampNear);
+    COLOR_RAMP(colors, clamp(uv.x + 0.18 + snoise(vec2(p.x * 0.45 + uTime * 0.07, p.y * 0.2)) * 0.1, 0.0, 1.0), rampMid);
+    COLOR_RAMP(colors, clamp(uv.x - 0.2 + snoise(vec2(p.x * 0.35 - uTime * 0.05, p.y * 0.18)) * 0.08, 0.0, 1.0), rampFar);
   
-  float height = snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude;
-  height = exp(height);
-  height = (uv.y * 2.0 - height + 0.2);
-  float intensity = 0.6 * height;
+    float waveNear = snoise(vec2(p.x * 1.4 + uTime * 0.14, topFlow * 0.5 + uTime * 0.02));
+    float waveMid = snoise(vec2(p.x * 1.0 - uTime * 0.08, topFlow * 0.35 - uTime * 0.015));
+    float waveFar = snoise(vec2(p.x * 0.65 + uTime * 0.05, topFlow * 0.25));
+
+    float curtainNear = exp(waveNear * 0.85 * uAmplitude);
+    float curtainMid = exp(waveMid * 0.65 * uAmplitude);
+    float curtainFar = exp(waveFar * 0.5 * uAmplitude);
+
+    float layerNear = (topFlow * 2.1 - curtainNear + 0.18);
+    float layerMid = (topFlow * 1.7 - curtainMid + 0.3);
+    float layerFar = (topFlow * 1.35 - curtainFar + 0.42);
+
+    float nearAlpha = smoothstep(0.07, 0.82, 0.9 - layerNear);
+    float midAlpha = smoothstep(0.08, 0.86, 0.95 - layerMid) * 0.72;
+    float farAlpha = smoothstep(0.1, 0.9, 1.0 - layerFar) * 0.5;
+
+    vec3 depthColor = rampNear * nearAlpha + rampMid * midAlpha + rampFar * farAlpha;
+    float caustic = smoothstep(0.36, 1.0, nearAlpha) * (0.45 + 0.55 * snoise(vec2(p.x * 3.0 + uTime * 0.35, p.y * 1.1)));
+    vec3 highlight = depthColor * (0.2 + 0.6 * caustic);
+
+    float depthFade = smoothstep(0.0, 0.85, topFlow);
+    vec3 auroraColor = (depthColor + highlight * 0.28) * depthFade;
   
   float midPoint = 0.20;
-  float auroraAlpha = smoothstep(midPoint - uBlend * 0.5, midPoint + uBlend * 0.5, intensity);
-  
-  vec3 auroraColor = intensity * rampColor;
+    float intensity = nearAlpha * 0.9 + midAlpha * 0.72 + farAlpha * 0.55;
+    float auroraAlpha = smoothstep(midPoint - uBlend * 0.5, midPoint + uBlend * 0.5, intensity) * depthFade;
   
   fragColor = vec4(auroraColor * auroraAlpha, auroraAlpha);
 }
