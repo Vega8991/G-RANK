@@ -20,7 +20,7 @@ export default function Register() {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleSubmit = async function (e: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setMessage("");
 
@@ -49,7 +49,7 @@ export default function Register() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }
 
     const features = [
         { icon: Trophy, text: "Compete in exclusive tournaments" },

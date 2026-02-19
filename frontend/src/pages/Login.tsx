@@ -16,7 +16,7 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleSubmit = async function (e: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setMessage("");
         setIsLoading(true);
@@ -29,7 +29,7 @@ export default function Login() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }
 
     const features = [
         { icon: Trophy, text: "Compete in exclusive tournaments" },

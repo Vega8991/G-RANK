@@ -2,7 +2,7 @@ export interface User {
   _id: string;
   username: string;
   email: string;
-  role: 'USER' | 'ADMIN';
+  role: "USER" | "ADMIN";
   mmr: number;
   rank: string;
   createdAt: string;
@@ -28,7 +28,7 @@ export interface Tournament {
   currentParticipants: number;
   registrationDeadline: string;
   matchDateTime: string;
-  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  status: "open" | "in_progress" | "completed" | "cancelled";
   createdBy: string | User;
   participants: string[];
   createdAt: string;

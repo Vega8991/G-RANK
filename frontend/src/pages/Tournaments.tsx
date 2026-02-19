@@ -1,29 +1,29 @@
-import { useState, useEffect, useRef } from 'react';
-import { getAllTournaments, createTournament, registerToTournament, getMyTournaments, syncParticipantCounts } from '../services/tournamentService';
-import { submitReplay } from '../services/matchService';
-import { Calendar } from 'lucide-react';
-import type { Tournament, MatchResultResponse } from '../types';
-import { AxiosError } from 'axios';
+import { useEffect, useRef, useState } from "react";
+import { AxiosError } from "axios";
+import { Calendar } from "lucide-react";
+import { createTournament, getAllTournaments, getMyTournaments, registerToTournament, syncParticipantCounts } from "../services/tournamentService";
+import { submitReplay } from "../services/matchService";
+import type { MatchResultResponse, Tournament } from "../types";
 
 export default function Tournaments() {
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
     const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [registrationDeadline, setRegistrationDeadline] = useState('');
-    const [matchDateTime, setMatchDateTime] = useState('');
-    const [selectedTournament, setSelectedTournament] = useState('');
-    const [replayUrl, setReplayUrl] = useState('');
-    const [message, setMessage] = useState('');
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [registrationDeadline, setRegistrationDeadline] = useState("");
+    const [matchDateTime, setMatchDateTime] = useState("");
+    const [selectedTournament, setSelectedTournament] = useState("");
+    const [replayUrl, setReplayUrl] = useState("");
+    const [message, setMessage] = useState("");
     const [result, setResult] = useState<MatchResultResponse | null>(null);
     const registrationDeadlineRef = useRef<HTMLInputElement>(null);
     const matchDateTimeRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        loadData();
+        void loadData();
     }, []);
 
-    const loadData = async () => {
+    async function loadData() {
         try {
             await syncParticipantCounts();
             const t = await getAllTournaments();
@@ -31,51 +31,53 @@ export default function Tournaments() {
             const my = await getMyTournaments();
             setMyTournaments(my.tournaments || []);
         } catch (err) {
-            console.error('Error loading tournaments:', err);
+            console.error("Error loading tournaments:", err);
             const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || 'Error loading tournaments');
+            setMessage(axiosErr.response?.data?.message || "Error loading tournaments");
         }
-    };
+    }
 
-    const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+
         try {
             await createTournament(name, description, registrationDeadline, matchDateTime);
-            setMessage('Tournament created');
-            setName('');
-            setDescription('');
-            setRegistrationDeadline('');
-            setMatchDateTime('');
-            loadData();
+            setMessage("Tournament created");
+            setName("");
+            setDescription("");
+            setRegistrationDeadline("");
+            setMatchDateTime("");
+            void loadData();
         } catch (err) {
             const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || 'Error');
+            setMessage(axiosErr.response?.data?.message || "Error");
         }
-    };
+    }
 
-    const handleRegister = async (id: string) => {
+    async function handleRegister(id: string) {
         try {
             await registerToTournament(id);
-            setMessage('Registered');
-            loadData();
+            setMessage("Registered");
+            void loadData();
         } catch (err) {
             const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || 'Error');
+            setMessage(axiosErr.response?.data?.message || "Error");
         }
-    };
+    }
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
+
         try {
             const res = await submitReplay(selectedTournament, replayUrl);
             setResult(res);
-            setMessage('Replay submitted');
-            loadData();
+            setMessage("Replay submitted");
+            void loadData();
         } catch (err) {
             const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || 'Error');
+            setMessage(axiosErr.response?.data?.message || "Error");
         }
-    };
+    }
 
     return (
         <div>
@@ -85,11 +87,11 @@ export default function Tournaments() {
             <form onSubmit={handleCreate}>
                 <input type="text" placeholder="Title" value={name} onChange={(e) => setName(e.target.value)} required />
                 <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
                     <Calendar 
                         size={18} 
                         onClick={() => registrationDeadlineRef.current?.showPicker()} 
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                     />
                     Registration Deadline:
                     <input 
@@ -97,15 +99,15 @@ export default function Tournaments() {
                         type="datetime-local" 
                         value={registrationDeadline} 
                         onChange={(e) => setRegistrationDeadline(e.target.value)} 
-                        style={{ cursor: 'pointer', padding: '4px 8px' }}
+                        style={{ cursor: "pointer", padding: "4px 8px" }}
                         required 
                     />
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
                     <Calendar 
                         size={18} 
                         onClick={() => matchDateTimeRef.current?.showPicker()} 
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                     />
                     Match Date & Time:
                     <input 
@@ -113,7 +115,7 @@ export default function Tournaments() {
                         type="datetime-local" 
                         value={matchDateTime} 
                         onChange={(e) => setMatchDateTime(e.target.value)} 
-                        style={{ cursor: 'pointer', padding: '4px 8px' }}
+                        style={{ cursor: "pointer", padding: "4px 8px" }}
                         required 
                     />
                 </label>

@@ -4,9 +4,15 @@ import { Crown, Home, Trophy, User, Shield, ChevronDown } from "lucide-react";
 import { prefetchRoute } from "../services/routePrefetch";
 import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
 
-const CustomCursor = lazy(function () {
-    return import("../components/cursor/CustomCursor");
-});
+const CustomCursor = lazy(() => import("../components/cursor/CustomCursor"));
+
+const baseLinkClass = "flex items-center gap-2 text-sm font-medium transition-colors pb-1 border-b-2";
+const activeLinkClass = "border-[#dc143c] text-white";
+const inactiveLinkClass = "border-transparent text-[#d1d5db] hover:text-white";
+
+function getLinkClass(isActive: boolean): string {
+    return isActive ? `${baseLinkClass} ${activeLinkClass}` : `${baseLinkClass} ${inactiveLinkClass}`;
+}
 
 export default function AppLayout() {
     const tournamentsViewportRef = useViewportPrefetch("tournaments");
@@ -17,22 +23,11 @@ export default function AppLayout() {
 
     function getPrefetchProps(route: "login" | "register" | "leaderboard" | "tournaments" | "dashboard") {
         return {
-            onMouseEnter: function () { prefetchRoute(route); },
-            onFocus: function () { prefetchRoute(route); },
-            onTouchStart: function () { prefetchRoute(route); }
+            onMouseEnter: () => prefetchRoute(route),
+            onFocus: () => prefetchRoute(route),
+            onTouchStart: () => prefetchRoute(route)
         };
     }
-
-    let getLinkClass = function (isActive: boolean): string {
-        let baseClass = "flex items-center gap-2 text-sm font-medium transition-colors pb-1 border-b-2";
-        let activeClass = "border-[#dc143c] text-white";
-        let inactiveClass = "border-transparent text-[#d1d5db] hover:text-white";
-
-        if (isActive) {
-            return baseClass + " " + activeClass;
-        }
-        return baseClass + " " + inactiveClass;
-    };
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white relative">
@@ -51,19 +46,19 @@ export default function AppLayout() {
                             </NavLink>
                             
                             <div className="hidden md:flex items-center gap-8">
-                                <NavLink to="/" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }}>
+                                <NavLink to="/" className={({ isActive }) => getLinkClass(isActive)}>
                                     <Home size={16} /> Home
                                 </NavLink>
-                                <NavLink to="/tournaments" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }} {...getPrefetchProps("tournaments")} ref={tournamentsViewportRef}>
+                                <NavLink to="/tournaments" className={({ isActive }) => getLinkClass(isActive)} {...getPrefetchProps("tournaments")} ref={tournamentsViewportRef}>
                                     <Trophy size={16} /> Tournaments
                                 </NavLink>
-                                <NavLink to="/leaderboard" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }} {...getPrefetchProps("leaderboard")} ref={leaderboardViewportRef}>
+                                <NavLink to="/leaderboard" className={({ isActive }) => getLinkClass(isActive)} {...getPrefetchProps("leaderboard")} ref={leaderboardViewportRef}>
                                     <Crown size={16} /> Leaderboard
                                 </NavLink>
-                                <NavLink to="/dashboard" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }} {...getPrefetchProps("dashboard")} ref={dashboardViewportRef}>
+                                <NavLink to="/dashboard" className={({ isActive }) => getLinkClass(isActive)} {...getPrefetchProps("dashboard")} ref={dashboardViewportRef}>
                                     <User size={16} /> Dashboard
                                 </NavLink>
-                                <NavLink to="/admin" className={function ({ isActive }: { isActive: boolean }) { return getLinkClass(isActive); }}>
+                                <NavLink to="/admin" className={({ isActive }) => getLinkClass(isActive)}>
                                     <Shield size={16} /> Admin
                                 </NavLink>
                             </div>

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getProfile, logout } from '../services/authService';
-import type { User } from '../types';
-import { AxiosError } from 'axios';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
+import { getProfile, logout } from "../services/authService";
+import type { User } from "../types";
 
 export default function Dashboard() {
     const [user, setUser] = useState<User | null>(null);
@@ -12,26 +12,29 @@ export default function Dashboard() {
         loadProfile();
     }, []);
 
-    const loadProfile = async () => {
+    async function loadProfile() {
         try {
             const response = await getProfile();
             setUser(response.user);
         } catch (err) {
-            console.error('Error loading profile:', err);
+            console.error("Error loading profile:", err);
             const axiosErr = err as AxiosError;
             if (axiosErr.response?.status === 401 || axiosErr.response?.status === 403) {
                 logout();
-                navigate('/login');
+                navigate("/login");
             }
         }
-    };
+    }
 
-    const handleLogout = () => {
+    function handleLogout() {
         logout();
-        navigate('/login');
-    };
+        navigate("/login");
+    }
 
-    if (!user) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Loading...</div>
+    if (!user) {
+        return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Loading...</div>;
+    }
+
     return (
         <div>
             <h1>Dashboard</h1>
@@ -40,7 +43,7 @@ export default function Dashboard() {
             <p>Rank: {user.rank}</p>
             <p>Wins: {(user as User & { wins?: number }).wins} | Losses: {(user as User & { losses?: number }).losses}</p>
             <p>Winrate%: {(user as User & { winRate?: number }).winRate}%</p>
-            <button onClick={() => navigate('/tournaments')}>Tournaments</button>
+            <button onClick={() => navigate("/tournaments")}>Tournaments</button>
             <button onClick={handleLogout}>Logout</button>
         </div>
     );

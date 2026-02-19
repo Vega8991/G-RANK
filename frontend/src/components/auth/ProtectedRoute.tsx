@@ -45,6 +45,10 @@ export default function ProtectedRoute({ isAllowed: staticIsAllowed, redirectTo 
             window.removeEventListener('auth-change', updateAuthStatus);
         };
     }, []);
+
+    if (typeof staticIsAllowed === "boolean" && !staticIsAllowed) {
+        return <Navigate to={redirectTo} replace />;
+    }
     
     if (requireAdmin) {
         if (authStatus.userRole !== "ADMIN") {

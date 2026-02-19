@@ -1,4 +1,3 @@
-import { memo } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 
@@ -14,7 +13,7 @@ interface FeatureCardProps {
     index: number;
 }
 
-const FeatureCard = memo(function FeatureCard({ feature, index }: FeatureCardProps) {
+export default function FeatureCard({ feature, index }: FeatureCardProps) {
     const IconComponent = feature.icon;
 
     return (
@@ -46,6 +45,4 @@ const FeatureCard = memo(function FeatureCard({ feature, index }: FeatureCardPro
             </button>
         </motion.div>
     );
-});
-
-export default FeatureCard;
+}
