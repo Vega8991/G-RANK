@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { memo, useEffect, useRef, useState, type MouseEvent } from "react";
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
 import Button from "../common/Button";
 import ReactiveBackground from "./ReactiveBackground";
+import { prefetchRoute } from "../../services/routePrefetch";
+import { useViewportPrefetch } from "../../hooks/useViewportPrefetch";
 import { Zap, ArrowRight, Trophy, Users, Award, TrendingUp, Flame, Crown, Star, type LucideIcon } from "lucide-react";
 
 interface TopPlayer {
@@ -19,17 +21,30 @@ interface Counters {
     teams: number;
 }
 
-export default function HeroSection() {
+const TOP_PLAYERS: TopPlayer[] = [
+    { rank: 1, name: "Garrax", mmr: 3420, winRate: "85%", icon: Crown },
+    { rank: 2, name: "ProGamer99", mmr: 3280, winRate: "78%", icon: Star },
+    { rank: 3, name: "NinjaStrike", mmr: 3150, winRate: "76%", icon: Flame }
+];
+
+function getPrefetchProps(route: "login" | "register" | "leaderboard") {
+    return {
+        onMouseEnter: function () { prefetchRoute(route); },
+        onFocus: function () { prefetchRoute(route); },
+        onTouchStart: function () { prefetchRoute(route); }
+    };
+}
+
+const HeroSection = memo(function HeroSection() {
+    const registerViewportRef = useViewportPrefetch("register");
+    const loginViewportRef = useViewportPrefetch("login");
+    const leaderboardViewportRef = useViewportPrefetch("leaderboard");
+
     let [counters, setCounters] = useState<Counters>({ tournaments: 0, players: 0, teams: 0 });
     let mainCardRef = useRef<HTMLDivElement>(null);
     let topFloatRef = useRef<HTMLDivElement>(null);
     let bottomFloatRef = useRef<HTMLDivElement>(null);
-
-    let topPlayers: TopPlayer[] = [
-        { rank: 1, name: "Garrax", mmr: 3420, winRate: "85%", icon: Crown },
-        { rank: 2, name: "ProGamer99", mmr: 3280, winRate: "78%", icon: Star },
-        { rank: 3, name: "NinjaStrike", mmr: 3150, winRate: "76%", icon: Flame }
-    ];
+    let mouseRafRef = useRef<number | null>(null);
 
     useEffect(function () {
         let animationFrame: number;
@@ -40,10 +55,22 @@ export default function HeroSection() {
             const elapsed = time - start;
             const progress = Math.min(1, elapsed / duration);
 
-            setCounters({
-                tournaments: Math.round(3 * progress),
-                players: Math.round(1200 * progress),
-                teams: Math.round(9 * progress)
+            setCounters(function (prev) {
+                const next = {
+                    tournaments: Math.round(3 * progress),
+                    players: Math.round(1200 * progress),
+                    teams: Math.round(9 * progress)
+                };
+
+                if (
+                    prev.tournaments === next.tournaments &&
+                    prev.players === next.players &&
+                    prev.teams === next.teams
+                ) {
+                    return prev;
+                }
+
+                return next;
             });
 
             if (progress < 1) {
@@ -60,26 +87,40 @@ export default function HeroSection() {
         };
     }, []);
 
+    useEffect(function () {
+        return function () {
+            if (mouseRafRef.current !== null) {
+                cancelAnimationFrame(mouseRafRef.current);
+            }
+        };
+    }, []);
+
     function handleMouseMove(event: MouseEvent<HTMLElement>) {
         const rect = event.currentTarget.getBoundingClientRect();
         const x = (event.clientX - (rect.left + rect.width / 2)) / rect.width;
         const y = (event.clientY - (rect.top + rect.height / 2)) / rect.height;
 
-        if (mainCardRef.current) {
-            mainCardRef.current.style.transform =
-                "perspective(1000px) rotateX(" + (y * -8) +
-                "deg) rotateY(" + (x * 8) +
-                "deg) translate3d(" + (x * 16) +
-                "px, " + (y * 16) + "px, 0)";
+        if (mouseRafRef.current !== null) {
+            cancelAnimationFrame(mouseRafRef.current);
         }
-        if (topFloatRef.current) {
-            topFloatRef.current.style.transform =
-                "translate3d(" + (x * 24) + "px, " + (y * -12) + "px, 0)";
-        }
-        if (bottomFloatRef.current) {
-            bottomFloatRef.current.style.transform =
-                "translate3d(" + (x * -18) + "px, " + (y * 16) + "px, 0)";
-        }
+
+        mouseRafRef.current = requestAnimationFrame(function () {
+            if (mainCardRef.current) {
+                mainCardRef.current.style.transform =
+                    "perspective(1000px) rotateX(" + (y * -8) +
+                    "deg) rotateY(" + (x * 8) +
+                    "deg) translate3d(" + (x * 16) +
+                    "px, " + (y * 16) + "px, 0)";
+            }
+            if (topFloatRef.current) {
+                topFloatRef.current.style.transform =
+                    "translate3d(" + (x * 24) + "px, " + (y * -12) + "px, 0)";
+            }
+            if (bottomFloatRef.current) {
+                bottomFloatRef.current.style.transform =
+                    "translate3d(" + (x * -18) + "px, " + (y * 16) + "px, 0)";
+            }
+        });
     }
 
     return (
@@ -131,7 +172,7 @@ export default function HeroSection() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.35, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                         >
-                            <NavLink to="/register">
+                            <NavLink to="/register" {...getPrefetchProps("register")} ref={registerViewportRef}>
                                 <Button className="group px-8 py-3 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                                     <span className="relative flex items-center gap-2">
                                         <span className="absolute -inset-2 rounded-full bg-[var(--brand-primary)]/40 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -144,12 +185,12 @@ export default function HeroSection() {
                                     </span>
                                 </Button>
                             </NavLink>
-                            <NavLink to="/login">
+                            <NavLink to="/login" {...getPrefetchProps("login")} ref={loginViewportRef}>
                                 <Button variant="outline" className="px-8 py-3 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                                     Login
                                 </Button>
                             </NavLink>
-                            <NavLink to="/leaderboard">
+                            <NavLink to="/leaderboard" {...getPrefetchProps("leaderboard")} ref={leaderboardViewportRef}>
                                 <Button variant="outline" className="px-8 py-3 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-lg">
                                     <ArrowRight size={18} /> View Rankings
                                 </Button>
@@ -221,7 +262,7 @@ export default function HeroSection() {
                             </div>
 
                             <div className="space-y-3 mb-6">
-                                {topPlayers.map(function (player) {
+                                {TOP_PLAYERS.map(function (player) {
                                     let IconComponent = player.icon;
                                     let isFirst = player.rank === 1;
                                     let cardClass =
@@ -338,4 +379,6 @@ export default function HeroSection() {
 
         </section>
     );
-}
+});
+
+export default HeroSection;
