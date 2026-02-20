@@ -7,6 +7,28 @@ import { prefetchRoute } from "../../services/routePrefetch";
 import { useViewportPrefetch } from "../../hooks/useViewportPrefetch";
 import { Zap, ArrowRight, Trophy, Users, Award, TrendingUp, Flame, Crown, Star, type LucideIcon } from "lucide-react";
 
+interface StatCounterProps {
+    icon: LucideIcon;
+    iconColorClass: string;
+    bgColorClass: string;
+    value: string;
+    label: string;
+}
+
+function StatCounter({ icon: Icon, iconColorClass, bgColorClass, value, label }: StatCounterProps) {
+    return (
+        <div className="flex items-center gap-3 transition-transform duration-300 hover:-translate-y-1 hover:scale-105">
+            <div className={"w-10 h-10 rounded-lg flex items-center justify-center " + bgColorClass}>
+                <Icon size={20} className={iconColorClass} />
+            </div>
+            <div>
+                <p className="text-2xl font-extrabold">{value}</p>
+                <p className="text-xs text-[var(--neutral-text-secondary)]">{label}</p>
+            </div>
+        </div>
+    );
+}
+
 interface TopPlayer {
     rank: number;
     name: string;
@@ -207,35 +229,27 @@ export default function HeroSection() {
                                 ease: [0.16, 1, 0.3, 1]
                             }}
                         >
-                            <div className="flex items-center gap-3 transition-transform duration-300 hover:-translate-y-1 hover:scale-105">
-                                <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)]/10 flex items-center justify-center">
-                                    <Trophy size={20} className="text-[var(--brand-primary)]" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-extrabold">{counters.tournaments}</p>
-                                    <p className="text-xs text-[var(--neutral-text-secondary)]">Active Tournaments</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 transition-transform duration-300 hover:-translate-y-1 hover:scale-105">
-                                <div className="w-10 h-10 rounded-lg bg-[var(--status-success)]/10 flex items-center justify-center">
-                                    <Users size={20} className="text-[var(--status-success)]" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-extrabold">
-                                        {counters.players ? counters.players.toLocaleString() : "0"}
-                                    </p>
-                                    <p className="text-xs text-[var(--neutral-text-secondary)]">Active Players</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 transition-transform duration-300 hover:-translate-y-1 hover:scale-105">
-                                <div className="w-10 h-10 rounded-lg bg-[var(--status-warning)]/10 flex items-center justify-center">
-                                    <Award size={20} className="text-[var(--status-warning)]" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-extrabold">{counters.teams}</p>
-                                    <p className="text-xs text-[var(--neutral-text-secondary)]">Pro Teams</p>
-                                </div>
-                            </div>
+                            <StatCounter
+                                icon={Trophy}
+                                iconColorClass="text-[var(--brand-primary)]"
+                                bgColorClass="bg-[var(--brand-primary)]/10"
+                                value={String(counters.tournaments)}
+                                label="Active Tournaments"
+                            />
+                            <StatCounter
+                                icon={Users}
+                                iconColorClass="text-[var(--status-success)]"
+                                bgColorClass="bg-[var(--status-success)]/10"
+                                value={counters.players ? counters.players.toLocaleString() : "0"}
+                                label="Active Players"
+                            />
+                            <StatCounter
+                                icon={Award}
+                                iconColorClass="text-[var(--status-warning)]"
+                                bgColorClass="bg-[var(--status-warning)]/10"
+                                value={String(counters.teams)}
+                                label="Pro Teams"
+                            />
                         </motion.div>
                     </motion.div>
 
