@@ -28,37 +28,35 @@ function FeatureSpotlight({ features, featureIndex, onFeatureSelect }: FeatureSp
                     </span>
                 </div>
                 <div className="relative h-32 md:h-24 overflow-hidden">
-                    <div
-                        className="absolute inset-0 flex items-center gap-4 transition-transform duration-500 ease-out"
-                        style={{
-                            transform: "translate3d(0, 0, 0)"
-                        }}
-                    >
-                        <div 
-                            className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center flex-shrink-0" 
-                            style={{ 
-                                background: `linear-gradient(135deg, ${features[featureIndex].color}20, ${features[featureIndex].color}05)` 
-                            }}
-                        >
-                            {(() => {
-                                const IconComponent = features[featureIndex].icon;
-                                return (
-                                    <IconComponent
-                                        size={28}
-                                        style={{ color: features[featureIndex].color }}
-                                    />
-                                );
-                            })()}
-                        </div>
-                        <div className="text-left">
-                            <h3 className="text-lg md:text-xl font-bold mb-1">
-                                {features[featureIndex].title}
-                            </h3>
-                            <p className="text-xs md:text-sm text-[var(--neutral-text-secondary)] leading-relaxed">
-                                {features[featureIndex].desc}
-                            </p>
-                        </div>
-                    </div>
+                    {(() => {
+                        const SpotlightIcon = features[featureIndex].icon;
+                        const spotlightColor = features[featureIndex].color;
+                        return (
+                            <div
+                                className="absolute inset-0 flex items-center gap-4 transition-transform duration-500 ease-out"
+                                style={{
+                                    transform: "translate3d(0, 0, 0)"
+                                }}
+                            >
+                                <div
+                                    className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center flex-shrink-0"
+                                    style={{
+                                        background: `linear-gradient(135deg, ${spotlightColor}20, ${spotlightColor}05)`
+                                    }}
+                                >
+                                    <SpotlightIcon size={28} style={{ color: spotlightColor }} />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="text-lg md:text-xl font-bold mb-1">
+                                        {features[featureIndex].title}
+                                    </h3>
+                                    <p className="text-xs md:text-sm text-[var(--neutral-text-secondary)] leading-relaxed">
+                                        {features[featureIndex].desc}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
                 <div className="flex gap-2 mt-4 justify-center">
                     {features.map(function (_feature, idx) {
@@ -144,8 +142,8 @@ export default function FeaturesSection({ features }: FeaturesSectionProps) {
                     })}
                 </motion.div>
 
-                <FeatureSpotlight 
-                    features={features} 
+                <FeatureSpotlight
+                    features={features}
                     featureIndex={featureIndex}
                     onFeatureSelect={setFeatureIndex}
                 />

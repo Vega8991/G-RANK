@@ -11,11 +11,11 @@ interface ProtectedRouteProps {
 function checkAuthStatus(): AuthStatus {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
-    
+
     if (!token || !userStr) {
         return { isLoggedIn: false, userRole: null };
     }
-    
+
     try {
         const user = JSON.parse(userStr);
         return { isLoggedIn: true, userRole: user.role || 'USER' };
@@ -28,38 +28,41 @@ function checkAuthStatus(): AuthStatus {
 
 export default function ProtectedRoute({ isAllowed: staticIsAllowed, redirectTo = "/login", requireAdmin = false }: ProtectedRouteProps) {
     const [authStatus, setAuthStatus] = useState<AuthStatus>(checkAuthStatus());
-    
+
     useEffect(() => {
         const updateAuthStatus = () => {
             setAuthStatus(checkAuthStatus());
         };
-        
+
         updateAuthStatus();
-        
+
         window.addEventListener('storage', updateAuthStatus);
-        
+
         window.addEventListener('auth-change', updateAuthStatus);
-        
+
         return () => {
             window.removeEventListener('storage', updateAuthStatus);
             window.removeEventListener('auth-change', updateAuthStatus);
         };
     }, []);
 
-    if (typeof staticIsAllowed === "boolean" && !staticIsAllowed) {
+    const isExplicitlyDenied = typeof staticIsAllowed === "boolean" && !staticIsAllowed;
+    const isNotAdmin = authStatus.userRole !== "ADMIN";
+
+    if (isExplicitlyDenied) {
         return <Navigate to={redirectTo} replace />;
     }
-    
+
     if (requireAdmin) {
-        if (authStatus.userRole !== "ADMIN") {
+        if (isNotAdmin) {
             return <Navigate to={redirectTo} replace />;
         }
         return <Outlet />;
     }
-    
+
     if (!authStatus.isLoggedIn) {
         return <Navigate to={redirectTo} replace />;
     }
-    
+
     return <Outlet />;
 }

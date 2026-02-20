@@ -7,6 +7,16 @@ import Button from "../components/common/Button";
 import Aurora from "../components/ui/Aurora";
 import { Crown, User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Trophy, Target, TrendingUp } from "lucide-react";
 
+const inputClassName = "w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300";
+
+const inputWithIconClassName = "w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 pr-12 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300";
+
+const features = [
+    { icon: Trophy, text: "Compete in exclusive tournaments" },
+    { icon: Target, text: "Fair MMR-based matchmaking system" },
+    { icon: TrendingUp, text: "Track your progress and statistics" },
+];
+
 export default function Register() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -38,24 +48,25 @@ export default function Register() {
         try {
             const response = await register(username, email, password);
             setIsSuccess(true);
-            setMessage((response as { message?: string }).message || "Account created successfully!");
+            const successMessage = (response as { message?: string }).message || "Account created successfully!";
+            setMessage(successMessage);
             setTimeout(function () {
                 navigate("/login");
             }, 2000);
         } catch (err) {
             const axiosErr = err as AxiosError<{ message?: string }>;
+            const errorMessage = axiosErr.response?.data?.message || "Registration failed. Please try again.";
             setIsSuccess(false);
-            setMessage(axiosErr.response?.data?.message || "Registration failed. Please try again.");
+            setMessage(errorMessage);
         } finally {
             setIsLoading(false);
         }
     }
 
-    const features = [
-        { icon: Trophy, text: "Compete in exclusive tournaments" },
-        { icon: Target, text: "Fair MMR-based matchmaking system" },
-        { icon: TrendingUp, text: "Track your progress and statistics" },
-    ];
+    const messageColorClass = isSuccess ? "text-[var(--status-success)]" : "text-[var(--status-danger)]";
+    const messageBgClass = isSuccess
+        ? "bg-[var(--status-success)]/10 border-[var(--status-success)]/30"
+        : "bg-[var(--status-danger)]/10 border-[var(--status-danger)]/30";
 
     return (
         <div className="min-h-screen text-white relative flex">
@@ -153,10 +164,7 @@ export default function Register() {
                         {message && (
                             <motion.div
                                 className={
-                                    "flex items-center gap-3 rounded-xl px-4 py-3 mb-6 border " +
-                                    (isSuccess
-                                        ? "bg-[var(--status-success)]/10 border-[var(--status-success)]/30"
-                                        : "bg-[var(--status-danger)]/10 border-[var(--status-danger)]/30")
+                                    "flex items-center gap-3 rounded-xl px-4 py-3 mb-6 border " + messageBgClass
                                 }
                                 initial={{ opacity: 0, y: -8 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -167,7 +175,7 @@ export default function Register() {
                                 ) : (
                                     <AlertCircle size={16} className="text-[var(--status-danger)] flex-shrink-0" />
                                 )}
-                                <p className={"text-sm " + (isSuccess ? "text-[var(--status-success)]" : "text-[var(--status-danger)]")}>
+                                <p className={"text-sm " + messageColorClass}>
                                     {message}
                                 </p>
                             </motion.div>
@@ -185,7 +193,7 @@ export default function Register() {
                                     placeholder="Choose a username"
                                     value={username}
                                     onChange={function (e) { setUsername(e.target.value); }}
-                                    className="w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300"
+                                    className={inputClassName}
                                 />
                                 <p className="text-xs text-[var(--neutral-text-muted)]">Minimum 3 characters</p>
                             </div>
@@ -201,7 +209,7 @@ export default function Register() {
                                     placeholder="your@email.com"
                                     value={email}
                                     onChange={function (e) { setEmail(e.target.value); }}
-                                    className="w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300"
+                                    className={inputClassName}
                                 />
                             </div>
 
@@ -217,7 +225,7 @@ export default function Register() {
                                         placeholder="Create a strong password"
                                         value={password}
                                         onChange={function (e) { setPassword(e.target.value); }}
-                                        className="w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 pr-12 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300"
+                                        className={inputWithIconClassName}
                                     />
                                     <button
                                         type="button"
@@ -242,7 +250,7 @@ export default function Register() {
                                         placeholder="Re-enter your password"
                                         value={confirmPassword}
                                         onChange={function (e) { setConfirmPassword(e.target.value); }}
-                                        className="w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 pr-12 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300"
+                                        className={inputWithIconClassName}
                                     />
                                     <button
                                         type="button"

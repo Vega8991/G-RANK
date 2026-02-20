@@ -5,6 +5,11 @@ import { createTournament, getAllTournaments, getMyTournaments, registerToTourna
 import { submitReplay } from "../services/matchService";
 import type { MatchResultResponse, Tournament } from "../types";
 
+function getErrorMessage(err: unknown): string {
+    const axiosErr = err as AxiosError<{ message?: string }>;
+    return axiosErr.response?.data?.message || "Error";
+}
+
 export default function Tournaments() {
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
     const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
@@ -32,8 +37,7 @@ export default function Tournaments() {
             setMyTournaments(my.tournaments || []);
         } catch (err) {
             console.error("Error loading tournaments:", err);
-            const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || "Error loading tournaments");
+            setMessage(getErrorMessage(err));
         }
     }
 
@@ -49,8 +53,7 @@ export default function Tournaments() {
             setMatchDateTime("");
             void loadData();
         } catch (err) {
-            const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || "Error");
+            setMessage(getErrorMessage(err));
         }
     }
 
@@ -60,8 +63,7 @@ export default function Tournaments() {
             setMessage("Registered");
             void loadData();
         } catch (err) {
-            const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || "Error");
+            setMessage(getErrorMessage(err));
         }
     }
 
@@ -74,8 +76,7 @@ export default function Tournaments() {
             setMessage("Replay submitted");
             void loadData();
         } catch (err) {
-            const axiosErr = err as AxiosError<{ message?: string }>;
-            setMessage(axiosErr.response?.data?.message || "Error");
+            setMessage(getErrorMessage(err));
         }
     }
 
@@ -88,35 +89,35 @@ export default function Tournaments() {
                 <input type="text" placeholder="Title" value={name} onChange={(e) => setName(e.target.value)} required />
                 <input type="text" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required />
                 <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                    <Calendar 
-                        size={18} 
-                        onClick={() => registrationDeadlineRef.current?.showPicker()} 
+                    <Calendar
+                        size={18}
+                        onClick={() => registrationDeadlineRef.current?.showPicker()}
                         style={{ cursor: "pointer" }}
                     />
                     Registration Deadline:
-                    <input 
+                    <input
                         ref={registrationDeadlineRef}
-                        type="datetime-local" 
-                        value={registrationDeadline} 
-                        onChange={(e) => setRegistrationDeadline(e.target.value)} 
+                        type="datetime-local"
+                        value={registrationDeadline}
+                        onChange={(e) => setRegistrationDeadline(e.target.value)}
                         style={{ cursor: "pointer", padding: "4px 8px" }}
-                        required 
+                        required
                     />
                 </label>
                 <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                    <Calendar 
-                        size={18} 
-                        onClick={() => matchDateTimeRef.current?.showPicker()} 
+                    <Calendar
+                        size={18}
+                        onClick={() => matchDateTimeRef.current?.showPicker()}
                         style={{ cursor: "pointer" }}
                     />
                     Match Date & Time:
-                    <input 
+                    <input
                         ref={matchDateTimeRef}
-                        type="datetime-local" 
-                        value={matchDateTime} 
-                        onChange={(e) => setMatchDateTime(e.target.value)} 
+                        type="datetime-local"
+                        value={matchDateTime}
+                        onChange={(e) => setMatchDateTime(e.target.value)}
                         style={{ cursor: "pointer", padding: "4px 8px" }}
-                        required 
+                        required
                     />
                 </label>
                 <button type="submit">Create</button>
