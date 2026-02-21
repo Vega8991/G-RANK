@@ -28,9 +28,10 @@ export interface Tournament {
   currentParticipants: number;
   registrationDeadline: string;
   matchDateTime: string;
-  status: "open" | "in_progress" | "completed" | "cancelled";
+  status: "open" | "pending" | "in_progress" | "completed" | "cancelled";
   createdBy: string | User;
   participants: string[];
+  prizePool?: number;
   createdAt: string;
   updatedAt: string;
 }
