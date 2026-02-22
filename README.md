@@ -1,14 +1,14 @@
 # G-RANK
 
-Plataforma competitiva de esports con sistema de ranking MMR para batallas de Pokemon Showdown.
+Competitive esports platform with an MMR ranking system for some games matches
 
-## Requisitos
+## Requirements
 
 - Node.js 18+
-- MongoDB (local o MongoDB Atlas)
-- Cuenta de Gmail para verificación de emails
+- MongoDB (local or MongoDB Atlas)
+- Gmail account for email verification
 
-## Instalación
+## Installation
 
 ```bash
 git clone https://github.com/Vega8991/G-RANK.git
@@ -17,49 +17,64 @@ cd backend && npm install
 cd ../frontend && npm install
 ```
 
-## Configuración
+## Configuration
 
-Crea un archivo `.env` en la carpeta `backend`:
+Create a `.env` file inside the `backend` folder:
 
 ```env
 MONGO_URI=mongodb://localhost:27017/grank
-JWT_SECRET=tu_clave_secreta_jwt
+JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRE=7d
 PORT=5000
-EMAIL_USER=tu-email@gmail.com
-EMAIL_PASS=tu-app-password-de-gmail
-EMAIL_FROM=G-Rank <tu-email@gmail.com>
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-gmail-app-password
+EMAIL_FROM=G-Rank <your-email@gmail.com>
 FRONTEND_URL=http://localhost:5173
 ```
 
-Para obtener el `EMAIL_PASS`:
-1. Activa la autenticación de 2 factores en tu cuenta de Google
-2. Ve a Cuenta de Google → Seguridad → Contraseñas de aplicaciones
-3. Genera una contraseña para "G-Rank" y úsala en el `.env`
+To get `EMAIL_PASS`:
+1. Enable 2-factor authentication on your Google account
+2. Go to Google Account -> Security -> App passwords
+3. Generate an app password for "G-Rank" and use it in `.env`
 
-## Ejecución
+## Run
 
-Desde la raíz del proyecto:
+From the project root:
 
 ```bash
 ./start.sh
 ```
 
-O manualmente:
+Or run manually:
 
 ```bash
 cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-La aplicación estará disponible en:
+The app will be available at:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:5000
 
-## Sistema de Ranking
+## Swagger
 
-| Rango | MMR | Victoria | Derrota |
-|-------|-----|----------|---------|
+API Swagger docs are available in `Doc_G-RANK`.
+
+```bash
+cd Doc_G-RANK
+npm install
+npm start
+```
+
+With the server running, open:
+
+- Swagger UI: http://localhost:8080/docs
+- API base URL: http://localhost:8080
+
+## Ranking System
+
+| Rank | MMR | Win | Loss |
+|------|-----|-----|------|
 | Bronze | 0-499 | +50 | -25 |
 | Silver | 500-999 | +40 | -20 |
 | Gold | 1000-1499 | +32 | -18 |
@@ -68,7 +83,7 @@ La aplicación estará disponible en:
 | Master | 2500-2999 | +20 | -25 |
 | Elite | 3000+ | +15 | -30 |
 
-## Stack Tecnológico
+## Tech Stack
 
 **Backend**: Node.js, Express, MongoDB, Mongoose, JWT, Bcrypt, Nodemailer  
 **Frontend**: React 19, Vite, React Router, Tailwind CSS, Axios
