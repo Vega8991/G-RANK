@@ -31,7 +31,7 @@ export interface Lobby {
   status: "open" | "pending" | "in_progress" | "completed" | "cancelled";
   createdBy: string | User;
   participants: string[];
-  prizePool?: number;
+  prizePool?: string;
   createdAt: string;
   updatedAt: string;
 }
