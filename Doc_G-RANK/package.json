@@ -1,0 +1,16 @@
+{
+    "name": "g-rank-api",
+    "version": "1.0.0",
+    "description": "OpenAPI specification for the G-RANK backend. You can import it into Postman to generate a collection with sample requests.",
+    "license": "UNLICENSED",
+    
+    "private": true,
+    "main": "index.js",
+    "scripts": {
+        "prestart": "npm install --only=prod",
+        "start": "node index.js"    },
+    "dependencies": {
+        "express": "^4.18.0",
+        "@oas-tools/core": "^3.0.0"
+    }
+}
