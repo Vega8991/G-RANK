@@ -12,7 +12,7 @@ const inputClassName = "w-full bg-[var(--neutral-bg)]/60 border border-[var(--ne
 const inputWithIconClassName = "w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 pr-12 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300";
 
 const features = [
-    { icon: Trophy, text: "Compete in exclusive tournaments" },
+    { icon: Trophy, text: "Compete in exclusive lobbies" },
     { icon: Target, text: "Fair MMR-based matchmaking system" },
     { icon: TrendingUp, text: "Track your progress and statistics" },
 ];
@@ -83,7 +83,7 @@ export default function Login() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        Climb the ranks, compete in tournaments, and prove your dominance against the best players worldwide.
+                        Climb the ranks, compete in lobbies, and prove your dominance against the best players worldwide.
                     </motion.p>
 
                     <motion.div

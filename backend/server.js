@@ -4,8 +4,8 @@ require('dotenv').config();
 
 let connectToDatabase = require('./src/config/database');
 let authRoutes = require('./src/routes/authRoutes');
-let tournamentRoutes = require('./src/routes/tournamentRoutes');
-let tournamentParticipantRoutes = require('./src/routes/tournamentParticipantRoutes');
+let lobbyRoutes = require('./src/routes/lobbyRoutes');
+let lobbyParticipantRoutes = require('./src/routes/lobbyParticipantRoutes');
 let matchResultRoutes = require('./src/routes/matchResultRoutes');
 
 let app = express();
@@ -25,8 +25,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/tournaments', tournamentRoutes);
-app.use('/api/tournament-participants', tournamentParticipantRoutes);
+app.use('/api/lobbies', lobbyRoutes);
+app.use('/api/lobby-participants', lobbyParticipantRoutes);
 app.use('/api/match-results', matchResultRoutes);
 
 app.listen(port, () => {

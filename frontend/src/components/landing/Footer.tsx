@@ -13,7 +13,7 @@ export default function Footer() {
                             <span className="font-extrabold text-lg">G-RANK</span>
                         </div>
                         <p className="text-sm text-[var(--neutral-text-secondary)] max-w-xs">
-                            Pro esports platform with MMR-based matchmaking and competitive tournaments.
+                            Pro esports platform with MMR-based matchmaking and competitive lobbies.
                         </p>
                     </div>
 
