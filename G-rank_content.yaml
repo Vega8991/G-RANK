@@ -3,12 +3,12 @@ info:
   title: G-RANK API
   version: 1.0.0
   description: |
-    Especificacion OpenAPI para el backend de G-RANK.
-    Puedes importarla en Postman para generar una coleccion con ejemplos de peticiones.
+    OpenAPI specification for the G-RANK backend.
+    You can import it into Postman to generate a collection with sample requests.
 
 servers:
   - url: http://localhost:5000
-    description: Servidor local
+    description: Local server
 
 tags:
   - name: Auth
@@ -23,7 +23,7 @@ paths:
       summary: Health check
       responses:
         "200":
-          description: API activa
+          description: API active
           content:
             application/json:
               schema:
@@ -39,7 +39,7 @@ paths:
   /api/auth/register:
     post:
       tags: [Auth]
-      summary: Registrar usuario
+      summary: Register user
       requestBody:
         required: true
         content:
@@ -52,7 +52,7 @@ paths:
               password: "123456"
       responses:
         "201":
-          description: Usuario registrado
+          description: User registered
           content:
             application/json:
               schema:
@@ -63,7 +63,7 @@ paths:
   /api/auth/login:
     post:
       tags: [Auth]
-      summary: Iniciar sesion
+      summary: Sign in
       requestBody:
         required: true
         content:
@@ -75,7 +75,7 @@ paths:
               password: "123456"
       responses:
         "200":
-          description: Login correcto
+          description: Login successful
           content:
             application/json:
               schema:
@@ -85,7 +85,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Correo no verificado
+          description: Email not verified
           content:
             application/json:
               schema:
@@ -99,12 +99,12 @@ paths:
   /api/auth/profile:
     get:
       tags: [Auth]
-      summary: Obtener perfil autenticado
+      summary: Get authenticated profile
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Perfil del usuario
+          description: User profile
           content:
             application/json:
               schema:
@@ -112,7 +112,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Token faltante o invalido
+          description: Missing or invalid token
           content:
             application/json:
               schema:
@@ -121,17 +121,17 @@ paths:
   /api/auth/verify-email:
     get:
       tags: [Auth]
-      summary: Verificar email
+      summary: Verify email
       parameters:
         - in: query
           name: token
           required: true
           schema:
             type: string
-          description: Token de verificacion enviado por email
+          description: Verification token sent by email
       responses:
         "200":
-          description: Email verificado
+          description: Email verified
           content:
             application/json:
               schema:
@@ -147,7 +147,7 @@ paths:
   /api/lobbies:
     post:
       tags: [Lobbies]
-      summary: Crear lobby
+      summary: Create lobby
       security:
         - bearerAuth: []
       requestBody:
@@ -157,8 +157,8 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateLobbyRequest"
             example:
-              name: "Lobby semanal 1v1"
-              description: "Formato competitivo BO1"
+              name: "Weekly 1v1 lobby"
+              description: "Competitive BO1 format"
               game: "pokemon_showdown"
               maxParticipants: 2
               registrationDeadline: "2026-02-25T18:00:00.000Z"
@@ -166,7 +166,7 @@ paths:
               prizePool: 1000
       responses:
         "201":
-          description: Lobby creado
+          description: Lobby created
           content:
             application/json:
               schema:
@@ -178,10 +178,10 @@ paths:
 
     get:
       tags: [Lobbies]
-      summary: Obtener todos los lobbies
+      summary: Get all lobbies
       responses:
         "200":
-          description: Lista de lobbies
+          description: Lobby list
           content:
             application/json:
               schema:
@@ -197,12 +197,12 @@ paths:
   /api/lobbies/my-created:
     get:
       tags: [Lobbies]
-      summary: Obtener lobbies creados por el usuario autenticado
+      summary: Get lobbies created by authenticated user
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Lista de lobbies creados
+          description: Created lobby list
           content:
             application/json:
               schema:
@@ -220,10 +220,10 @@ paths:
   /api/lobbies/sync-counts:
     post:
       tags: [Lobbies]
-      summary: Sincronizar conteo de participantes
+      summary: Sync participant counts
       responses:
         "200":
-          description: Sincronizacion completa
+          description: Synchronization completed
           content:
             application/json:
               schema:
@@ -241,7 +241,7 @@ paths:
   /api/lobbies/{id}:
     get:
       tags: [Lobbies]
-      summary: Obtener lobby por ID
+      summary: Get lobby by ID
       parameters:
         - in: path
           name: id
@@ -250,7 +250,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Lobby encontrado
+          description: Lobby found
           content:
             application/json:
               schema:
@@ -266,7 +266,7 @@ paths:
   /api/lobbies/{id}/status:
     patch:
       tags: [Lobbies]
-      summary: Actualizar estado de lobby
+      summary: Update lobby status
       security:
         - bearerAuth: []
       parameters:
@@ -290,7 +290,7 @@ paths:
               status: "pending"
       responses:
         "200":
-          description: Estado actualizado
+          description: Status updated
           content:
             application/json:
               schema:
@@ -305,7 +305,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "403":
-          description: El usuario no es creador del lobby
+          description: User is not the lobby creator
           content:
             application/json:
               schema:
@@ -316,7 +316,7 @@ paths:
   /api/lobby-participants/register:
     post:
       tags: [Lobby Participants]
-      summary: Registrarse a un lobby
+      summary: Register to a lobby
       security:
         - bearerAuth: []
       requestBody:
@@ -333,7 +333,7 @@ paths:
               lobbyId: "65f0a93c8f4fca1d6c7f0001"
       responses:
         "201":
-          description: Registro exitoso
+          description: Registration successful
           content:
             application/json:
               schema:
@@ -355,12 +355,12 @@ paths:
   /api/lobby-participants/my-lobbies:
     get:
       tags: [Lobby Participants]
-      summary: Obtener lobbies donde estoy registrado
+      summary: Get lobbies I joined
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Lobbies registrados
+          description: Joined lobbies
           content:
             application/json:
               schema:
@@ -378,7 +378,7 @@ paths:
   /api/match-results/submit-replay:
     post:
       tags: [Match Results]
-      summary: Enviar replay para validar resultado y actualizar MMR
+      summary: Submit replay to validate result and update MMR
       security:
         - bearerAuth: []
       requestBody:
@@ -399,7 +399,7 @@ paths:
               replayUrl: "https://replay.pokemonshowdown.com/gen9ou-1234567890"
       responses:
         "201":
-          description: Replay procesado
+          description: Replay processed
           content:
             application/json:
               schema:
@@ -407,7 +407,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "403":
-          description: Usuario no registrado en lobby
+          description: User is not registered in the lobby
           content:
             application/json:
               schema:
@@ -418,7 +418,7 @@ paths:
   /api/match-results/lobby/{lobbyId}:
     get:
       tags: [Match Results]
-      summary: Obtener resultados de un lobby
+      summary: Get lobby results
       parameters:
         - in: path
           name: lobbyId
@@ -427,7 +427,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Resultados del lobby
+          description: Lobby results
           content:
             application/json:
               schema:
@@ -453,19 +453,19 @@ components:
 
   responses:
     BadRequest:
-      description: Solicitud invalida
+      description: Invalid request
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
-      description: No autorizado
+      description: Unauthorized
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
-      description: Recurso no encontrado
+      description: Resource not found
       content:
         application/json:
           schema:
