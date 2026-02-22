@@ -131,7 +131,80 @@ const getMyLobbies = async (req, res) => {
     }
 };
 
+const leaveLobby = async (req, res) => {
+    const session = await mongoose.startSession();
+
+    try {
+        let result;
+        await session.withTransaction(async () => {
+            const userId = req.userId;
+            const { lobbyId } = req.body;
+
+            const lobby = await Lobby.findById(lobbyId).session(session);
+
+            if (!lobby) {
+                throw new Error('LOBBY_NOT_FOUND');
+            }
+
+            if (lobby.status !== 'open') {
+                throw new Error('LOBBY_NOT_OPEN');
+            }
+
+            const participant = await LobbyParticipant.findOneAndDelete({
+                lobbyId: lobbyId,
+                userId: userId
+            }).session(session);
+
+            if (!participant) {
+                throw new Error('NOT_REGISTERED');
+            }
+
+            await Lobby.findByIdAndUpdate(
+                lobbyId,
+                { $inc: { currentParticipants: -1 } },
+                { session: session }
+            );
+
+            result = {
+                success: true,
+                message: 'Left lobby successfully'
+            };
+        });
+
+        return res.status(200).json(result);
+    } catch (error) {
+        const errorCode = error.message || 'UNKNOWN_ERROR';
+        let statusCode = 500;
+        let message = 'Error leaving lobby';
+
+        switch (errorCode) {
+            case 'LOBBY_NOT_FOUND':
+                statusCode = 404;
+                message = 'Lobby not found';
+                break;
+            case 'NOT_REGISTERED':
+                statusCode = 400;
+                message = 'You are not registered in this lobby';
+                break;
+            case 'LOBBY_NOT_OPEN':
+                statusCode = 400;
+                message = 'Cannot leave a lobby that is no longer open';
+                break;
+            default:
+                message = error.message || message;
+        }
+
+        return res.status(statusCode).json({
+            success: false,
+            message: message
+        });
+    } finally {
+        await session.endSession();
+    }
+};
+
 module.exports = {
     registerToLobby,
-    getMyLobbies
+    getMyLobbies,
+    leaveLobby
 };
