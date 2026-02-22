@@ -38,7 +38,7 @@ interface TopPlayer {
 }
 
 interface Counters {
-    tournaments: number;
+    lobbies: number;
     players: number;
     teams: number;
 }
@@ -62,7 +62,7 @@ export default function HeroSection() {
     const loginViewportRef = useViewportPrefetch("login");
     const leaderboardViewportRef = useViewportPrefetch("leaderboard");
 
-    const [counters, setCounters] = useState<Counters>({ tournaments: 0, players: 0, teams: 0 });
+    const [counters, setCounters] = useState<Counters>({ lobbies: 0, players: 0, teams: 0 });
     const mainCardRef = useRef<HTMLDivElement>(null);
     const topFloatRef = useRef<HTMLDivElement>(null);
     const bottomFloatRef = useRef<HTMLDivElement>(null);
@@ -79,13 +79,13 @@ export default function HeroSection() {
 
             setCounters(function (prev) {
                 const next = {
-                    tournaments: Math.round(3 * progress),
+                    lobbies: Math.round(3 * progress),
                     players: Math.round(1200 * progress),
                     teams: Math.round(9 * progress)
                 };
 
                 if (
-                    prev.tournaments === next.tournaments &&
+                    prev.lobbies === next.lobbies &&
                     prev.players === next.players &&
                     prev.teams === next.teams
                 ) {
@@ -184,7 +184,7 @@ export default function HeroSection() {
                             </motion.div>
 
                             <p className="text-xl md:text-2xl text-[var(--neutral-text-secondary)] leading-relaxed max-w-lg">
-                                Join the ultimate competitive platform. Compete in tournaments, climb ranks, and prove you're elite.
+                                Join the ultimate competitive platform. Compete in lobbies, climb ranks, and prove you're elite.
                             </p>
                         </div>
 
@@ -233,8 +233,8 @@ export default function HeroSection() {
                                 icon={Trophy}
                                 iconColorClass="text-[var(--brand-primary)]"
                                 bgColorClass="bg-[var(--brand-primary)]/10"
-                                value={String(counters.tournaments)}
-                                label="Active Tournaments"
+                                value={String(counters.lobbies)}
+                                label="Active Lobbies"
                             />
                             <StatCounter
                                 icon={Users}

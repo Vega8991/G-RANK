@@ -4,14 +4,14 @@ import { motion } from "framer-motion";
 import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus } from "lucide-react";
 import Button from "../components/common/Button";
 import Antigravity from "../components/ui/Antigravity";
-import { createTournament, getAllTournaments, getMyTournaments, registerToTournament, syncParticipantCounts } from "../services/tournamentService";
+import { createLobby, getAllLobbies, getMyLobbies, registerToLobby, syncParticipantCounts } from "../services/lobbyService";
 import { submitReplay } from "../services/matchService";
-import type { MatchResultResponse, Tournament } from "../types";
+import type { MatchResultResponse, Lobby } from "../types";
 
-type UiTournamentStatus = "open" | "pending" | "in_progress" | "completed" | "cancelled" | "unknown";
-type TournamentStatusFilter = "all" | UiTournamentStatus;
+type UiLobbyStatus = "open" | "pending" | "in_progress" | "completed" | "cancelled" | "unknown";
+type LobbyStatusFilter = "all" | UiLobbyStatus;
 
-const STATUS_LABEL: Record<UiTournamentStatus, string> = {
+const STATUS_LABEL: Record<UiLobbyStatus, string> = {
     open: "registering",
     pending: "pending",
     in_progress: "live",
@@ -20,7 +20,7 @@ const STATUS_LABEL: Record<UiTournamentStatus, string> = {
     unknown: "no status"
 };
 
-const STATUS_CLASS: Record<UiTournamentStatus, string> = {
+const STATUS_CLASS: Record<UiLobbyStatus, string> = {
     open: "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)] border-[var(--brand-primary)]/40",
     pending: "bg-[#1F2937]/50 text-[#D1D5DB] border-[#374151]",
     in_progress: "bg-[#2563EB]/25 text-[#7FB3FF] border-[#2563EB]/40",
@@ -29,7 +29,7 @@ const STATUS_CLASS: Record<UiTournamentStatus, string> = {
     unknown: "bg-[#1F2937]/45 text-[#E5E7EB] border-[#374151]"
 };
 
-const FILTERS: Array<{ value: TournamentStatusFilter; label: string }> = [
+const FILTERS: Array<{ value: LobbyStatusFilter; label: string }> = [
     { value: "all", label: "All" },
     { value: "open", label: "Registering" },
     { value: "pending", label: "Pending" },
@@ -60,21 +60,21 @@ function estimatePrize(maxParticipants: number): string {
     return "$" + base.toLocaleString("en-US");
 }
 
-function normalizeStatus(status: unknown): UiTournamentStatus {
+function normalizeStatus(status: unknown): UiLobbyStatus {
     if (status === "open" || status === "pending" || status === "in_progress" || status === "completed" || status === "cancelled") {
         return status;
     }
     return "unknown";
 }
 
-function hasTournamentId(value: unknown): value is Tournament {
+function hasLobbyId(value: unknown): value is Lobby {
     if (!value || typeof value !== "object") return false;
     const record = value as { _id?: unknown };
     return typeof record._id === "string" && record._id.length > 0;
 }
 
 function getCardAction(
-    status: UiTournamentStatus,
+    status: UiLobbyStatus,
     isRegistered: boolean,
     isFull: boolean
 ): { label: string; variant: "primary" | "outline"; disabled: boolean } {
@@ -107,7 +107,7 @@ function getCardAction(
     return { label: "Coming soon", variant: "outline", disabled: true };
 }
 
-function TournamentsBackground() {
+function LobbiesBackground() {
     return (
         <div className="fixed inset-0 z-0 w-screen h-screen overflow-hidden">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(220,20,60,0.24),transparent_38%),radial-gradient(circle_at_78%_20%,rgba(220,20,60,0.12),transparent_32%),radial-gradient(circle_at_50%_100%,rgba(220,20,60,0.22),transparent_48%)]" />
@@ -137,19 +137,19 @@ function TournamentsBackground() {
     );
 }
 
-export default function Tournaments() {
-    const [tournaments, setTournaments] = useState<Tournament[]>([]);
-    const [myTournaments, setMyTournaments] = useState<Tournament[]>([]);
+export default function Lobbies() {
+    const [lobbies, setLobbies] = useState<Lobby[]>([]);
+    const [myLobbies, setMyLobbies] = useState<Lobby[]>([]);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [registrationDeadline, setRegistrationDeadline] = useState("");
     const [matchDateTime, setMatchDateTime] = useState("");
-    const [selectedTournament, setSelectedTournament] = useState("");
+    const [selectedLobby, setSelectedLobby] = useState("");
     const [replayUrl, setReplayUrl] = useState("");
     const [message, setMessage] = useState("");
     const [result, setResult] = useState<MatchResultResponse | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedStatus, setSelectedStatus] = useState<TournamentStatusFilter>("all");
+    const [selectedStatus, setSelectedStatus] = useState<LobbyStatusFilter>("all");
     const registrationDeadlineRef = useRef<HTMLInputElement>(null);
     const matchDateTimeRef = useRef<HTMLInputElement>(null);
     const createPanelRef = useRef<HTMLDivElement>(null);
@@ -160,7 +160,7 @@ export default function Tournaments() {
 
     async function loadData() {
         setMessage("");
-        setTournaments([]);
+        setLobbies([]);
 
         try {
             await syncParticipantCounts();
@@ -169,24 +169,24 @@ export default function Tournaments() {
         }
 
         try {
-            const allTournamentsResponse = await getAllTournaments();
-            const safeTournaments = Array.isArray(allTournamentsResponse.tournaments)
-                ? allTournamentsResponse.tournaments.filter(hasTournamentId)
+            const allLobbiesResponse = await getAllLobbies();
+            const safeLobbies = Array.isArray(allLobbiesResponse.lobbies)
+                ? allLobbiesResponse.lobbies.filter(hasLobbyId)
                 : [];
-            setTournaments(safeTournaments);
+            setLobbies(safeLobbies);
         } catch (err) {
-            console.error("Error loading tournaments:", err);
+            console.error("Error loading lobbies:", err);
             setMessage(getErrorMessage(err));
         }
 
         try {
-            const myResponse = await getMyTournaments();
-            const safeMyTournaments = Array.isArray(myResponse.tournaments)
-                ? myResponse.tournaments.filter(hasTournamentId)
+            const myResponse = await getMyLobbies();
+            const safeMyLobbies = Array.isArray(myResponse.lobbies)
+                ? myResponse.lobbies.filter(hasLobbyId)
                 : [];
-            setMyTournaments(safeMyTournaments);
+            setMyLobbies(safeMyLobbies);
         } catch (err) {
-            setMyTournaments([]);
+            setMyLobbies([]);
         }
     }
 
@@ -194,8 +194,8 @@ export default function Tournaments() {
         e.preventDefault();
 
         try {
-            await createTournament(name, description, registrationDeadline, matchDateTime);
-            setMessage("Tournament created successfully");
+            await createLobby(name, description, registrationDeadline, matchDateTime);
+            setMessage("Lobby created successfully");
             setName("");
             setDescription("");
             setRegistrationDeadline("");
@@ -208,7 +208,7 @@ export default function Tournaments() {
 
     async function handleRegister(id: string) {
         try {
-            await registerToTournament(id);
+            await registerToLobby(id);
             setMessage("Successfully registered");
             void loadData();
         } catch (err) {
@@ -220,7 +220,7 @@ export default function Tournaments() {
         e.preventDefault();
 
         try {
-            const res = await submitReplay(selectedTournament, replayUrl);
+            const res = await submitReplay(selectedLobby, replayUrl);
             setResult(res);
             setMessage("Replay submitted successfully");
             setReplayUrl("");
@@ -230,39 +230,39 @@ export default function Tournaments() {
         }
     }
 
-    const filteredTournaments = useMemo(function () {
+    const filteredLobbies = useMemo(function () {
         const normalizedQuery = searchQuery.trim().toLowerCase();
 
-        return tournaments.filter(function (tournament) {
-            if (!hasTournamentId(tournament)) return false;
-            const normalizedStatus = normalizeStatus(tournament.status);
+        return lobbies.filter(function (lobby) {
+            if (!hasLobbyId(lobby)) return false;
+            const normalizedStatus = normalizeStatus(lobby.status);
             const matchByStatus = selectedStatus === "all" || normalizedStatus === selectedStatus;
             if (!matchByStatus) return false;
 
             if (!normalizedQuery) return true;
-            const safeName = String(tournament.name || "").toLowerCase();
-            const safeDescription = String(tournament.description || "").toLowerCase();
+            const safeName = String(lobby.name || "").toLowerCase();
+            const safeDescription = String(lobby.description || "").toLowerCase();
             return (
                 safeName.includes(normalizedQuery) ||
                 safeDescription.includes(normalizedQuery)
             );
         });
-    }, [tournaments, searchQuery, selectedStatus]);
+    }, [lobbies, searchQuery, selectedStatus]);
 
-    const myTournamentIds = useMemo(function () {
+    const myLobbyIds = useMemo(function () {
         return new Set(
-            myTournaments
-                .filter(hasTournamentId)
-                .map(function (tournament) {
-                    return tournament._id;
+            myLobbies
+                .filter(hasLobbyId)
+                .map(function (lobby) {
+                    return lobby._id;
                 })
         );
-    }, [myTournaments]);
+    }, [myLobbies]);
     const hasActiveFilter = selectedStatus !== "all" || searchQuery.trim().length > 0;
 
     return (
         <div className="relative bg-[var(--neutral-bg)] text-white min-h-[calc(100vh-64px)]">
-            <TournamentsBackground />
+            <LobbiesBackground />
 
             <div className="relative z-10 pointer-events-auto">
                 <section className="max-w-[1512px] mx-auto px-6 md:px-20 pt-12 pb-16 space-y-8">
@@ -273,9 +273,9 @@ export default function Tournaments() {
                         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <div>
-                            <h1 className="text-4xl md:text-5xl font-extrabold mb-2">Tournaments</h1>
+                            <h1 className="text-4xl md:text-5xl font-extrabold mb-2">Lobbies</h1>
                             <p className="text-[var(--neutral-text-secondary)] text-lg">
-                                Browse, register, and compete in the most intense G-RANK tournaments.
+                                Browse, register, and compete in the most intense G-RANK lobbies.
                             </p>
                         </div>
 
@@ -286,7 +286,7 @@ export default function Tournaments() {
                             }}
                         >
                             <Plus size={18} />
-                            Create Tournament
+                            Create Lobby
                         </Button>
                     </motion.div>
 
@@ -300,7 +300,7 @@ export default function Tournaments() {
                             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--neutral-text-muted)]" />
                             <input
                                 className="w-full h-12 rounded-xl bg-[var(--neutral-surface)]/50 border border-[var(--neutral-border)]/50 pl-11 pr-4 text-sm outline-none transition-all duration-300 focus:border-[var(--brand-primary)]/50 focus:ring-2 focus:ring-[var(--brand-primary)]/20"
-                                placeholder="Search tournaments..."
+                                placeholder="Search lobbies..."
                                 value={searchQuery}
                                 onChange={function (event) {
                                     setSearchQuery(event.target.value);
@@ -343,18 +343,18 @@ export default function Tournaments() {
                     <div
                         className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
                     >
-                        {filteredTournaments.map(function (tournament) {
-                            const normalizedStatus = normalizeStatus(tournament.status);
-                            const safeName = tournament.name || "Untitled tournament";
-                            const safeDescription = tournament.description || "No description available.";
-                            const safeCurrentParticipants = Number(tournament.currentParticipants) || 0;
-                            const safeMaxParticipants = Number(tournament.maxParticipants) || 0;
-                            const isRegistered = myTournamentIds.has(tournament._id);
+                        {filteredLobbies.map(function (lobby) {
+                            const normalizedStatus = normalizeStatus(lobby.status);
+                            const safeName = lobby.name || "Untitled lobby";
+                            const safeDescription = lobby.description || "No description available.";
+                            const safeCurrentParticipants = Number(lobby.currentParticipants) || 0;
+                            const safeMaxParticipants = Number(lobby.maxParticipants) || 0;
+                            const isRegistered = myLobbyIds.has(lobby._id);
                             const isFull = safeMaxParticipants > 0 && safeCurrentParticipants >= safeMaxParticipants;
                             const action = getCardAction(normalizedStatus, isRegistered, isFull);
                             return (
                                 <article
-                                    key={tournament._id}
+                                    key={lobby._id}
                                     className="group rounded-2xl border border-[var(--neutral-border)]/50 bg-[var(--neutral-surface)]/35 backdrop-blur-lg p-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-[var(--brand-primary)]/10"
                                 >
                                     <div className="flex items-start justify-between gap-3 mb-4">
@@ -376,7 +376,7 @@ export default function Tournaments() {
                                     <div className="space-y-3 mb-5">
                                         <div className="flex items-center gap-2 text-sm text-[var(--neutral-text-secondary)]">
                                             <Calendar size={14} />
-                                            <span>{formatDate(tournament.matchDateTime)}</span>
+                                            <span>{formatDate(lobby.matchDateTime)}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-[var(--neutral-text-secondary)]">
                                             <Users size={14} />
@@ -396,7 +396,7 @@ export default function Tournaments() {
                                         disabled={action.disabled}
                                         onClick={function () {
                                             if (action.label === "Register now") {
-                                                void handleRegister(tournament._id);
+                                                void handleRegister(lobby._id);
                                             }
                                         }}
                                     >
@@ -407,9 +407,9 @@ export default function Tournaments() {
                         })}
                     </div>
 
-                    {filteredTournaments.length === 0 && (
+                    {filteredLobbies.length === 0 && (
                         <div className="rounded-xl border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/55 px-6 py-8 text-center text-[var(--neutral-text-secondary)]">
-                            <p>No tournaments match your current filters.</p>
+                            <p>No lobbies match your current filters.</p>
                             {hasActiveFilter && (
                                 <button
                                     className="mt-3 text-sm font-semibold text-[var(--brand-primary)] hover:text-white transition-colors"
@@ -446,15 +446,15 @@ export default function Tournaments() {
                             viewport={{ amount: 0.2 }}
                             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                         >
-                            <h2 className="text-2xl font-bold mb-1">Create tournament</h2>
+                            <h2 className="text-2xl font-bold mb-1">Create lobby</h2>
                             <p className="text-sm text-[var(--neutral-text-secondary)] mb-6">
-                                Set up a new competitive tournament in seconds.
+                                Set up a new competitive lobby in seconds.
                             </p>
 
                             <form onSubmit={handleCreate} className="space-y-4">
                                 <input
                                     type="text"
-                                    placeholder="Tournament name"
+                                    placeholder="Lobby name"
                                     value={name}
                                     onChange={function (event) {
                                         setName(event.target.value);
@@ -515,7 +515,7 @@ export default function Tournaments() {
                                     />
                                 </label>
 
-                                <Button className="w-full py-2.5">Create tournament</Button>
+                                <Button className="w-full py-2.5">Create lobby</Button>
                             </form>
                         </motion.div>
 
@@ -533,18 +533,18 @@ export default function Tournaments() {
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <select
-                                    value={selectedTournament}
+                                    value={selectedLobby}
                                     onChange={function (event) {
-                                        setSelectedTournament(event.target.value);
+                                        setSelectedLobby(event.target.value);
                                     }}
                                     className="w-full h-11 rounded-lg bg-[var(--neutral-bg)]/50 border border-[var(--neutral-border)]/50 px-3 text-sm outline-none focus:border-[var(--brand-primary)]/50"
                                     required
                                 >
-                                    <option value="">Select a tournament</option>
-                                    {myTournaments.map(function (tournament) {
+                                    <option value="">Select a lobby</option>
+                                    {myLobbies.map(function (lobby) {
                                         return (
-                                            <option key={tournament._id} value={tournament._id}>
-                                                {tournament.name}
+                                            <option key={lobby._id} value={lobby._id}>
+                                                {lobby.name}
                                             </option>
                                         );
                                     })}

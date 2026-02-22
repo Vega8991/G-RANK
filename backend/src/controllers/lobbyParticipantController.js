@@ -1,35 +1,35 @@
-const Tournament = require('../models/tournamentModel');
-const TournamentParticipant = require('../models/tournamentParticipantModel');
+const Lobby = require('../models/lobbyModel');
+const LobbyParticipant = require('../models/lobbyParticipantModel');
 const User = require('../models/userModel');
 const mongoose = require('mongoose');
 
-const registerToTournament = async (req, res) => {
+const registerToLobby = async (req, res) => {
     const session = await mongoose.startSession();
 
     try {
         let result;
         await session.withTransaction(async () => {
             const userId = req.userId;
-            const { tournamentId } = req.body;
+            const { lobbyId } = req.body;
 
-            const tournament = await Tournament.findById(tournamentId).session(session);
+            const lobby = await Lobby.findById(lobbyId).session(session);
 
-            if (!tournament) {
-                throw new Error('TOURNAMENT_NOT_FOUND');
+            if (!lobby) {
+                throw new Error('LOBBY_NOT_FOUND');
             }
 
-            if (tournament.status !== 'open') {
-                throw new Error('TOURNAMENT_NOT_OPEN');
+            if (lobby.status !== 'open') {
+                throw new Error('LOBBY_NOT_OPEN');
             }
 
             const currentDate = new Date();
 
-            if (currentDate > tournament.registrationDeadline) {
+            if (currentDate > lobby.registrationDeadline) {
                 throw new Error('DEADLINE_PASSED');
             }
 
-            const existingParticipant = await TournamentParticipant.findOne({
-                tournamentId: tournamentId,
+            const existingParticipant = await LobbyParticipant.findOne({
+                lobbyId: lobbyId,
                 userId: userId
             }).session(session);
 
@@ -43,10 +43,10 @@ const registerToTournament = async (req, res) => {
                 throw new Error('USER_NOT_FOUND');
             }
 
-            const updatedTournament = await Tournament.findOneAndUpdate(
+            const updatedLobby = await Lobby.findOneAndUpdate(
                 {
-                    _id: tournamentId,
-                    currentParticipants: { $lt: tournament.maxParticipants }
+                    _id: lobbyId,
+                    currentParticipants: { $lt: lobby.maxParticipants }
                 },
                 {
                     $inc: { currentParticipants: 1 }
@@ -57,19 +57,19 @@ const registerToTournament = async (req, res) => {
                 }
             );
 
-            if (!updatedTournament) {
-                throw new Error('TOURNAMENT_FULL');
+            if (!updatedLobby) {
+                throw new Error('LOBBY_FULL');
             }
 
-            const newParticipant = await TournamentParticipant.create([{
-                tournamentId: tournamentId,
+            const newParticipant = await LobbyParticipant.create([{
+                lobbyId: lobbyId,
                 userId: userId,
                 mmrBefore: user.mmr
             }], { session: session });
 
             result = {
                 success: true,
-                message: 'Registered to tournament successfully',
+                message: 'Registered to lobby successfully',
                 participant: newParticipant[0]
             };
         });
@@ -78,22 +78,22 @@ const registerToTournament = async (req, res) => {
     } catch (error) {
         const errorCode = error.message || 'UNKNOWN_ERROR';
         let statusCode = 500;
-        let message = 'Error registering to tournament';
+        let message = 'Error registering to lobby';
 
         switch (errorCode) {
-            case 'TOURNAMENT_NOT_FOUND':
+            case 'LOBBY_NOT_FOUND':
             case 'USER_NOT_FOUND':
                 statusCode = 404;
-                message = errorCode === 'TOURNAMENT_NOT_FOUND' ? 'Tournament not found' : 'User not found';
+                message = errorCode === 'LOBBY_NOT_FOUND' ? 'Lobby not found' : 'User not found';
                 break;
             case 'ALREADY_REGISTERED':
-            case 'TOURNAMENT_FULL':
-            case 'TOURNAMENT_NOT_OPEN':
+            case 'LOBBY_FULL':
+            case 'LOBBY_NOT_OPEN':
             case 'DEADLINE_PASSED':
                 statusCode = 400;
-                message = errorCode === 'ALREADY_REGISTERED' ? 'You are already registered in this tournament' :
-                    errorCode === 'TOURNAMENT_FULL' ? 'Tournament is full' :
-                        errorCode === 'TOURNAMENT_NOT_OPEN' ? 'Tournament is not open for registration' :
+                message = errorCode === 'ALREADY_REGISTERED' ? 'You are already registered in this lobby' :
+                    errorCode === 'LOBBY_FULL' ? 'Lobby is full' :
+                        errorCode === 'LOBBY_NOT_OPEN' ? 'Lobby is not open for registration' :
                             'Registration deadline has passed';
                 break;
             default:
@@ -109,29 +109,29 @@ const registerToTournament = async (req, res) => {
     }
 };
 
-const getMyTournaments = async (req, res) => {
+const getMyLobbies = async (req, res) => {
     try {
         const userId = req.userId;
 
-        const participants = await TournamentParticipant.find({ userId })
-            .populate('tournamentId');
+        const participants = await LobbyParticipant.find({ userId })
+            .populate('lobbyId');
 
-        const tournaments = participants.map(p => p.tournamentId);
+        const lobbies = participants.map(p => p.lobbyId);
 
         return res.status(200).json({
             success: true,
-            tournaments: tournaments
+            lobbies: lobbies
         });
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error fetching tournaments',
+            message: 'Error fetching lobbies',
             error: error.message
         });
     }
 };
 
 module.exports = {
-    registerToTournament,
-    getMyTournaments
+    registerToLobby,
+    getMyLobbies
 };
