@@ -58,7 +58,7 @@ const createLobby = async function (req, res) {
             registrationDeadline: registrationDeadline,
             matchDateTime: matchDateTime,
             maxParticipants: req.body.maxParticipants || 2,
-            prizePool: req.body.prizePool || 0,
+            prizePool: req.body.prizePool || '',
             createdBy: userId
         };
 
@@ -81,7 +81,8 @@ const createLobby = async function (req, res) {
 
 const getAllLobbies = async (req, res) => {
     try {
-        const lobbies = await Lobby.find();
+        const lobbies = await Lobby.find()
+            .populate('createdBy', 'username');
 
         return res.status(200).json({
             success: true,
