@@ -1,0 +1,756 @@
+openapi: 3.0.3
+info:
+  title: G-RANK API
+  version: 1.0.0
+  description: |
+    Especificacion OpenAPI para el backend de G-RANK.
+    Puedes importarla en Postman para generar una coleccion con ejemplos de peticiones.
+
+servers:
+  - url: http://localhost:5000
+    description: Servidor local
+
+tags:
+  - name: Auth
+  - name: Lobbies
+  - name: Lobby Participants
+  - name: Match Results
+
+paths:
+  /:
+    get:
+      tags: [Auth]
+      summary: Health check
+      responses:
+        "200":
+          description: API activa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  version:
+                    type: string
+                  status:
+                    type: string
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrar usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+            example:
+              username: "proplayer"
+              email: "proplayer@example.com"
+              password: "123456"
+      responses:
+        "201":
+          description: Usuario registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "proplayer@example.com"
+              password: "123456"
+      responses:
+        "200":
+          description: Login correcto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Correo no verificado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                message: "Please verify your email before logging in"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/auth/profile:
+    get:
+      tags: [Auth]
+      summary: Obtener perfil autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Perfil del usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Token faltante o invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verificar email
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+          description: Token de verificacion enviado por email
+      responses:
+        "200":
+          description: Email verificado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/lobbies:
+    post:
+      tags: [Lobbies]
+      summary: Crear lobby
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLobbyRequest"
+            example:
+              name: "Lobby semanal 1v1"
+              description: "Formato competitivo BO1"
+              game: "pokemon_showdown"
+              maxParticipants: 2
+              registrationDeadline: "2026-02-25T18:00:00.000Z"
+              matchDateTime: "2026-02-25T20:00:00.000Z"
+              prizePool: 1000
+      responses:
+        "201":
+          description: Lobby creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LobbyCreateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    get:
+      tags: [Lobbies]
+      summary: Obtener todos los lobbies
+      responses:
+        "200":
+          description: Lista de lobbies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Lobby"
+
+  /api/lobbies/my-created:
+    get:
+      tags: [Lobbies]
+      summary: Obtener lobbies creados por el usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista de lobbies creados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Lobby"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/lobbies/sync-counts:
+    post:
+      tags: [Lobbies]
+      summary: Sincronizar conteo de participantes
+      responses:
+        "200":
+          description: Sincronizacion completa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  totalLobbies:
+                    type: integer
+                  updated:
+                    type: integer
+
+  /api/lobbies/{id}:
+    get:
+      tags: [Lobbies]
+      summary: Obtener lobby por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lobby encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lobby:
+                    $ref: "#/components/schemas/Lobby"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/lobbies/{id}/status:
+    patch:
+      tags: [Lobbies]
+      summary: Actualizar estado de lobby
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [open, pending, completed, cancelled]
+            example:
+              status: "pending"
+      responses:
+        "200":
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  lobby:
+                    $ref: "#/components/schemas/Lobby"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: El usuario no es creador del lobby
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/lobby-participants/register:
+    post:
+      tags: [Lobby Participants]
+      summary: Registrarse a un lobby
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lobbyId]
+              properties:
+                lobbyId:
+                  type: string
+            example:
+              lobbyId: "65f0a93c8f4fca1d6c7f0001"
+      responses:
+        "201":
+          description: Registro exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  participant:
+                    $ref: "#/components/schemas/LobbyParticipant"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/lobby-participants/my-lobbies:
+    get:
+      tags: [Lobby Participants]
+      summary: Obtener lobbies donde estoy registrado
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lobbies registrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Lobby"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/match-results/submit-replay:
+    post:
+      tags: [Match Results]
+      summary: Enviar replay para validar resultado y actualizar MMR
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lobbyId, replayUrl]
+              properties:
+                lobbyId:
+                  type: string
+                replayUrl:
+                  type: string
+                  format: uri
+            example:
+              lobbyId: "65f0a93c8f4fca1d6c7f0001"
+              replayUrl: "https://replay.pokemonshowdown.com/gen9ou-1234567890"
+      responses:
+        "201":
+          description: Replay procesado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitReplayResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Usuario no registrado en lobby
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/match-results/lobby/{lobbyId}:
+    get:
+      tags: [Match Results]
+      summary: Obtener resultados de un lobby
+      parameters:
+        - in: path
+          name: lobbyId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resultados del lobby
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lobby:
+                    $ref: "#/components/schemas/Lobby"
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MatchResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Solicitud invalida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: No autorizado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+        error:
+          type: string
+
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        rank:
+          type: string
+        mmr:
+          type: number
+        winRate:
+          type: number
+        winStreak:
+          type: number
+        wins:
+          type: number
+        losses:
+          type: number
+        role:
+          type: string
+          enum: [USER, ADMIN]
+
+    RegisterRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RegisterResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserPublic"
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserPublic"
+
+    ProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/UserPublic"
+
+    Lobby:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        game:
+          type: string
+          enum: [pokemon_showdown]
+        description:
+          type: string
+        registrationDeadline:
+          type: string
+          format: date-time
+        matchDateTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [open, pending, completed, cancelled]
+        maxParticipants:
+          type: integer
+        currentParticipants:
+          type: integer
+        prizePool:
+          type: number
+        createdBy:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                _id:
+                  type: string
+                username:
+                  type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateLobbyRequest:
+      type: object
+      required: [name, description, registrationDeadline, matchDateTime]
+      properties:
+        name:
+          type: string
+        game:
+          type: string
+          default: pokemon_showdown
+        description:
+          type: string
+        registrationDeadline:
+          type: string
+          format: date-time
+        matchDateTime:
+          type: string
+          format: date-time
+        maxParticipants:
+          type: integer
+          default: 2
+        prizePool:
+          type: number
+          default: 0
+
+    LobbyCreateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        lobby:
+          $ref: "#/components/schemas/Lobby"
+
+    LobbyParticipant:
+      type: object
+      properties:
+        _id:
+          type: string
+        lobbyId:
+          type: string
+        userId:
+          type: string
+        registrationDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [registered, played, verified, disqualified]
+        hasSubmittedResults:
+          type: boolean
+        finalPosition:
+          type: integer
+          nullable: true
+        mmrBefore:
+          type: number
+        mmrAfter:
+          type: number
+          nullable: true
+        mmrChange:
+          type: number
+
+    MatchResult:
+      type: object
+      properties:
+        _id:
+          type: string
+        lobbyId:
+          type: string
+        replayUrl:
+          type: string
+          format: uri
+        winnerId:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                _id:
+                  type: string
+                username:
+                  type: string
+                rank:
+                  type: string
+                mmr:
+                  type: number
+        loserId:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                _id:
+                  type: string
+                username:
+                  type: string
+                rank:
+                  type: string
+                mmr:
+                  type: number
+        replayData:
+          type: object
+          additionalProperties: true
+        verified:
+          type: boolean
+        submittedBy:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                _id:
+                  type: string
+                username:
+                  type: string
+        submittedAt:
+          type: string
+          format: date-time
+
+    PlayerResultInfo:
+      type: object
+      properties:
+        username:
+          type: string
+        mmrBefore:
+          type: number
+        mmrChange:
+          type: number
+        mmrAfter:
+          type: number
+        newRank:
+          type: string
+        wins:
+          type: integer
+        losses:
+          type: integer
+        winRate:
+          type: number
+        winStreak:
+          type: integer
+
+    SubmitReplayResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        result:
+          $ref: "#/components/schemas/MatchResult"
+        winner:
+          $ref: "#/components/schemas/PlayerResultInfo"
+        loser:
+          $ref: "#/components/schemas/PlayerResultInfo"

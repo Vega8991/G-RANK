@@ -1,0 +1,452 @@
+{
+  "info": {
+    "_postman_id": "607ddd53-4af4-4f5c-a87e-760fd775d1ae",
+    "name": "G-RANK API",
+    "description": "Coleccion Postman para probar endpoints del backend G-RANK.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /",
+          "id": "32ecc9bc-b216-4bc9-a390-1dfe0a360229",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "a370fb20-2c4d-4c4b-9b13-b8c5dab97c6b"
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/register",
+          "id": "979e8ee2-ee6d-455e-9480-93c6332fee11",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"proplayer\",\n  \"email\": \"proplayer@example.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/login",
+          "id": "50067b41-bc5d-4d47-9683-b7aad07b96a0",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"proplayer@example.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/profile",
+          "id": "2a6a0835-75e5-4098-91d7-c21c58901a65",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/verify-email?token=...",
+          "id": "f61e4483-97ef-400e-a784-b735236bf5ff",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-email?token=REEMPLAZA_TOKEN",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-email"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "REEMPLAZA_TOKEN"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "96d4692f-a68b-4e00-85f2-c79b1c708ba6"
+    },
+    {
+      "name": "Lobbies",
+      "item": [
+        {
+          "name": "POST /api/lobbies",
+          "id": "dbe67007-4b5e-4b5a-b4a1-8add2f6b206a",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lobby semanal 1v1\",\n  \"description\": \"Formato competitivo BO1\",\n  \"game\": \"pokemon_showdown\",\n  \"maxParticipants\": 2,\n  \"registrationDeadline\": \"2026-02-25T18:00:00.000Z\",\n  \"matchDateTime\": \"2026-02-25T20:00:00.000Z\",\n  \"prizePool\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lobbies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobbies"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/lobbies",
+          "id": "edd2eecd-7314-4e22-b53d-1cc1b32782fa",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lobbies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobbies"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/lobbies/my-created",
+          "id": "849899db-4dc1-44eb-93fa-83fd4322ad1d",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lobbies/my-created",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobbies",
+                "my-created"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/lobbies/sync-counts",
+          "id": "63a8ea65-cc92-4b54-849e-41ea72b5bf71",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lobbies/sync-counts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobbies",
+                "sync-counts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/lobbies/:id",
+          "id": "ec8fde62-d2e3-419d-a7a0-897ccfab1a22",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lobbies/{{lobbyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobbies",
+                "{{lobbyId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /api/lobbies/:id/status",
+          "id": "a9281d92-1686-423e-92dc-eb3cdd74f3ab",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"pending\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lobbies/{{lobbyId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobbies",
+                "{{lobbyId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "3f863912-b777-4e85-bc6c-ef53f2a8e7a1"
+    },
+    {
+      "name": "Lobby Participants",
+      "item": [
+        {
+          "name": "POST /api/lobby-participants/register",
+          "id": "6a503f73-bfaf-4bf8-b954-e4b53e92b6a9",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lobbyId\": \"{{lobbyId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lobby-participants/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobby-participants",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/lobby-participants/my-lobbies",
+          "id": "aca7a4ab-d1c5-4d7f-a277-afee9caca335",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lobby-participants/my-lobbies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lobby-participants",
+                "my-lobbies"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "b38be9c5-3898-482c-bc47-675ca52b33e4"
+    },
+    {
+      "name": "Match Results",
+      "item": [
+        {
+          "name": "POST /api/match-results/submit-replay",
+          "id": "09df9ca1-8c40-422b-aa05-d14d158b9680",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lobbyId\": \"{{lobbyId}}\",\n  \"replayUrl\": \"https://replay.pokemonshowdown.com/gen9ou-1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/match-results/submit-replay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "match-results",
+                "submit-replay"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/match-results/lobby/:lobbyId",
+          "id": "d145d700-4d97-4b19-94c0-7872f45a81db",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/match-results/lobby/{{lobbyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "match-results",
+                "lobby",
+                "{{lobbyId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "f77ae63b-a025-4ec4-b085-17c114cc5a23"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "id": "fbbb7d48-58a3-4ded-8f2e-a16915ea7be4",
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "id": "a0d7100a-a60e-40c2-9f78-9dbfcf711ace",
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "id": "bd5844fa-3773-4222-b9c2-7f2cef9107a8",
+      "key": "lobbyId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

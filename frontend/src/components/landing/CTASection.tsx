@@ -5,7 +5,7 @@ import Button from "../common/Button";
 
 const benefits: string[] = [
     "Competitive ranking system",
-    "Weekly tournament schedule",
+    "Weekly lobby schedule",
     "Real-time match tracking",
     "Detailed performance stats",
     "Global leaderboards",
@@ -81,9 +81,9 @@ export default function CTASection() {
                                 <Zap size={18} /> Create Free Account
                             </Button>
                         </NavLink>
-                        <NavLink to="/tournaments">
+                        <NavLink to="/lobbies">
                             <Button variant="outline" className="px-8 py-3">
-                                <Trophy size={18} /> View Tournaments
+                                <Trophy size={18} /> View Lobbies
                             </Button>
                         </NavLink>
                     </motion.div>

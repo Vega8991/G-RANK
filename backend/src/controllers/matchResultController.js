@@ -1,6 +1,6 @@
 const MatchResult = require('../models/matchResultModel');
-const Tournament = require('../models/tournamentModel');
-const TournamentParticipant = require('../models/tournamentParticipantModel');
+const Lobby = require('../models/lobbyModel');
+const LobbyParticipant = require('../models/lobbyParticipantModel');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const { calculateMMRChange, updateUserStats } = require('../services/mmrService');
@@ -12,19 +12,19 @@ const submitReplay = async function (req, res) {
         let result;
         await session.withTransaction(async () => {
             const userId = req.userId;
-            const { tournamentId, replayUrl } = req.body;
+            const { lobbyId, replayUrl } = req.body;
 
-            const tournament = await Tournament.findById(tournamentId).session(session);
-            if (!tournament) {
-                throw new Error('TOURNAMENT_NOT_FOUND');
+            const lobby = await Lobby.findById(lobbyId).session(session);
+            if (!lobby) {
+                throw new Error('LOBBY_NOT_FOUND');
             }
 
-            if (tournament.status !== 'pending') {
-                throw new Error('TOURNAMENT_NOT_PENDING');
+            if (lobby.status !== 'pending') {
+                throw new Error('LOBBY_NOT_PENDING');
             }
 
-            const participant = await TournamentParticipant.findOne({
-                tournamentId: tournamentId,
+            const participant = await LobbyParticipant.findOne({
+                lobbyId: lobbyId,
                 userId: userId
             }).session(session);
 
@@ -59,8 +59,8 @@ const submitReplay = async function (req, res) {
                 throw new Error('WINNER_NOT_FOUND');
             }
 
-            const allParticipants = await TournamentParticipant.find({
-                tournamentId: tournamentId
+            const allParticipants = await LobbyParticipant.find({
+                lobbyId: lobbyId
             }).populate('userId', 'username mmr').session(session);
 
             if (allParticipants.length !== 2) {
@@ -83,7 +83,7 @@ const submitReplay = async function (req, res) {
             }
 
             const matchResult = await MatchResult.create([{
-                tournamentId: tournamentId,
+                lobbyId: lobbyId,
                 replayUrl: replayUrl,
                 winnerId: winnerId,
                 loserId: loserId,
@@ -118,8 +118,8 @@ const submitReplay = async function (req, res) {
             participant.hasSubmittedResults = true;
             await participant.save({ session: session });
 
-            tournament.status = 'completed';
-            await tournament.save({ session: session });
+            lobby.status = 'completed';
+            await lobby.save({ session: session });
 
             result = {
                 success: true,
@@ -158,21 +158,21 @@ const submitReplay = async function (req, res) {
         let message = 'Error submitting replay';
 
         switch (true) {
-            case errorCode === 'TOURNAMENT_NOT_FOUND':
+            case errorCode === 'LOBBY_NOT_FOUND':
                 statusCode = 404;
-                message = 'Tournament not found';
+                message = 'Lobby not found';
                 break;
-            case errorCode === 'TOURNAMENT_NOT_PENDING':
+            case errorCode === 'LOBBY_NOT_PENDING':
                 statusCode = 400;
-                message = 'Tournament is not in pending status';
+                message = 'Lobby is not in pending status';
                 break;
             case errorCode === 'NOT_REGISTERED':
                 statusCode = 403;
-                message = 'You are not registered in this tournament';
+                message = 'You are not registered in this lobby';
                 break;
             case errorCode === 'ALREADY_SUBMITTED':
                 statusCode = 400;
-                message = 'You have already submitted results for this tournament';
+                message = 'You have already submitted results for this lobby';
                 break;
             case errorCode === 'INVALID_REPLAY_URL':
                 statusCode = 400;
@@ -185,11 +185,11 @@ const submitReplay = async function (req, res) {
             case errorCode.startsWith('INVALID_PARTICIPANT_COUNT'):
                 statusCode = 400;
                 const count = errorCode.split(':')[1];
-                message = `Tournament must have exactly 2 participants. Found: ${count}`;
+                message = `Lobby must have exactly 2 participants. Found: ${count}`;
                 break;
             case errorCode === 'PARTICIPANTS_MISMATCH':
                 statusCode = 400;
-                message = 'Could not match replay participants with tournament participants';
+                message = 'Could not match replay participants with lobby participants';
                 break;
             default:
                 message = error.message || message;
@@ -204,33 +204,33 @@ const submitReplay = async function (req, res) {
     }
 };
 
-const getTournamentResults = async function (req, res) {
+const getLobbyResults = async function (req, res) {
     try {
-        const tournamentId = req.params.tournamentId;
+        const lobbyId = req.params.lobbyId;
 
-        const tournament = await Tournament.findById(tournamentId);
-        if (!tournament) {
+        const lobby = await Lobby.findById(lobbyId);
+        if (!lobby) {
             return res.status(404).json({
                 success: false,
-                message: 'Tournament not found'
+                message: 'Lobby not found'
             });
         }
 
-        const results = await MatchResult.find({ tournamentId: tournamentId })
+        const results = await MatchResult.find({ lobbyId: lobbyId })
             .populate('winnerId', 'username rank mmr')
             .populate('loserId', 'username rank mmr')
             .populate('submittedBy', 'username');
 
         return res.status(200).json({
             success: true,
-            tournament: tournament,
+            lobby: lobby,
             results: results
         });
 
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error fetching tournament results',
+            message: 'Error fetching lobby results',
             error: error.message
         });
     }
@@ -238,5 +238,5 @@ const getTournamentResults = async function (req, res) {
 
 module.exports = {
     submitReplay,
-    getTournamentResults
+    getLobbyResults
 };

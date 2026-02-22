@@ -4,6 +4,6 @@ const matchResultController = require('../controllers/matchResultController');
 const { verifyToken } = require('../middlewares/authMiddleware');
 
 router.post('/submit-replay', verifyToken, matchResultController.submitReplay);
-router.get('/tournament/:tournamentId', matchResultController.getTournamentResults);
+router.get('/lobby/:lobbyId', matchResultController.getLobbyResults);
 
 module.exports = router;
