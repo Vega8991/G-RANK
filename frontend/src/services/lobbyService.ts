@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { API_URL } from '../config/api';
 import { getToken } from './authService';
-import type { Tournament } from '../types';
+import type { Lobby } from '../types';
 
 function requireToken(): string {
     const token = getToken();
@@ -19,18 +19,18 @@ function getAuthHeaders(token: string) {
     };
 }
 
-export const createTournament = async (
+export const createLobby = async (
     title: string,
     description: string,
     registrationDeadline?: string,
     matchDateTime?: string
-): Promise<{ tournament: Tournament }> => {
+): Promise<{ lobby: Lobby }> => {
     const token = requireToken();
 
     const deadlineDate = registrationDeadline ? new Date(registrationDeadline) : new Date(Date.now() + 24 * 60 * 60 * 1000);
     const matchDate = matchDateTime ? new Date(matchDateTime) : new Date(Date.now() + 48 * 60 * 60 * 1000);
 
-    const response = await axios.post(`${API_URL}/tournaments`, {
+    const response = await axios.post(`${API_URL}/lobbies`, {
         name: title,
         description,
         game: 'pokemon_showdown',
@@ -42,30 +42,30 @@ export const createTournament = async (
     return response.data;
 };
 
-export const getAllTournaments = async (): Promise<{ tournaments: Tournament[] }> => {
-    const response = await axios.get(`${API_URL}/tournaments`);
+export const getAllLobbies = async (): Promise<{ lobbies: Lobby[] }> => {
+    const response = await axios.get(`${API_URL}/lobbies`);
     return response.data;
 };
 
-export const registerToTournament = async (tournamentId: string): Promise<{ message: string }> => {
+export const registerToLobby = async (lobbyId: string): Promise<{ message: string }> => {
     const token = requireToken();
 
-    const response = await axios.post(`${API_URL}/tournament-participants/register`, {
-        tournamentId
+    const response = await axios.post(`${API_URL}/lobby-participants/register`, {
+        lobbyId
     }, getAuthHeaders(token));
 
     return response.data;
 };
 
-export const getMyTournaments = async (): Promise<{ tournaments: Tournament[] }> => {
+export const getMyLobbies = async (): Promise<{ lobbies: Lobby[] }> => {
     const token = requireToken();
 
-    const response = await axios.get(`${API_URL}/tournament-participants/my-tournaments`, getAuthHeaders(token));
+    const response = await axios.get(`${API_URL}/lobby-participants/my-lobbies`, getAuthHeaders(token));
 
     return response.data;
 };
 
 export const syncParticipantCounts = async (): Promise<{ message: string }> => {
-    const response = await axios.post(`${API_URL}/tournaments/sync-counts`);
+    const response = await axios.post(`${API_URL}/lobbies/sync-counts`);
     return response.data;
 };

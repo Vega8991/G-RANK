@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const tournamentSchema = new mongoose.Schema({
+const lobbySchema = new mongoose.Schema({
     name: {
         type: String,
         required: true
@@ -51,6 +51,6 @@ const tournamentSchema = new mongoose.Schema({
     }
 });
 
-const Tournament = mongoose.model('Tournament', tournamentSchema);
+const Lobby = mongoose.model('Lobby', lobbySchema);
 
-module.exports = Tournament;
+module.exports = Lobby;

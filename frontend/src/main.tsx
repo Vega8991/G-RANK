@@ -11,7 +11,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Tournaments = lazy(() => import("./pages/Tournaments"));
+const Lobbies = lazy(() => import("./pages/Lobbies"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -29,7 +29,7 @@ const publicRoutes: RouteObject[] = [
 
 const protectedRoutes: RouteObject[] = [
   { path: "/dashboard", element: withSuspense(<Dashboard />) },
-  { path: "/tournaments", element: withSuspense(<Tournaments />) },
+  { path: "/lobbies", element: withSuspense(<Lobbies />) },
   { path: "/leaderboard", element: withSuspense(<Leaderboard />) },
   { path: "/profile/:username", element: withSuspense(<Profile />) }
 ];
