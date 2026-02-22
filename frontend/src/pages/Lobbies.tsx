@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AxiosError } from "axios";
 import { motion } from "framer-motion";
-import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus } from "lucide-react";
+import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus, LogOut } from "lucide-react";
 import Button from "../components/common/Button";
 import Antigravity from "../components/ui/Antigravity";
-import { createLobby, getAllLobbies, getMyLobbies, registerToLobby, syncParticipantCounts } from "../services/lobbyService";
+import { createLobby, getAllLobbies, getMyLobbies, registerToLobby, leaveLobby, syncParticipantCounts } from "../services/lobbyService";
 import { submitReplay } from "../services/matchService";
 import type { MatchResultResponse, Lobby } from "../types";
 
@@ -53,11 +53,6 @@ function formatDate(value: string): string {
         day: "numeric",
         year: "numeric"
     });
-}
-
-function estimatePrize(maxParticipants: number): string {
-    const base = Math.max(1500, maxParticipants * 300);
-    return "$" + base.toLocaleString("en-US");
 }
 
 function normalizeStatus(status: unknown): UiLobbyStatus {
@@ -142,6 +137,9 @@ export default function Lobbies() {
     const [myLobbies, setMyLobbies] = useState<Lobby[]>([]);
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
+    const [maxParticipants, setMaxParticipants] = useState("");
+    const [hasPrize, setHasPrize] = useState(false);
+    const [prizePool, setPrizePool] = useState("");
     const [registrationDeadline, setRegistrationDeadline] = useState("");
     const [matchDateTime, setMatchDateTime] = useState("");
     const [selectedLobby, setSelectedLobby] = useState("");
@@ -194,10 +192,20 @@ export default function Lobbies() {
         e.preventDefault();
 
         try {
-            await createLobby(name, description, registrationDeadline, matchDateTime);
+            await createLobby(
+                name,
+                description,
+                parseInt(maxParticipants) || 0,
+                hasPrize ? prizePool : "",
+                registrationDeadline,
+                matchDateTime
+            );
             setMessage("Lobby created successfully");
             setName("");
             setDescription("");
+            setMaxParticipants("");
+            setHasPrize(false);
+            setPrizePool("");
             setRegistrationDeadline("");
             setMatchDateTime("");
             void loadData();
@@ -210,6 +218,16 @@ export default function Lobbies() {
         try {
             await registerToLobby(id);
             setMessage("Successfully registered");
+            void loadData();
+        } catch (err) {
+            setMessage(getErrorMessage(err));
+        }
+    }
+
+    async function handleLeave(id: string) {
+        try {
+            await leaveLobby(id);
+            setMessage("Left lobby successfully");
             void loadData();
         } catch (err) {
             setMessage(getErrorMessage(err));
@@ -357,17 +375,20 @@ export default function Lobbies() {
                                     key={lobby._id}
                                     className="group rounded-2xl border border-[var(--neutral-border)]/50 bg-[var(--neutral-surface)]/35 backdrop-blur-lg p-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-[var(--brand-primary)]/10"
                                 >
-                                    <div className="flex items-start justify-between gap-3 mb-4">
+                                    <div className="flex items-start justify-between gap-3 mb-1">
                                         <h3 className="text-2xl font-bold leading-tight">{safeName}</h3>
                                         <span
                                             className={
-                                                "capitalize text-[10px] font-bold px-2.5 py-1 rounded-full border " +
+                                                "capitalize text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 " +
                                                 STATUS_CLASS[normalizedStatus]
                                             }
                                         >
                                             {STATUS_LABEL[normalizedStatus]}
                                         </span>
                                     </div>
+                                    <p className="text-xs text-[var(--neutral-text-muted)] mb-4">
+                                        by {typeof lobby.createdBy === "object" && lobby.createdBy !== null ? lobby.createdBy.username : "Unknown"}
+                                    </p>
 
                                     <p className="text-sm text-[var(--neutral-text-secondary)] min-h-12 mb-5">
                                         {safeDescription}
@@ -384,24 +405,38 @@ export default function Lobbies() {
                                                 {safeCurrentParticipants}/{safeMaxParticipants} participants
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm font-semibold text-[var(--brand-primary)]">
+                                        <div className={"flex items-center gap-2 text-sm font-semibold " + (lobby.prizePool ? "text-[var(--brand-primary)]" : "text-[var(--neutral-text-muted)]")}>
                                             <Trophy size={14} />
-                                            <span>{estimatePrize(safeMaxParticipants)}</span>
+                                            <span>{lobby.prizePool || "No prize"}</span>
                                         </div>
                                     </div>
 
-                                    <Button
-                                        variant={action.variant}
-                                        className="w-full py-2.5"
-                                        disabled={action.disabled}
-                                        onClick={function () {
-                                            if (action.label === "Register now") {
-                                                void handleRegister(lobby._id);
-                                            }
-                                        }}
-                                    >
-                                        {action.label}
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant={action.variant}
+                                            className={"py-2.5 " + (isRegistered && normalizedStatus === "open" ? "flex-1" : "w-full")}
+                                            disabled={action.disabled}
+                                            onClick={function () {
+                                                if (action.label === "Register now") {
+                                                    void handleRegister(lobby._id);
+                                                }
+                                            }}
+                                        >
+                                            {action.label}
+                                        </Button>
+                                        {isRegistered && normalizedStatus === "open" && (
+                                            <Button
+                                                variant="outline"
+                                                className="py-2.5 px-4 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
+                                                onClick={function () {
+                                                    void handleLeave(lobby._id);
+                                                }}
+                                            >
+                                                <LogOut size={16} />
+                                                Leave
+                                            </Button>
+                                        )}
+                                    </div>
                                 </article>
                             );
                         })}
@@ -472,6 +507,61 @@ export default function Lobbies() {
                                     className="w-full h-11 rounded-lg bg-[var(--neutral-bg)]/50 border border-[var(--neutral-border)]/50 px-3 text-sm outline-none focus:border-[var(--brand-primary)]/50"
                                     required
                                 />
+
+                                <div className="relative">
+                                    <Users size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--neutral-text-muted)] pointer-events-none" />
+                                    <input
+                                        type="number"
+                                        placeholder="Max participants"
+                                        min={2}
+                                        value={maxParticipants}
+                                        onChange={function (event) {
+                                            setMaxParticipants(event.target.value);
+                                        }}
+                                        className="w-full h-11 rounded-lg bg-[var(--neutral-bg)]/50 border border-[var(--neutral-border)]/50 pl-9 pr-3 text-sm outline-none focus:border-[var(--brand-primary)]/50"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between h-11 rounded-lg bg-[var(--neutral-bg)]/50 border border-[var(--neutral-border)]/50 px-3">
+                                    <div className="flex items-center gap-2 text-sm text-[var(--neutral-text-secondary)]">
+                                        <Trophy size={16} />
+                                        <span>Has prize?</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={hasPrize}
+                                        onClick={function () { setHasPrize(!hasPrize); }}
+                                        className={
+                                            "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/50 " +
+                                            (hasPrize ? "bg-[var(--brand-primary)]" : "bg-[var(--neutral-border)]")
+                                        }
+                                    >
+                                        <span
+                                            className={
+                                                "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md ring-0 transition-transform duration-300 " +
+                                                (hasPrize ? "translate-x-5" : "translate-x-0")
+                                            }
+                                        />
+                                    </button>
+                                </div>
+
+                                {hasPrize && (
+                                    <div className="relative">
+                                        <Trophy size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--brand-primary)] pointer-events-none" />
+                                        <input
+                                            type="text"
+                                            placeholder="Prize (e.g. $500, Steam gift card...)"
+                                            value={prizePool}
+                                            onChange={function (event) {
+                                                setPrizePool(event.target.value);
+                                            }}
+                                            className="w-full h-11 rounded-lg bg-[var(--neutral-bg)]/50 border border-[var(--brand-primary)]/30 pl-9 pr-3 text-sm outline-none focus:border-[var(--brand-primary)]/60"
+                                            required
+                                        />
+                                    </div>
+                                )}
 
                                 <label className="flex items-center gap-3 text-sm text-[var(--neutral-text-secondary)]">
                                     <Calendar

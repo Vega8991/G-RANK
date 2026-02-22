@@ -22,6 +22,8 @@ function getAuthHeaders(token: string) {
 export const createLobby = async (
     title: string,
     description: string,
+    maxParticipants: number,
+    prizePool: string,
     registrationDeadline?: string,
     matchDateTime?: string
 ): Promise<{ lobby: Lobby }> => {
@@ -34,7 +36,8 @@ export const createLobby = async (
         name: title,
         description,
         game: 'pokemon_showdown',
-        maxParticipants: 2,
+        maxParticipants,
+        prizePool,
         registrationDeadline: deadlineDate,
         matchDateTime: matchDate
     }, getAuthHeaders(token));
@@ -51,6 +54,16 @@ export const registerToLobby = async (lobbyId: string): Promise<{ message: strin
     const token = requireToken();
 
     const response = await axios.post(`${API_URL}/lobby-participants/register`, {
+        lobbyId
+    }, getAuthHeaders(token));
+
+    return response.data;
+};
+
+export const leaveLobby = async (lobbyId: string): Promise<{ message: string }> => {
+    const token = requireToken();
+
+    const response = await axios.post(`${API_URL}/lobby-participants/leave`, {
         lobbyId
     }, getAuthHeaders(token));
 
