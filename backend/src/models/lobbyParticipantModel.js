@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-const tournamentParticipantSchema = new mongoose.Schema({
-    tournamentId: {
+const lobbyParticipantSchema = new mongoose.Schema({
+    lobbyId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tournament',
+        ref: 'Lobby',
         required: true
     },
     userId: {
@@ -42,8 +42,8 @@ const tournamentParticipantSchema = new mongoose.Schema({
     }
 });
 
-tournamentParticipantSchema.index({ tournamentId: 1, userId: 1 }, { unique: true });
+lobbyParticipantSchema.index({ lobbyId: 1, userId: 1 }, { unique: true });
 
-const TournamentParticipant = mongoose.model('TournamentParticipant', tournamentParticipantSchema);
+const LobbyParticipant = mongoose.model('LobbyParticipant', lobbyParticipantSchema);
 
-module.exports = TournamentParticipant;
+module.exports = LobbyParticipant;

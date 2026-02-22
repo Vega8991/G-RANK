@@ -1,7 +1,7 @@
-const Tournament = require('../models/tournamentModel');
-const TournamentParticipant = require('../models/tournamentParticipantModel');
+const Lobby = require('../models/lobbyModel');
+const LobbyParticipant = require('../models/lobbyParticipantModel');
 
-const createTournament = async function (req, res) {
+const createLobby = async function (req, res) {
     try {
         const userId = req.userId;
 
@@ -51,7 +51,7 @@ const createTournament = async function (req, res) {
             });
         }
 
-        const tournamentData = {
+        const lobbyData = {
             name: req.body.name,
             game: req.body.game || 'pokemon_showdown',
             description: req.body.description,
@@ -62,109 +62,109 @@ const createTournament = async function (req, res) {
             createdBy: userId
         };
 
-        const newTournament = await Tournament.create(tournamentData);
+        const newLobby = await Lobby.create(lobbyData);
 
         return res.status(201).json({
             success: true,
-            message: 'Tournament created successfully',
-            tournament: newTournament
+            message: 'Lobby created successfully',
+            lobby: newLobby
         });
 
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error creating tournament',
+            message: 'Error creating lobby',
             error: error.message
         });
     }
 };
 
-const getAllTournaments = async (req, res) => {
+const getAllLobbies = async (req, res) => {
     try {
-        const tournaments = await Tournament.find();
+        const lobbies = await Lobby.find();
 
         return res.status(200).json({
             success: true,
-            tournaments: tournaments
+            lobbies: lobbies
         });
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error fetching tournaments',
+            message: 'Error fetching lobbies',
             error: error.message
         });
     }
 };
 
 
-const getTournamentById = async function (req, res) {
+const getLobbyById = async function (req, res) {
     try {
-        const tournamentId = req.params.id;
+        const lobbyId = req.params.id;
 
-        const tournament = await Tournament.findById(tournamentId)
+        const lobby = await Lobby.findById(lobbyId)
             .populate('createdBy', 'username');
 
-        if (!tournament) {
+        if (!lobby) {
             return res.status(404).json({
                 success: false,
-                message: 'Tournament not found'
+                message: 'Lobby not found'
             });
         }
 
         return res.status(200).json({
             success: true,
-            tournament: tournament
+            lobby: lobby
         });
 
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error fetching tournament',
+            message: 'Error fetching lobby',
             error: error.message
         });
     }
 };
 
-const getMyCreatedTournaments = async function (req, res) {
+const getMyCreatedLobbies = async function (req, res) {
     try {
         const userId = req.userId;
 
-        const tournaments = await Tournament.find({ createdBy: userId })
+        const lobbies = await Lobby.find({ createdBy: userId })
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
-            tournaments: tournaments
+            lobbies: lobbies
         });
 
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error fetching your tournaments',
+            message: 'Error fetching your lobbies',
             error: error.message
         });
     }
 };
 
-const updateTournamentStatus = async function (req, res) {
+const updateLobbyStatus = async function (req, res) {
     try {
         const userId = req.userId;
-        const tournamentId = req.params.id;
+        const lobbyId = req.params.id;
         const { status } = req.body;
 
-        const tournament = await Tournament.findById(tournamentId);
+        const lobby = await Lobby.findById(lobbyId);
 
-        if (!tournament) {
+        if (!lobby) {
             return res.status(404).json({
                 success: false,
-                message: 'Tournament not found'
+                message: 'Lobby not found'
             });
         }
 
-        if (tournament.createdBy.toString() !== userId) {
+        if (lobby.createdBy.toString() !== userId) {
             return res.status(403).json({
                 success: false,
-                message: 'Only the tournament creator can update its status'
+                message: 'Only the lobby creator can update its status'
             });
         }
 
@@ -176,19 +176,19 @@ const updateTournamentStatus = async function (req, res) {
             });
         }
 
-        tournament.status = status;
-        await tournament.save();
+        lobby.status = status;
+        await lobby.save();
 
         return res.status(200).json({
             success: true,
-            message: 'Tournament status updated successfully',
-            tournament: tournament
+            message: 'Lobby status updated successfully',
+            lobby: lobby
         });
 
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error updating tournament status',
+            message: 'Error updating lobby status',
             error: error.message
         });
     }
@@ -196,25 +196,25 @@ const updateTournamentStatus = async function (req, res) {
 
 const syncParticipantCounts = async function (req, res) {
     try {
-        const tournaments = await Tournament.find();
+        const lobbies = await Lobby.find();
         let updatedCount = 0;
 
-        for (const tournament of tournaments) {
-            const actualCount = await TournamentParticipant.countDocuments({
-                tournamentId: tournament._id
+        for (const lobby of lobbies) {
+            const actualCount = await LobbyParticipant.countDocuments({
+                lobbyId: lobby._id
             });
 
-            if (tournament.currentParticipants !== actualCount) {
-                tournament.currentParticipants = actualCount;
-                await tournament.save();
+            if (lobby.currentParticipants !== actualCount) {
+                lobby.currentParticipants = actualCount;
+                await lobby.save();
                 updatedCount++;
             }
         }
 
         return res.status(200).json({
             success: true,
-            message: `Synchronized ${updatedCount} tournament(s)`,
-            totalTournaments: tournaments.length,
+            message: `Synchronized ${updatedCount} lobby(s)`,
+            totalLobbies: lobbies.length,
             updated: updatedCount
         });
 
@@ -229,10 +229,10 @@ const syncParticipantCounts = async function (req, res) {
 
 
 module.exports = {
-    createTournament,
-    getAllTournaments,
-    getTournamentById,
-    getMyCreatedTournaments,
-    updateTournamentStatus,
+    createLobby,
+    getAllLobbies,
+    getLobbyById,
+    getMyCreatedLobbies,
+    updateLobbyStatus,
     syncParticipantCounts
 };

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const matchResultSchema = new mongoose.Schema({
-    tournamentId: {
+    lobbyId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Tournament',
+        ref: 'Lobby',
         required: true
     },
     replayUrl: {

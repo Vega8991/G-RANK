@@ -39,8 +39,8 @@ const RANKS: RankItem[] = [
 const FEATURES: FeatureItem[] = [
     {
         icon: Trophy,
-        title: "Weekly Tournaments",
-        desc: "Compete in structured tournaments with prize pools. Track brackets, schedules, and results in real-time.",
+        title: "Weekly Lobbies",
+        desc: "Compete in structured lobbies with prize pools. Track brackets, schedules, and results in real-time.",
         color: "var(--brand-primary)"
     },
     {
@@ -64,7 +64,7 @@ const FEATURES: FeatureItem[] = [
     {
         icon: Users,
         title: "Team Management",
-        desc: "Create or join teams, coordinate strategies, and compete together in team tournaments.",
+        desc: "Create or join teams, coordinate strategies, and compete together in team lobbies.",
         color: "#0EA5E9"
     },
     {
@@ -77,7 +77,7 @@ const FEATURES: FeatureItem[] = [
 
 const BENEFITS = [
     "Competitive ranking system",
-    "Weekly tournament schedule",
+    "Weekly lobby schedule",
     "Real-time match tracking",
     "Detailed performance stats",
     "Global leaderboards",
@@ -111,7 +111,7 @@ function LandingBackground() {
     );
 }
 
-function getPrefetchProps(route: "register" | "tournaments") {
+function getPrefetchProps(route: "register" | "lobbies") {
     return {
         onMouseEnter: function () { prefetchRoute(route); },
         onFocus: function () { prefetchRoute(route); },
@@ -304,10 +304,10 @@ function FeaturesInlineSection() {
 
 interface CTAInlineSectionProps {
     registerViewportRef: React.RefCallback<HTMLAnchorElement>;
-    tournamentsViewportRef: React.RefCallback<HTMLAnchorElement>;
+    lobbiesViewportRef: React.RefCallback<HTMLAnchorElement>;
 }
 
-function CTAInlineSection({ registerViewportRef, tournamentsViewportRef }: CTAInlineSectionProps) {
+function CTAInlineSection({ registerViewportRef, lobbiesViewportRef }: CTAInlineSectionProps) {
     return (
         <section className="relative py-20 md:py-28 px-4 md:px-20 overflow-hidden">
             <div className="max-w-[1512px] mx-auto relative z-10">
@@ -377,9 +377,9 @@ function CTAInlineSection({ registerViewportRef, tournamentsViewportRef }: CTAIn
                                 <Zap size={18} /> Create Free Account
                             </Button>
                         </NavLink>
-                        <NavLink to="/tournaments" {...getPrefetchProps("tournaments")} ref={tournamentsViewportRef}>
+                        <NavLink to="/lobbies" {...getPrefetchProps("lobbies")} ref={lobbiesViewportRef}>
                             <Button variant="outline" className="px-8 py-3">
-                                <Trophy size={18} /> View Tournaments
+                                <Trophy size={18} /> View Lobbies
                             </Button>
                         </NavLink>
                     </motion.div>
@@ -409,7 +409,7 @@ function FooterInlineSection() {
                             <span className="font-extrabold text-lg transition-colors duration-300 group-hover:text-[var(--brand-primary)]">G-RANK</span>
                         </div>
                         <p className="text-sm text-[var(--neutral-text-secondary)] max-w-xs leading-relaxed">
-                            Pro esports platform with MMR-based matchmaking and competitive tournaments.
+                            Pro esports platform with MMR-based matchmaking and competitive lobbies.
                         </p>
                     </div>
 
@@ -449,7 +449,7 @@ function FooterInlineSection() {
 
 export default function LandingPage() {
     const registerViewportRef = useViewportPrefetch("register");
-    const tournamentsViewportRef = useViewportPrefetch("tournaments");
+    const lobbiesViewportRef = useViewportPrefetch("lobbies");
 
     const [selectedRankName, setSelectedRankName] = useState<string>(RANKS[4].name);
 
@@ -479,7 +479,7 @@ export default function LandingPage() {
 
                 <CTAInlineSection
                     registerViewportRef={registerViewportRef}
-                    tournamentsViewportRef={tournamentsViewportRef}
+                    lobbiesViewportRef={lobbiesViewportRef}
                 />
 
                 <FooterInlineSection />

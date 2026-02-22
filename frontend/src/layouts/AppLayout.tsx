@@ -15,13 +15,13 @@ function getLinkClass(isActive: boolean): string {
 }
 
 export default function AppLayout() {
-    const tournamentsViewportRef = useViewportPrefetch("tournaments");
+    const lobbiesViewportRef = useViewportPrefetch("lobbies");
     const leaderboardViewportRef = useViewportPrefetch("leaderboard");
     const dashboardViewportRef = useViewportPrefetch("dashboard");
     const loginViewportRef = useViewportPrefetch("login");
     const registerViewportRef = useViewportPrefetch("register");
 
-    function getPrefetchProps(route: "login" | "register" | "leaderboard" | "tournaments" | "dashboard") {
+    function getPrefetchProps(route: "login" | "register" | "leaderboard" | "lobbies" | "dashboard") {
         return {
             onMouseEnter: () => prefetchRoute(route),
             onFocus: () => prefetchRoute(route),
@@ -49,8 +49,8 @@ export default function AppLayout() {
                                 <NavLink to="/" className={({ isActive }) => getLinkClass(isActive)}>
                                     <Home size={16} /> Home
                                 </NavLink>
-                                <NavLink to="/tournaments" className={({ isActive }) => getLinkClass(isActive)} {...getPrefetchProps("tournaments")} ref={tournamentsViewportRef}>
-                                    <Trophy size={16} /> Tournaments
+                                <NavLink to="/lobbies" className={({ isActive }) => getLinkClass(isActive)} {...getPrefetchProps("lobbies")} ref={lobbiesViewportRef}>
+                                    <Trophy size={16} /> Lobbies
                                 </NavLink>
                                 <NavLink to="/leaderboard" className={({ isActive }) => getLinkClass(isActive)} {...getPrefetchProps("leaderboard")} ref={leaderboardViewportRef}>
                                     <Crown size={16} /> Leaderboard

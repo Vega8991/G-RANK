@@ -48,7 +48,7 @@ export default function Dashboard() {
             <p>Rank: {user.rank}</p>
             <p>Wins: {userStats.wins} | Losses: {userStats.losses}</p>
             <p>Winrate%: {userStats.winRate}%</p>
-            <button onClick={() => navigate("/tournaments")}>Tournaments</button>
+            <button onClick={() => navigate("/lobbies")}>Lobbies</button>
             <button onClick={handleLogout}>Logout</button>
         </div>
     );

@@ -19,7 +19,7 @@ export interface AuthStatus {
   userRole: string | null;
 }
 
-export interface Tournament {
+export interface Lobby {
   _id: string;
   name: string;
   description: string;
@@ -36,8 +36,8 @@ export interface Tournament {
   updatedAt: string;
 }
 
-export interface TournamentListResponse {
-  tournaments: Tournament[];
+export interface LobbyListResponse {
+  lobbies: Lobby[];
 }
 
 export interface MmrChange {
@@ -56,7 +56,7 @@ export interface MatchPlayer {
 export interface MatchResult {
   winner: MatchPlayer;
   loser: MatchPlayer;
-  tournament: string;
+  lobby: string;
   replayUrl: string;
 }
 
