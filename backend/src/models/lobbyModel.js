@@ -37,8 +37,8 @@ const lobbySchema = new mongoose.Schema({
         default: 0
     },
     prizePool: {
-        type: Number,
-        default: 0
+        type: String,
+        default: ''
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
