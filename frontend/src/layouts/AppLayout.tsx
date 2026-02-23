@@ -32,7 +32,13 @@ export default function AppLayout() {
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white relative">
             <Suspense fallback={null}>
-                <TargetCursor spinDuration={2.8} hideDefaultCursor parallaxOn hoverDuration={0.6} />
+                <TargetCursor
+                    spinDuration={2.8}
+                    hideDefaultCursor
+                    parallaxOn
+                    hoverDuration={0.6}
+                    targetSelector="a, button, input, select, textarea, [role='button']"
+                />
             </Suspense>
             <nav className="border-b border-[#2a2a2a] sticky top-0 z-40 backdrop-blur-lg bg-[#0a0a0a]/95">
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20">
