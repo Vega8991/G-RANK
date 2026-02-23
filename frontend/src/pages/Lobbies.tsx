@@ -3,7 +3,7 @@ import { AxiosError } from "axios";
 import { motion } from "framer-motion";
 import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus, LogOut } from "lucide-react";
 import Button from "../components/common/Button";
-import Antigravity from "../components/ui/Antigravity";
+import Squares from "../components/ui/Squares";
 import { createLobby, getAllLobbies, getMyLobbies, registerToLobby, leaveLobby, syncParticipantCounts } from "../services/lobbyService";
 import { submitReplay } from "../services/matchService";
 import type { MatchResultResponse, Lobby } from "../types";
@@ -105,33 +105,19 @@ function getCardAction(
 function LobbiesBackground() {
     return (
         <div className="fixed inset-0 z-0 w-screen h-screen overflow-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(220,20,60,0.24),transparent_38%),radial-gradient(circle_at_78%_20%,rgba(220,20,60,0.12),transparent_32%),radial-gradient(circle_at_50%_100%,rgba(220,20,60,0.22),transparent_48%)]" />
-            <div className="absolute left-1/2 top-[-260px] -translate-x-1/2 opacity-45 pointer-events-auto">
-                <div style={{ width: "1080px", height: "1080px", position: "relative" }}>
-                    <Antigravity
-                        count={130}
-                        magnetRadius={19}
-                        ringRadius={8}
-                        waveSpeed={0.3}
-                        waveAmplitude={1.5}
-                        particleSize={1}
-                        lerpSpeed={0.25}
-                        color="#db1414"
-                        autoAnimate={true}
-                        particleVariance={0.6}
-                        rotationSpeed={0}
-                        depthFactor={0.3}
-                        pulseSpeed={3}
-                        particleShape="capsule"
-                        fieldStrength={5}
-                    />
-                </div>
-            </div>
+            <Squares
+                direction="diagonal"
+                speed={0.3}
+                borderColor="#db141433"
+                squareSize={48}
+                hoverFillColor="#db141440"
+                className="absolute inset-0 w-full h-full"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(220,20,60,0.24),transparent_38%),radial-gradient(circle_at_78%_20%,rgba(220,20,60,0.12),transparent_42%)]" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-[var(--neutral-bg)]" />
         </div>
     );
 }
-
 export default function Lobbies() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
     const [myLobbies, setMyLobbies] = useState<Lobby[]>([]);
