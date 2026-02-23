@@ -67,12 +67,18 @@ const Squares: React.FC<SquaresProps> = ({
             ctx.fillRect(squareX, squareY, squareSize, squareSize);
           }
 
+          // Glowing grid lines
+          ctx.save();
+          ctx.shadowColor = borderColor as string;
+          ctx.shadowBlur = 6;
+          ctx.lineWidth = 0.8;
           ctx.strokeStyle = borderColor;
           ctx.strokeRect(squareX, squareY, squareSize, squareSize);
+          ctx.restore();
         }
       }
 
-      // Radial vignette gradient matching G-RANK dark theme
+      // Subtle vignette - much more transparent so the grid shines through
       const gradient = ctx.createRadialGradient(
         canvas.width / 2,
         canvas.height / 2,
@@ -82,7 +88,8 @@ const Squares: React.FC<SquaresProps> = ({
         Math.sqrt(canvas.width ** 2 + canvas.height ** 2) / 2
       );
       gradient.addColorStop(0, 'rgba(10, 10, 10, 0)');
-      gradient.addColorStop(1, 'rgba(10, 10, 10, 0.92)');
+      gradient.addColorStop(0.6, 'rgba(10, 10, 10, 0.1)');
+      gradient.addColorStop(1, 'rgba(10, 10, 10, 0.55)');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     };
@@ -149,7 +156,7 @@ const Squares: React.FC<SquaresProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className={`w-full h-full block ${className}`}
+      className={`w-full h-full ${className}`}
     />
   );
 };
