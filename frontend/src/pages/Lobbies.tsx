@@ -107,10 +107,10 @@ function LobbiesBackground() {
         <div className="fixed inset-0 z-0 w-screen h-screen overflow-hidden">
             <Squares
                 direction="diagonal"
-                speed={0.3}
-                borderColor="#db141433"
-                squareSize={48}
-                hoverFillColor="#db141440"
+                speed={0.6}
+                borderColor="#db141488"
+                squareSize={36}
+                hoverFillColor="#db141480"
                 className="absolute inset-0 w-full h-full"
             />
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(220,20,60,0.24),transparent_38%),radial-gradient(circle_at_78%_20%,rgba(220,20,60,0.12),transparent_42%)]" />
