@@ -4,7 +4,7 @@ import { Crown, Home, Trophy, User, Shield, ChevronDown } from "lucide-react";
 import { prefetchRoute } from "../services/routePrefetch";
 import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
 
-const CustomCursor = lazy(() => import("../components/cursor/CustomCursor"));
+const TargetCursor = lazy(() => import("../components/cursor/TargetCursor"));
 
 const baseLinkClass = "flex items-center gap-2 text-sm font-medium transition-colors pb-1 border-b-2";
 const activeLinkClass = "border-[#dc143c] text-white";
@@ -32,7 +32,13 @@ export default function AppLayout() {
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white relative">
             <Suspense fallback={null}>
-                <CustomCursor />
+                <TargetCursor
+                    spinDuration={2.8}
+                    hideDefaultCursor
+                    parallaxOn
+                    hoverDuration={0.6}
+                    targetSelector="a, button, input, select, textarea, [role='button']"
+                />
             </Suspense>
             <nav className="border-b border-[#2a2a2a] sticky top-0 z-40 backdrop-blur-lg bg-[#0a0a0a]/95">
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20">
