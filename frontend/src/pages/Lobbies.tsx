@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AxiosError } from "axios";
 import { motion } from "framer-motion";
 import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus, LogOut } from "lucide-react";
 import Button from "../components/common/Button";
-import Antigravity from "../components/ui/Antigravity";
+import Silk from "../components/ui/Silk";
 import { createLobby, getAllLobbies, getMyLobbies, registerToLobby, leaveLobby, syncParticipantCounts } from "../services/lobbyService";
 import { submitReplay } from "../services/matchService";
 import type { MatchResultResponse, Lobby } from "../types";
@@ -102,35 +102,129 @@ function getCardAction(
     return { label: "Coming soon", variant: "outline", disabled: true };
 }
 
-function LobbiesBackground() {
+const LobbiesBackground = memo(function LobbiesBackground() {
     return (
         <div className="fixed inset-0 z-0 w-screen h-screen overflow-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(220,20,60,0.24),transparent_38%),radial-gradient(circle_at_78%_20%,rgba(220,20,60,0.12),transparent_32%),radial-gradient(circle_at_50%_100%,rgba(220,20,60,0.22),transparent_48%)]" />
-            <div className="absolute left-1/2 top-[-260px] -translate-x-1/2 opacity-45 pointer-events-auto">
-                <div style={{ width: "1080px", height: "1080px", position: "relative" }}>
-                    <Antigravity
-                        count={130}
-                        magnetRadius={19}
-                        ringRadius={8}
-                        waveSpeed={0.3}
-                        waveAmplitude={1.5}
-                        particleSize={1}
-                        lerpSpeed={0.25}
-                        color="#db1414"
-                        autoAnimate={true}
-                        particleVariance={0.6}
-                        rotationSpeed={0}
-                        depthFactor={0.3}
-                        pulseSpeed={3}
-                        particleShape="capsule"
-                        fieldStrength={5}
-                    />
-                </div>
-            </div>
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-[var(--neutral-bg)]" />
+            <Silk
+                speed={3}
+                scale={1.2}
+                color="#7a0e1e"
+                noiseIntensity={1.5}
+                rotation={0.3}
+            />
+            <div className="pointer-events-none absolute inset-0 bg-black/25" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(220,20,60,0.55),transparent_45%),radial-gradient(circle_at_80%_15%,rgba(220,20,60,0.35),transparent_45%),radial-gradient(circle_at_50%_60%,rgba(180,10,40,0.25),transparent_55%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-[var(--neutral-bg)]" />
         </div>
     );
+});
+
+type LobbyCardData = {
+    _id: string;
+    name: string;
+    description: string;
+    status: UiLobbyStatus;
+    currentParticipants: number;
+    maxParticipants: number;
+    createdByName: string;
+    prizePoolLabel: string;
+    formattedMatchDate: string;
+};
+
+function normalizeLobbyForCard(lobby: Lobby): LobbyCardData {
+    return {
+        _id: lobby._id,
+        name: lobby.name || "Untitled lobby",
+        description: lobby.description || "No description available.",
+        status: normalizeStatus(lobby.status),
+        currentParticipants: Number(lobby.currentParticipants) || 0,
+        maxParticipants: Number(lobby.maxParticipants) || 0,
+        createdByName: typeof lobby.createdBy === "object" && lobby.createdBy !== null ? lobby.createdBy.username : "Unknown",
+        prizePoolLabel: lobby.prizePool || "No prize",
+        formattedMatchDate: formatDate(lobby.matchDateTime)
+    };
 }
+
+type LobbyCardProps = {
+    lobby: LobbyCardData;
+    isRegistered: boolean;
+    onRegister: (id: string) => Promise<void>;
+    onLeave: (id: string) => Promise<void>;
+};
+
+const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, onRegister, onLeave }: LobbyCardProps) {
+    const isFull = lobby.maxParticipants > 0 && lobby.currentParticipants >= lobby.maxParticipants;
+    const action = getCardAction(lobby.status, isRegistered, isFull);
+
+    return (
+        <article
+            className="group rounded-2xl border border-[var(--neutral-border)]/50 bg-[var(--neutral-surface)]/35 backdrop-blur-lg p-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-[var(--brand-primary)]/10"
+        >
+            <div className="flex items-start justify-between gap-3 mb-1">
+                <h3 className="text-2xl font-bold leading-tight">{lobby.name}</h3>
+                <span
+                    className={
+                        "capitalize text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 " +
+                        STATUS_CLASS[lobby.status]
+                    }
+                >
+                    {STATUS_LABEL[lobby.status]}
+                </span>
+            </div>
+            <p className="text-xs text-[var(--neutral-text-muted)] mb-4">
+                by {lobby.createdByName}
+            </p>
+
+            <p className="text-sm text-[var(--neutral-text-secondary)] min-h-12 mb-5">
+                {lobby.description}
+            </p>
+
+            <div className="space-y-3 mb-5">
+                <div className="flex items-center gap-2 text-sm text-[var(--neutral-text-secondary)]">
+                    <Calendar size={14} />
+                    <span>{lobby.formattedMatchDate}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[var(--neutral-text-secondary)]">
+                    <Users size={14} />
+                    <span>
+                        {lobby.currentParticipants}/{lobby.maxParticipants} participants
+                    </span>
+                </div>
+                <div className={"flex items-center gap-2 text-sm font-semibold " + (lobby.prizePoolLabel !== "No prize" ? "text-[var(--brand-primary)]" : "text-[var(--neutral-text-muted)]")}>
+                    <Trophy size={14} />
+                    <span>{lobby.prizePoolLabel}</span>
+                </div>
+            </div>
+
+            <div className="flex gap-2">
+                <Button
+                    variant={action.variant}
+                    className={"py-2.5 " + (isRegistered && lobby.status === "open" ? "flex-1" : "w-full")}
+                    disabled={action.disabled}
+                    onClick={function () {
+                        if (action.label === "Register now") {
+                            onRegister(lobby._id);
+                        }
+                    }}
+                >
+                    {action.label}
+                </Button>
+                {isRegistered && lobby.status === "open" && (
+                    <Button
+                        variant="outline"
+                        className="py-2.5 px-4 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
+                        onClick={function () {
+                            onLeave(lobby._id);
+                        }}
+                    >
+                        <LogOut size={16} />
+                        Leave
+                    </Button>
+                )}
+            </div>
+        </article>
+    );
+});
 
 export default function Lobbies() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
@@ -148,45 +242,71 @@ export default function Lobbies() {
     const [result, setResult] = useState<MatchResultResponse | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState<LobbyStatusFilter>("all");
+    const deferredSearchQuery = useDeferredValue(searchQuery);
     const registrationDeadlineRef = useRef<HTMLInputElement>(null);
     const matchDateTimeRef = useRef<HTMLInputElement>(null);
     const createPanelRef = useRef<HTMLDivElement>(null);
 
-    useEffect(function () {
-        void loadData();
-    }, []);
-
-    async function loadData() {
+    const loadData = useCallback(async function (options?: { shouldSync?: boolean }) {
         setMessage("");
-        setLobbies([]);
+        const shouldSync = options?.shouldSync ?? false;
 
-        try {
-            await syncParticipantCounts();
-        } catch (err) {
-            console.error("Error syncing participant counts:", err);
+        if (shouldSync) {
+            try {
+                await syncParticipantCounts();
+            } catch (err) {
+                console.error("Error syncing participant counts:", err);
+            }
         }
 
-        try {
-            const allLobbiesResponse = await getAllLobbies();
-            const safeLobbies = Array.isArray(allLobbiesResponse.lobbies)
-                ? allLobbiesResponse.lobbies.filter(hasLobbyId)
+        const [allLobbiesResult, myLobbiesResult] = await Promise.allSettled([
+            getAllLobbies(),
+            getMyLobbies()
+        ]);
+
+        if (allLobbiesResult.status === "fulfilled") {
+            const safeLobbies = Array.isArray(allLobbiesResult.value.lobbies)
+                ? allLobbiesResult.value.lobbies.filter(hasLobbyId)
                 : [];
             setLobbies(safeLobbies);
-        } catch (err) {
-            console.error("Error loading lobbies:", err);
-            setMessage(getErrorMessage(err));
+        } else {
+            console.error("Error loading lobbies:", allLobbiesResult.reason);
+            setMessage(getErrorMessage(allLobbiesResult.reason));
         }
 
-        try {
-            const myResponse = await getMyLobbies();
-            const safeMyLobbies = Array.isArray(myResponse.lobbies)
-                ? myResponse.lobbies.filter(hasLobbyId)
+        if (myLobbiesResult.status === "fulfilled") {
+            const safeMyLobbies = Array.isArray(myLobbiesResult.value.lobbies)
+                ? myLobbiesResult.value.lobbies.filter(hasLobbyId)
                 : [];
             setMyLobbies(safeMyLobbies);
-        } catch (err) {
+        } else {
             setMyLobbies([]);
         }
-    }
+    }, []);
+
+    useEffect(function () {
+        void loadData({ shouldSync: true });
+    }, [loadData]);
+
+    const handleRegister = useCallback(async function (id: string) {
+        try {
+            await registerToLobby(id);
+            setMessage("Successfully registered");
+            void loadData();
+        } catch (err) {
+            setMessage(getErrorMessage(err));
+        }
+    }, [loadData]);
+
+    const handleLeave = useCallback(async function (id: string) {
+        try {
+            await leaveLobby(id);
+            setMessage("Left lobby successfully");
+            void loadData();
+        } catch (err) {
+            setMessage(getErrorMessage(err));
+        }
+    }, [loadData]);
 
     async function handleCreate(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -208,27 +328,7 @@ export default function Lobbies() {
             setPrizePool("");
             setRegistrationDeadline("");
             setMatchDateTime("");
-            void loadData();
-        } catch (err) {
-            setMessage(getErrorMessage(err));
-        }
-    }
-
-    async function handleRegister(id: string) {
-        try {
-            await registerToLobby(id);
-            setMessage("Successfully registered");
-            void loadData();
-        } catch (err) {
-            setMessage(getErrorMessage(err));
-        }
-    }
-
-    async function handleLeave(id: string) {
-        try {
-            await leaveLobby(id);
-            setMessage("Left lobby successfully");
-            void loadData();
+            void loadData({ shouldSync: true });
         } catch (err) {
             setMessage(getErrorMessage(err));
         }
@@ -249,23 +349,22 @@ export default function Lobbies() {
     }
 
     const filteredLobbies = useMemo(function () {
-        const normalizedQuery = searchQuery.trim().toLowerCase();
+        const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
 
-        return lobbies.filter(function (lobby) {
-            if (!hasLobbyId(lobby)) return false;
-            const normalizedStatus = normalizeStatus(lobby.status);
-            const matchByStatus = selectedStatus === "all" || normalizedStatus === selectedStatus;
-            if (!matchByStatus) return false;
+        return lobbies
+            .filter(hasLobbyId)
+            .map(normalizeLobbyForCard)
+            .filter(function (lobby) {
+                const matchByStatus = selectedStatus === "all" || lobby.status === selectedStatus;
+                if (!matchByStatus) return false;
 
-            if (!normalizedQuery) return true;
-            const safeName = String(lobby.name || "").toLowerCase();
-            const safeDescription = String(lobby.description || "").toLowerCase();
-            return (
-                safeName.includes(normalizedQuery) ||
-                safeDescription.includes(normalizedQuery)
-            );
-        });
-    }, [lobbies, searchQuery, selectedStatus]);
+                if (!normalizedQuery) return true;
+                return (
+                    lobby.name.toLowerCase().includes(normalizedQuery) ||
+                    lobby.description.toLowerCase().includes(normalizedQuery)
+                );
+            });
+    }, [lobbies, deferredSearchQuery, selectedStatus]);
 
     const myLobbyIds = useMemo(function () {
         return new Set(
@@ -276,6 +375,7 @@ export default function Lobbies() {
                 })
         );
     }, [myLobbies]);
+
     const hasActiveFilter = selectedStatus !== "all" || searchQuery.trim().length > 0;
 
     return (
@@ -362,82 +462,14 @@ export default function Lobbies() {
                         className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
                     >
                         {filteredLobbies.map(function (lobby) {
-                            const normalizedStatus = normalizeStatus(lobby.status);
-                            const safeName = lobby.name || "Untitled lobby";
-                            const safeDescription = lobby.description || "No description available.";
-                            const safeCurrentParticipants = Number(lobby.currentParticipants) || 0;
-                            const safeMaxParticipants = Number(lobby.maxParticipants) || 0;
-                            const isRegistered = myLobbyIds.has(lobby._id);
-                            const isFull = safeMaxParticipants > 0 && safeCurrentParticipants >= safeMaxParticipants;
-                            const action = getCardAction(normalizedStatus, isRegistered, isFull);
                             return (
-                                <article
+                                <LobbyCard
                                     key={lobby._id}
-                                    className="group rounded-2xl border border-[var(--neutral-border)]/50 bg-[var(--neutral-surface)]/35 backdrop-blur-lg p-5 transition-all duration-500 hover:-translate-y-1.5 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-[var(--brand-primary)]/10"
-                                >
-                                    <div className="flex items-start justify-between gap-3 mb-1">
-                                        <h3 className="text-2xl font-bold leading-tight">{safeName}</h3>
-                                        <span
-                                            className={
-                                                "capitalize text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 " +
-                                                STATUS_CLASS[normalizedStatus]
-                                            }
-                                        >
-                                            {STATUS_LABEL[normalizedStatus]}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-[var(--neutral-text-muted)] mb-4">
-                                        by {typeof lobby.createdBy === "object" && lobby.createdBy !== null ? lobby.createdBy.username : "Unknown"}
-                                    </p>
-
-                                    <p className="text-sm text-[var(--neutral-text-secondary)] min-h-12 mb-5">
-                                        {safeDescription}
-                                    </p>
-
-                                    <div className="space-y-3 mb-5">
-                                        <div className="flex items-center gap-2 text-sm text-[var(--neutral-text-secondary)]">
-                                            <Calendar size={14} />
-                                            <span>{formatDate(lobby.matchDateTime)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm text-[var(--neutral-text-secondary)]">
-                                            <Users size={14} />
-                                            <span>
-                                                {safeCurrentParticipants}/{safeMaxParticipants} participants
-                                            </span>
-                                        </div>
-                                        <div className={"flex items-center gap-2 text-sm font-semibold " + (lobby.prizePool ? "text-[var(--brand-primary)]" : "text-[var(--neutral-text-muted)]")}>
-                                            <Trophy size={14} />
-                                            <span>{lobby.prizePool || "No prize"}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant={action.variant}
-                                            className={"py-2.5 " + (isRegistered && normalizedStatus === "open" ? "flex-1" : "w-full")}
-                                            disabled={action.disabled}
-                                            onClick={function () {
-                                                if (action.label === "Register now") {
-                                                    void handleRegister(lobby._id);
-                                                }
-                                            }}
-                                        >
-                                            {action.label}
-                                        </Button>
-                                        {isRegistered && normalizedStatus === "open" && (
-                                            <Button
-                                                variant="outline"
-                                                className="py-2.5 px-4 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
-                                                onClick={function () {
-                                                    void handleLeave(lobby._id);
-                                                }}
-                                            >
-                                                <LogOut size={16} />
-                                                Leave
-                                            </Button>
-                                        )}
-                                    </div>
-                                </article>
+                                    lobby={lobby}
+                                    isRegistered={myLobbyIds.has(lobby._id)}
+                                    onRegister={handleRegister}
+                                    onLeave={handleLeave}
+                                />
                             );
                         })}
                     </div>
