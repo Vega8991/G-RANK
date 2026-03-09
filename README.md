@@ -85,5 +85,5 @@ With the server running, open:
 
 ## Tech Stack
 
-**Backend**: Node.js, Express, MongoDB, Mongoose, JWT, Bcrypt, Nodemailer  
+**Backend**: Node.js, Express, MongoDB, Mongoose, JWT, Bcrypt and Nodemailer  
 **Frontend**: React 19, Vite, React Router, Tailwind CSS, Axios
