@@ -12,6 +12,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "coverageProvider": "v8",
     "testMatch": [
       "**/__tests__/**/*.test.js",
       "**/*.test.js"
