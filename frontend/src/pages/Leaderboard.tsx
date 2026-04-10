@@ -1,67 +1,47 @@
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, Crown, Gem, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Flame, Crown, Gem, Award, Shield, Trophy } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import Silk from "../components/ui/Silk";
+import { getLeaderboard, type LeaderboardPlayer } from "../services/leaderboardService";
 
-type Trend = "up" | "down" | "neutral";
-type Tier = "elite" | "master" | "diamond";
+// ─── Tier derivation ──────────────────────────────────────────────────────────
 
-interface TopPlayer {
-    rank: number;
-    username: string;
-    mmr: number;
-    winRate: number;
-    wins: number;
-    losses: number;
+type Tier = "elite" | "master" | "diamond" | "platinum" | "gold" | "silver" | "bronze";
+
+function getTier(rank: string): Tier {
+    switch (rank) {
+        case "Elite":    return "elite";
+        case "Master":   return "master";
+        case "Diamond":  return "diamond";
+        case "Platinum": return "platinum";
+        case "Gold":     return "gold";
+        case "Silver":   return "silver";
+        default:         return "bronze";
+    }
 }
 
-interface TablePlayer {
-    rank: number;
-    username: string;
-    mmr: number;
-    wins: number;
-    losses: number;
-    winRate: number;
-    country: string;
-    trend: Trend;
-    tier: Tier;
-}
-
-const TOP_3: TopPlayer[] = [
-    { rank: 1, username: "Trembosil", mmr: 3245, winRate: 71, wins: 284, losses: 116 },
-    { rank: 2, username: "PepinoGamer", mmr: 3198, winRate: 68, wins: 312, losses: 145 },
-    { rank: 3, username: "KingWolf678", mmr: 2847, winRate: 67, wins: 256, losses: 124 }
-];
-
-const TABLE_PLAYERS: TablePlayer[] = [
-    { rank: 1, username: "ShadowMaster", mmr: 3245, wins: 284, losses: 116, winRate: 71, country: "USA", trend: "up", tier: "elite" },
-    { rank: 2, username: "ThunderKing", mmr: 3198, wins: 312, losses: 145, winRate: 68, country: "KOR", trend: "neutral", tier: "elite" },
-    { rank: 3, username: "ProPlayer", mmr: 2847, wins: 256, losses: 124, winRate: 67, country: "USA", trend: "up", tier: "master" },
-    { rank: 4, username: "PhantomStrike", mmr: 2756, wins: 198, losses: 102, winRate: 66, country: "JPN", trend: "down", tier: "master" },
-    { rank: 5, username: "IceQueen", mmr: 2689, wins: 223, losses: 127, winRate: 64, country: "SWE", trend: "up", tier: "master" },
-    { rank: 6, username: "FireDragon", mmr: 2634, wins: 201, losses: 115, winRate: 64, country: "CHN", trend: "neutral", tier: "master" },
-    { rank: 7, username: "StormRider", mmr: 2578, wins: 187, losses: 108, winRate: 63, country: "BRA", trend: "up", tier: "master" },
-    { rank: 8, username: "NightHawk", mmr: 2512, wins: 176, losses: 104, winRate: 63, country: "GER", trend: "down", tier: "diamond" },
-    { rank: 9, username: "PaqueteDeCamel", mmr: 2467, wins: 165, losses: 98, winRate: 63, country: "RUS", trend: "up", tier: "diamond" },
-    { rank: 10, username: "Achichocraft", mmr: 2423, wins: 154, losses: 91, winRate: 63, country: "MEX", trend: "neutral", tier: "diamond" }
-];
+const TIER_CONFIG: Record<Tier, { icon: typeof Flame; color: string; bg: string }> = {
+    elite:    { icon: Flame,   color: "#dc143c", bg: "rgba(220,20,60,0.18)"    },
+    master:   { icon: Crown,   color: "#9b30ff", bg: "rgba(155,48,255,0.18)"   },
+    diamond:  { icon: Gem,     color: "#b9f2ff", bg: "rgba(185,242,255,0.14)"  },
+    platinum: { icon: Gem,     color: "#00e5ff", bg: "rgba(0,229,255,0.12)"    },
+    gold:     { icon: Trophy,  color: "#ffd700", bg: "rgba(255,215,0,0.14)"    },
+    silver:   { icon: Award,   color: "#c0c0c0", bg: "rgba(192,192,192,0.12)"  },
+    bronze:   { icon: Shield,  color: "#cd7f32", bg: "rgba(205,127,50,0.12)"   },
+};
 
 const RANK_1_COLOR = "#ffd700";
 const RANK_2_COLOR = "#9ca3af";
 const RANK_3_COLOR = "#cd7f32";
 
-const TIER_CONFIG: Record<Tier, { icon: typeof Flame; color: string; bg: string }> = {
-    elite: { icon: Flame, color: "#dc143c", bg: "rgba(220,20,60,0.18)" },
-    master: { icon: Crown, color: "#9b30ff", bg: "rgba(155,48,255,0.18)" },
-    diamond: { icon: Gem, color: "#b9f2ff", bg: "rgba(185,242,255,0.14)" }
-};
-
-function getRankAccentColor(rank: number): string {
-    if (rank === 1) return RANK_1_COLOR;
-    if (rank === 2) return RANK_2_COLOR;
+function getRankAccentColor(pos: number): string {
+    if (pos === 1) return RANK_1_COLOR;
+    if (pos === 2) return RANK_2_COLOR;
     return RANK_3_COLOR;
 }
+
+// ─── Background ───────────────────────────────────────────────────────────────
 
 const LeaderboardBackground = memo(function LeaderboardBackground() {
     return (
@@ -80,15 +60,13 @@ const LeaderboardBackground = memo(function LeaderboardBackground() {
     );
 });
 
-interface PodiumCardProps {
-    player: TopPlayer;
-    index: number;
-}
+// ─── Podium card (top 3) ──────────────────────────────────────────────────────
 
-function PodiumCard({ player, index }: PodiumCardProps) {
-    const accentColor = getRankAccentColor(player.rank);
-    const rankLabel = player.rank === 1 ? "1" : player.rank === 2 ? "2" : "3";
-    const isFirst = player.rank === 1;
+function PodiumCard({ player, pos, index }: { player: LeaderboardPlayer; pos: number; index: number }) {
+    const accentColor = getRankAccentColor(pos);
+    const tierCfg = TIER_CONFIG[getTier(player.rank)];
+    const TierIcon = tierCfg.icon;
+    const isFirst = pos === 1;
 
     return (
         <motion.div
@@ -103,19 +81,17 @@ function PodiumCard({ player, index }: PodiumCardProps) {
             initial={{ opacity: 0, y: 40, scaleY: 0.95 }}
             animate={{ opacity: 1, y: 0, scaleY: 1 }}
             transition={{ duration: 0.85, delay: 0.15 + index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-            whileHover={{
-                boxShadow: `0 0 50px ${accentColor}25, 0 20px 50px rgba(0,0,0,0.6)`
-            }}
+            whileHover={{ boxShadow: `0 0 50px ${accentColor}25, 0 20px 50px rgba(0,0,0,0.6)` }}
         >
             <div className="flex items-start justify-between mb-4">
-                <span
-                    className="text-3xl font-extrabold"
-                    style={{ color: accentColor }}
-                >
-                    #{rankLabel}
+                <span className="text-3xl font-extrabold" style={{ color: accentColor }}>
+                    #{pos}
                 </span>
-                <div className="w-10 h-10 rounded-xl bg-[#dc143c] flex items-center justify-center shadow-lg shadow-[#dc143c]/40 group-hover:scale-105 transition-transform duration-300">
-                    <Crown size={18} className="text-white" />
+                <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300"
+                    style={{ background: tierCfg.bg, border: `1px solid ${tierCfg.color}40` }}
+                >
+                    <TierIcon size={18} style={{ color: tierCfg.color }} />
                 </div>
             </div>
 
@@ -128,7 +104,7 @@ function PodiumCard({ player, index }: PodiumCardProps) {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-[var(--neutral-text-muted)]">Win Rate</span>
-                    <span className="font-semibold text-white">{player.winRate}%</span>
+                    <span className="font-semibold text-white">{player.winRate.toFixed(1)}%</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-[var(--neutral-text-muted)]">W/L</span>
@@ -139,48 +115,17 @@ function PodiumCard({ player, index }: PodiumCardProps) {
             {isFirst && (
                 <div
                     className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{
-                        background: `linear-gradient(145deg, ${accentColor}06 0%, transparent 60%)`
-                    }}
+                    style={{ background: `linear-gradient(145deg, ${accentColor}06 0%, transparent 60%)` }}
                 />
             )}
         </motion.div>
     );
 }
 
-interface TrendIconProps {
-    trend: Trend;
-}
+// ─── Table row ────────────────────────────────────────────────────────────────
 
-function TrendIcon({ trend }: TrendIconProps) {
-    if (trend === "up") {
-        return (
-            <span className="inline-flex items-center">
-                <TrendingUp size={14} className="text-[var(--status-success)]" />
-            </span>
-        );
-    }
-    if (trend === "down") {
-        return (
-            <span className="inline-flex items-center">
-                <TrendingDown size={14} className="text-[#ef4444]" />
-            </span>
-        );
-    }
-    return (
-        <span className="inline-flex items-center">
-            <Minus size={14} className="text-[var(--neutral-text-muted)]" />
-        </span>
-    );
-}
-
-interface TableRowProps {
-    player: TablePlayer;
-    index: number;
-}
-
-function TableRow({ player, index }: TableRowProps) {
-    const tierCfg = TIER_CONFIG[player.tier];
+function TableRow({ player, pos, index }: { player: LeaderboardPlayer; pos: number; index: number }) {
+    const tierCfg = TIER_CONFIG[getTier(player.rank)];
     const TierIcon = tierCfg.icon;
 
     return (
@@ -190,13 +135,10 @@ function TableRow({ player, index }: TableRowProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.35 + index * 0.055, ease: [0.16, 1, 0.3, 1] }}
         >
-            <td className="py-4 px-5 w-20">
-                <div className="flex items-center gap-2">
-                    <TrendIcon trend={player.trend} />
-                    <span className="text-sm font-semibold text-[var(--neutral-text-secondary)]">
-                        {player.rank}
-                    </span>
-                </div>
+            <td className="py-4 px-5 w-16">
+                <span className="text-sm font-semibold text-[var(--neutral-text-secondary)]">
+                    {pos}
+                </span>
             </td>
 
             <td className="py-4 px-5">
@@ -220,23 +162,48 @@ function TableRow({ player, index }: TableRowProps) {
             </td>
 
             <td className="py-4 px-5">
-                <span className="text-sm font-semibold text-white">{player.winRate}%</span>
+                <span className="text-sm font-semibold text-white">{player.winRate.toFixed(1)}%</span>
             </td>
 
-            <td className="py-4 px-5">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[var(--neutral-surface)]/60 border border-[var(--neutral-border)]/40 text-[var(--neutral-text-secondary)]">
-                    {player.country}
-                </span>
-            </td>
-
-            <td className="py-4 px-5 text-right">
-                <button className="text-xs font-semibold text-[#dc143c] hover:text-white transition-colors duration-200 hover:underline underline-offset-2">
-                    View Profile
-                </button>
-            </td>
+            {player.country && (
+                <td className="py-4 px-5">
+                    <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[var(--neutral-surface)]/60 border border-[var(--neutral-border)]/40 text-[var(--neutral-text-secondary)]">
+                        {player.country}
+                    </span>
+                </td>
+            )}
         </motion.tr>
     );
 }
+
+// ─── Skeleton loaders ─────────────────────────────────────────────────────────
+
+function PodiumSkeleton() {
+    return (
+        <div className="rounded-2xl p-6 backdrop-blur-xl border border-white/10 bg-white/5 animate-pulse">
+            <div className="h-8 w-12 rounded bg-white/10 mb-4" />
+            <div className="h-6 w-32 rounded bg-white/10 mb-5" />
+            <div className="space-y-2">
+                {[1, 2, 3].map(i => <div key={i} className="h-4 rounded bg-white/10" />)}
+            </div>
+        </div>
+    );
+}
+
+function RowSkeleton({ index }: { index: number }) {
+    return (
+        <tr className="border-b border-[var(--neutral-border)]/25">
+            <td className="py-4 px-5"><div className="h-4 w-6 rounded bg-white/10 animate-pulse" style={{ animationDelay: `${index * 40}ms` }} /></td>
+            <td className="py-4 px-5"><div className="h-4 w-36 rounded bg-white/10 animate-pulse" style={{ animationDelay: `${index * 40}ms` }} /></td>
+            <td className="py-4 px-5"><div className="h-4 w-16 rounded bg-white/10 animate-pulse" style={{ animationDelay: `${index * 40}ms` }} /></td>
+            <td className="py-4 px-5"><div className="h-4 w-14 rounded bg-white/10 animate-pulse" style={{ animationDelay: `${index * 40}ms` }} /></td>
+            <td className="py-4 px-5"><div className="h-4 w-12 rounded bg-white/10 animate-pulse" style={{ animationDelay: `${index * 40}ms` }} /></td>
+            <td className="py-4 px-5"><div className="h-4 w-10 rounded bg-white/10 animate-pulse" style={{ animationDelay: `${index * 40}ms` }} /></td>
+        </tr>
+    );
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
 
 function LeaderboardFooter() {
     return (
@@ -258,8 +225,8 @@ function LeaderboardFooter() {
                     <div>
                         <h4 className="font-bold text-sm mb-4 text-[var(--neutral-text)] tracking-wide">GAMES</h4>
                         <div className="space-y-3">
-                            <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white hover:translate-x-1 transition-all duration-300">Fortnite</NavLink>
-                            <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white hover:translate-x-1 transition-all duration-300">Rocket League</NavLink>
+                            <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white hover:translate-x-1 transition-all duration-300">Pokémon Showdown</NavLink>
+                            <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white hover:translate-x-1 transition-all duration-300">League of Legends</NavLink>
                             <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white hover:translate-x-1 transition-all duration-300">Valorant</NavLink>
                         </div>
                     </div>
@@ -284,7 +251,23 @@ function LeaderboardFooter() {
     );
 }
 
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 export default function Leaderboard() {
+    const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        getLeaderboard(50)
+            .then(setPlayers)
+            .catch(() => setError("Failed to load leaderboard"))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const top3   = players.slice(0, 3);
+    const rest   = players.slice(3);
+
     return (
         <div className="relative bg-[var(--neutral-bg)] text-white min-h-[calc(100vh-64px)]">
             <LeaderboardBackground />
@@ -296,47 +279,61 @@ export default function Leaderboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                     >
-                        <h1 className="text-4xl md:text-5xl font-extrabold mb-8">Leaderboard</h1>
+                        <h1 className="text-4xl md:text-5xl font-extrabold mb-2">Leaderboard</h1>
+                        {!loading && !error && (
+                            <p className="text-sm text-[var(--neutral-text-muted)] mb-8">
+                                {players.length} ranked players
+                            </p>
+                        )}
                     </motion.div>
                 </section>
 
                 <section className="max-w-[1512px] mx-auto px-6 md:px-20 py-10">
+                    {/* ── Podium ── */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-                        {TOP_3.map(function (player, index) {
-                            return (
-                                <PodiumCard key={player.username} player={player} index={index} />
-                            );
-                        })}
+                        {loading
+                            ? [0, 1, 2].map(i => <PodiumSkeleton key={i} />)
+                            : top3.map((p, i) => (
+                                <PodiumCard key={p._id} player={p} pos={i + 1} index={i} />
+                            ))
+                        }
                     </div>
 
-                    <motion.div
-                        className="rounded-2xl border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/35 backdrop-blur-xl overflow-hidden"
-                        initial={{ opacity: 0, y: 30, scaleY: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                        style={{ originY: 0 }}
-                        transition={{ duration: 0.85, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    >
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/30">
-                                    <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase w-20">Rank</th>
-                                    <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">Player</th>
-                                    <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">MMR</th>
-                                    <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">W/L</th>
-                                    <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">Win Rate</th>
-                                    <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">Country</th>
-                                    <th className="py-3.5 px-5" />
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {TABLE_PLAYERS.map(function (player, index) {
-                                    return (
-                                        <TableRow key={player.username} player={player} index={index} />
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </motion.div>
+                    {/* ── Rankings table ── */}
+                    {error ? (
+                        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
+                            <p className="text-red-400">{error}</p>
+                        </div>
+                    ) : (
+                        <motion.div
+                            className="rounded-2xl border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/35 backdrop-blur-xl overflow-hidden"
+                            initial={{ opacity: 0, y: 30, scaleY: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scaleY: 1 }}
+                            style={{ originY: 0 }}
+                            transition={{ duration: 0.85, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        >
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/30">
+                                        <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase w-16">#</th>
+                                        <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">Player</th>
+                                        <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">MMR</th>
+                                        <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">W/L</th>
+                                        <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">Win Rate</th>
+                                        <th className="py-3.5 px-5 text-left text-xs font-bold text-[var(--neutral-text-muted)] tracking-wider uppercase">Country</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {loading
+                                        ? Array.from({ length: 10 }, (_, i) => <RowSkeleton key={i} index={i} />)
+                                        : rest.map((p, i) => (
+                                            <TableRow key={p._id} player={p} pos={i + 4} index={i} />
+                                        ))
+                                    }
+                                </tbody>
+                            </table>
+                        </motion.div>
+                    )}
                 </section>
 
                 <LeaderboardFooter />
