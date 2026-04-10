@@ -76,6 +76,22 @@ let userSchema = new mongoose.Schema({
         type: String,
         enum: ['USER', 'ADMIN'],
         default: 'USER'
+    },
+    riotGameName: {
+        type: String,
+        default: null
+    },
+    riotTagLine: {
+        type: String,
+        default: null
+    },
+    riotPuuid: {
+        type: String,
+        default: null
+    },
+    riotPlatform: {
+        type: String,
+        default: null
     }
 });
 

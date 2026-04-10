@@ -173,7 +173,11 @@ async function getProfile(req, res) {
                 winStreak: user.winStreak,
                 wins: user.wins,
                 losses: user.losses,
-                role: user.role || 'USER'
+                role: user.role || 'USER',
+                riotGameName: user.riotGameName || null,
+                riotTagLine: user.riotTagLine || null,
+                riotPuuid: user.riotPuuid || null,
+                riotPlatform: user.riotPlatform || null
             }
         });
     } catch (err) {
