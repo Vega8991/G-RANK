@@ -7,6 +7,10 @@ export interface User {
   rank: string;
   createdAt: string;
   updatedAt: string;
+  riotGameName?: string | null;
+  riotTagLine?: string | null;
+  riotPuuid?: string | null;
+  riotPlatform?: string | null;
 }
 
 export interface AuthResponse {
@@ -68,4 +72,82 @@ export interface MatchResultResponse {
 export interface ApiResponse<T = unknown> {
   message?: string;
   data?: T;
+}
+
+// ─── Riot Games ────────────────────────────────────────────────────────────────
+
+export type RiotPlatform =
+  | 'na1' | 'na2' | 'br1' | 'la1' | 'la2'
+  | 'euw1' | 'eun1' | 'tr1' | 'ru'
+  | 'kr' | 'jp1'
+  | 'oc1' | 'ph2' | 'sg2' | 'th2' | 'tw2' | 'vn2';
+
+export type ValPlatform = 'na' | 'eu' | 'ap' | 'kr' | 'br' | 'latam';
+
+export interface RiotAccount {
+  gameName: string;
+  tagLine: string;
+  puuid: string;
+  platform: RiotPlatform;
+}
+
+export interface RiotRankedEntry {
+  queueType: string;
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  veteran: boolean;
+  hotStreak: boolean;
+  freshBlood: boolean;
+}
+
+export interface RiotChampionMastery {
+  championId: number;
+  championLevel: number;
+  championPoints: number;
+}
+
+export interface RiotSummoner {
+  id: string;
+  puuid: string;
+  name: string;
+  profileIconId: number;
+  summonerLevel: number;
+}
+
+export interface RiotFullProfile {
+  account: RiotAccount;
+  summoner: RiotSummoner;
+  rankedSolo: RiotRankedEntry | null;
+  rankedFlex: RiotRankedEntry | null;
+  topChampions: RiotChampionMastery[];
+}
+
+export interface RiotMatchResultResponse {
+  success: boolean;
+  message: string;
+  winner: {
+    username: string;
+    mmrBefore: number;
+    mmrChange: number;
+    mmrAfter: number;
+    newRank: string;
+    wins: number;
+    losses: number;
+    winRate: number;
+    winStreak: number;
+  };
+  loser: {
+    username: string;
+    mmrBefore: number;
+    mmrChange: number;
+    mmrAfter: number;
+    newRank: string;
+    wins: number;
+    losses: number;
+    winRate: number;
+    winStreak: number;
+  };
 }

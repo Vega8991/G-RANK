@@ -1,12 +1,56 @@
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { AxiosError } from "axios";
 import { motion } from "framer-motion";
-import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus, LogOut } from "lucide-react";
+import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus, LogOut, Swords, Crosshair, Zap, AlertCircle, CheckCircle } from "lucide-react";
 import Button from "../components/common/Button";
 import Silk from "../components/ui/Silk";
 import { createLobby, getAllLobbies, getMyLobbies, registerToLobby, leaveLobby, syncParticipantCounts } from "../services/lobbyService";
 import { submitReplay } from "../services/matchService";
+import { getProfile } from "../services/authService";
 import type { MatchResultResponse, Lobby } from "../types";
+
+type GameType = "pokemon_showdown" | "league_of_legends" | "valorant";
+
+interface GameConfig {
+    label: string;
+    shortLabel: string;
+    color: string;
+    bg: string;
+    Icon: typeof Zap;
+    requiresRiot: boolean;
+}
+
+const GAME_CONFIG: Record<GameType, GameConfig> = {
+    pokemon_showdown: {
+        label: "Pokémon Showdown",
+        shortLabel: "Pokémon",
+        color: "#dc143c",
+        bg: "rgba(220,20,60,0.15)",
+        Icon: Zap,
+        requiresRiot: false
+    },
+    league_of_legends: {
+        label: "League of Legends",
+        shortLabel: "LoL",
+        color: "#3B82F6",
+        bg: "rgba(59,130,246,0.15)",
+        Icon: Swords,
+        requiresRiot: true
+    },
+    valorant: {
+        label: "Valorant",
+        shortLabel: "Valorant",
+        color: "#FF4655",
+        bg: "rgba(255,70,85,0.15)",
+        Icon: Crosshair,
+        requiresRiot: true
+    }
+};
+
+function normalizeGame(game: unknown): GameType {
+    if (game === "league_of_legends" || game === "valorant") return game;
+    return "pokemon_showdown";
+}
 
 type UiLobbyStatus = "open" | "pending" | "in_progress" | "completed" | "cancelled" | "unknown";
 type LobbyStatusFilter = "all" | UiLobbyStatus;
@@ -129,6 +173,7 @@ type LobbyCardData = {
     createdByName: string;
     prizePoolLabel: string;
     formattedMatchDate: string;
+    game: GameType;
 };
 
 function normalizeLobbyForCard(lobby: Lobby): LobbyCardData {
@@ -141,20 +186,27 @@ function normalizeLobbyForCard(lobby: Lobby): LobbyCardData {
         maxParticipants: Number(lobby.maxParticipants) || 0,
         createdByName: typeof lobby.createdBy === "object" && lobby.createdBy !== null ? lobby.createdBy.username : "Unknown",
         prizePoolLabel: lobby.prizePool || "No prize",
-        formattedMatchDate: formatDate(lobby.matchDateTime)
+        formattedMatchDate: formatDate(lobby.matchDateTime),
+        game: normalizeGame(lobby.game)
     };
 }
 
 type LobbyCardProps = {
     lobby: LobbyCardData;
     isRegistered: boolean;
+    userRiotLinked: boolean | null;
     onRegister: (id: string) => Promise<void>;
     onLeave: (id: string) => Promise<void>;
 };
 
-const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, onRegister, onLeave }: LobbyCardProps) {
+const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, userRiotLinked, onRegister, onLeave }: LobbyCardProps) {
     const isFull = lobby.maxParticipants > 0 && lobby.currentParticipants >= lobby.maxParticipants;
     const action = getCardAction(lobby.status, isRegistered, isFull);
+    const gameCfg = GAME_CONFIG[lobby.game];
+    const GameIcon = gameCfg.Icon;
+    const needsRiot = gameCfg.requiresRiot;
+    const riotMissing = needsRiot && userRiotLinked === false;
+    const riotOk = needsRiot && userRiotLinked === true;
 
     return (
         <article
@@ -162,18 +214,61 @@ const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, onRegister, onL
         >
             <div className="flex items-start justify-between gap-3 mb-1">
                 <h3 className="text-2xl font-bold leading-tight">{lobby.name}</h3>
-                <span
-                    className={
-                        "capitalize text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 " +
-                        STATUS_CLASS[lobby.status]
-                    }
-                >
-                    {STATUS_LABEL[lobby.status]}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                    <span
+                        className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border"
+                        style={{
+                            color: gameCfg.color,
+                            backgroundColor: gameCfg.bg,
+                            borderColor: gameCfg.color + "50"
+                        }}
+                    >
+                        <GameIcon size={11} />
+                        {gameCfg.shortLabel}
+                    </span>
+                    <span
+                        className={
+                            "capitalize text-[10px] font-bold px-2.5 py-1 rounded-full border " +
+                            STATUS_CLASS[lobby.status]
+                        }
+                    >
+                        {STATUS_LABEL[lobby.status]}
+                    </span>
+                </div>
             </div>
-            <p className="text-xs text-[var(--neutral-text-muted)] mb-4">
+            <p className="text-xs text-[var(--neutral-text-muted)] mb-3">
                 by {lobby.createdByName}
             </p>
+
+            {riotMissing && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 mb-4">
+                    <AlertCircle size={14} className="text-amber-400 mt-0.5 shrink-0" />
+                    <p className="text-xs text-amber-300 leading-relaxed">
+                        Este torneo requiere una <span className="font-semibold">cuenta Riot vinculada</span> para enviar resultados.{" "}
+                        <a href="/dashboard" className="underline underline-offset-2 hover:text-amber-100 transition-colors">
+                            Vincular en mi perfil →
+                        </a>
+                    </p>
+                </div>
+            )}
+
+            {riotOk && (
+                <div className="flex items-center gap-2 rounded-lg border border-green-500/25 bg-green-500/8 px-3 py-2 mb-4">
+                    <CheckCircle size={13} className="text-green-400 shrink-0" />
+                    <p className="text-xs text-green-300">
+                        Cuenta Riot vinculada — listo para competir
+                    </p>
+                </div>
+            )}
+
+            {needsRiot && userRiotLinked === null && (
+                <div className="flex items-center gap-2 rounded-lg border border-[var(--neutral-border)]/30 bg-[var(--neutral-surface)]/30 px-3 py-2 mb-4">
+                    <AlertCircle size={13} className="text-[var(--neutral-text-muted)] shrink-0" />
+                    <p className="text-xs text-[var(--neutral-text-muted)]">
+                        Requiere cuenta Riot vinculada para enviar resultados
+                    </p>
+                </div>
+            )}
 
             <p className="text-sm text-[var(--neutral-text-secondary)] min-h-12 mb-5">
                 {lobby.description}
@@ -236,16 +331,28 @@ export default function Lobbies() {
     const [prizePool, setPrizePool] = useState("");
     const [registrationDeadline, setRegistrationDeadline] = useState("");
     const [matchDateTime, setMatchDateTime] = useState("");
+    const [selectedGame, setSelectedGame] = useState<GameType>("pokemon_showdown");
     const [selectedLobby, setSelectedLobby] = useState("");
     const [replayUrl, setReplayUrl] = useState("");
     const [message, setMessage] = useState("");
     const [result, setResult] = useState<MatchResultResponse | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState<LobbyStatusFilter>("all");
+    const [userRiotLinked, setUserRiotLinked] = useState<boolean | null>(null);
     const deferredSearchQuery = useDeferredValue(searchQuery);
     const registrationDeadlineRef = useRef<HTMLInputElement>(null);
     const matchDateTimeRef = useRef<HTMLInputElement>(null);
     const createPanelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(function () {
+        getProfile()
+            .then(function (res) {
+                setUserRiotLinked(!!res.user.riotPuuid);
+            })
+            .catch(function () {
+                setUserRiotLinked(null);
+            });
+    }, []);
 
     const loadData = useCallback(async function (options?: { shouldSync?: boolean }) {
         setMessage("");
@@ -318,7 +425,8 @@ export default function Lobbies() {
                 parseInt(maxParticipants) || 0,
                 hasPrize ? prizePool : "",
                 registrationDeadline,
-                matchDateTime
+                matchDateTime,
+                selectedGame
             );
             setMessage("Lobby created successfully");
             setName("");
@@ -328,6 +436,7 @@ export default function Lobbies() {
             setPrizePool("");
             setRegistrationDeadline("");
             setMatchDateTime("");
+            setSelectedGame("pokemon_showdown");
             void loadData({ shouldSync: true });
         } catch (err) {
             setMessage(getErrorMessage(err));
@@ -467,6 +576,7 @@ export default function Lobbies() {
                                     key={lobby._id}
                                     lobby={lobby}
                                     isRegistered={myLobbyIds.has(lobby._id)}
+                                    userRiotLinked={userRiotLinked}
                                     onRegister={handleRegister}
                                     onLeave={handleLeave}
                                 />
@@ -519,6 +629,35 @@ export default function Lobbies() {
                             </p>
 
                             <form onSubmit={handleCreate} className="space-y-4">
+                                <div>
+                                    <p className="text-xs font-semibold text-[var(--neutral-text-muted)] mb-2 tracking-wide uppercase">Game</p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {(Object.entries(GAME_CONFIG) as [GameType, GameConfig][]).map(function ([key, cfg]) {
+                                            const Icon = cfg.Icon;
+                                            const isActive = selectedGame === key;
+                                            return (
+                                                <button
+                                                    key={key}
+                                                    type="button"
+                                                    onClick={function () { setSelectedGame(key); }}
+                                                    className="flex flex-col items-center gap-1.5 rounded-xl border py-3 px-2 text-xs font-semibold transition-all duration-200"
+                                                    style={isActive ? {
+                                                        borderColor: cfg.color + "70",
+                                                        backgroundColor: cfg.bg,
+                                                        color: cfg.color
+                                                    } : {
+                                                        borderColor: "var(--neutral-border)",
+                                                        backgroundColor: "transparent",
+                                                        color: "var(--neutral-text-muted)"
+                                                    }}
+                                                >
+                                                    <Icon size={18} />
+                                                    {cfg.shortLabel}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                                 <input
                                     type="text"
                                     placeholder="Lobby name"
