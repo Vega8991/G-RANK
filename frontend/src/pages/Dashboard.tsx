@@ -4,15 +4,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AxiosError } from "axios";
 import {
     Award, Crown, Flame, Gem, Star, Trophy, Zap,
-    LogOut, Link2, Unlink2, ChevronRight, Calendar,
+    LogOut, ExternalLink, Unlink2, ChevronRight, Calendar,
     Users, Gamepad2, CheckCircle2, AlertCircle,
     TrendingUp, Shield, RefreshCw, type LucideIcon
 } from "lucide-react";
 import LineWaves from "../components/ui/LineWaves";
 import { getProfile, logout } from "../services/authService";
 import { getMyLobbies } from "../services/lobbyService";
-import { linkRiotAccount, unlinkRiotAccount } from "../services/riotService";
-import type { User, Lobby, RiotPlatform } from "../types";
+import { unlinkRiotAccount } from "../services/riotService";
+import type { User, Lobby } from "../types";
 
 // ─── Rank configuration ────────────────────────────────────────────────────────
 
@@ -27,13 +27,13 @@ const RANK_CONFIG: Record<RankName, {
     next: RankName | null;
     nextMin: number | null;
 }> = {
-    Bronze:   { color: "#cd7f32", glow: "rgba(205,127,50,0.4)",  Icon: Shield,  min: 0,    max: 499,      next: "Silver",   nextMin: 500  },
-    Silver:   { color: "#c0c0c0", glow: "rgba(192,192,192,0.4)", Icon: Award,   min: 500,  max: 999,      next: "Gold",     nextMin: 1000 },
-    Gold:     { color: "#ffd700", glow: "rgba(255,215,0,0.45)",  Icon: Trophy,  min: 1000, max: 1499,     next: "Platinum", nextMin: 1500 },
-    Platinum: { color: "#00e5ff", glow: "rgba(0,229,255,0.35)",  Icon: Gem,     min: 1500, max: 1999,     next: "Diamond",  nextMin: 2000 },
-    Diamond:  { color: "#b9f2ff", glow: "rgba(185,242,255,0.4)", Icon: Star,    min: 2000, max: 2499,     next: "Master",   nextMin: 2500 },
-    Master:   { color: "#bf00ff", glow: "rgba(191,0,255,0.35)",  Icon: Crown,   min: 2500, max: 2999,     next: "Elite",    nextMin: 3000 },
-    Elite:    { color: "#dc143c", glow: "rgba(220,20,60,0.45)",  Icon: Flame,   min: 3000, max: Infinity, next: null,       nextMin: null },
+    Bronze: { color: "#cd7f32", glow: "rgba(205,127,50,0.4)", Icon: Shield, min: 0, max: 499, next: "Silver", nextMin: 500 },
+    Silver: { color: "#c0c0c0", glow: "rgba(192,192,192,0.4)", Icon: Award, min: 500, max: 999, next: "Gold", nextMin: 1000 },
+    Gold: { color: "#ffd700", glow: "rgba(255,215,0,0.45)", Icon: Trophy, min: 1000, max: 1499, next: "Platinum", nextMin: 1500 },
+    Platinum: { color: "#00e5ff", glow: "rgba(0,229,255,0.35)", Icon: Gem, min: 1500, max: 1999, next: "Diamond", nextMin: 2000 },
+    Diamond: { color: "#b9f2ff", glow: "rgba(185,242,255,0.4)", Icon: Star, min: 2000, max: 2499, next: "Master", nextMin: 2500 },
+    Master: { color: "#bf00ff", glow: "rgba(191,0,255,0.35)", Icon: Crown, min: 2500, max: 2999, next: "Elite", nextMin: 3000 },
+    Elite: { color: "#dc143c", glow: "rgba(220,20,60,0.45)", Icon: Flame, min: 3000, max: Infinity, next: null, nextMin: null },
 };
 
 function getRankConfig(rank: string) {
@@ -81,17 +81,19 @@ function DashboardBackground() {
             <div className="absolute inset-0 bg-[var(--neutral-bg)]" />
             <div className="absolute inset-0 opacity-60">
                 <LineWaves
-                    color1="#dc143c"
-                    color2="#7b0020"
-                    color3="#ff2244"
-                    brightness={0.14}
-                    speed={0.22}
-                    warpIntensity={0.75}
-                    innerLineCount={26}
-                    outerLineCount={32}
-                    rotation={-28}
-                    colorCycleSpeed={0.6}
-                    enableMouseInteraction={false}
+                    speed={0.3}
+                    innerLineCount={12}
+                    outerLineCount={39}
+                    warpIntensity={0.7}
+                    rotation={-45}
+                    edgeFadeWidth={0.05}
+                    colorCycleSpeed={1.1}
+                    brightness={0.3}
+                    color1="#e01b24"
+                    color2="#ed333b"
+                    color3="#c01c28"
+                    enableMouseInteraction
+                    mouseInfluence={2}
                 />
             </div>
             <div className="absolute inset-0 bg-gradient-to-b from-[var(--neutral-bg)]/40 via-transparent to-[var(--neutral-bg)]/80" />
@@ -227,54 +229,17 @@ function MmrProgressCard({ user }: { user: User }) {
 
 // ─── RiotAccountCard ──────────────────────────────────────────────────────────
 
-const RIOT_PLATFORMS: { value: RiotPlatform; label: string }[] = [
-    { value: "na1",  label: "NA" },
-    { value: "euw1", label: "EUW" },
-    { value: "eun1", label: "EUNE" },
-    { value: "kr",   label: "KR" },
-    { value: "br1",  label: "BR" },
-    { value: "la1",  label: "LAN" },
-    { value: "la2",  label: "LAS" },
-    { value: "jp1",  label: "JP" },
-    { value: "oc1",  label: "OCE" },
-    { value: "tr1",  label: "TR" },
-    { value: "ru",   label: "RU" },
-];
-
 function RiotAccountCard({ user, onUpdate }: { user: User; onUpdate: () => void }) {
     const isLinked = Boolean(user.riotPuuid);
-    const [gameName, setGameName] = useState("");
-    const [tagLine, setTagLine] = useState("");
-    const [platform, setPlatform] = useState<RiotPlatform>("na1");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    async function handleLink() {
-        if (!gameName.trim() || !tagLine.trim()) return;
-        setLoading(true);
-        setError(null);
-        try {
-            await linkRiotAccount(gameName.trim(), tagLine.trim(), platform);
-            setGameName("");
-            setTagLine("");
-            onUpdate();
-        } catch (err) {
-            const ax = err as AxiosError<{ message?: string }>;
-            setError(ax.response?.data?.message ?? "Failed to link account");
-        } finally {
-            setLoading(false);
-        }
-    }
 
     async function handleUnlink() {
         setLoading(true);
-        setError(null);
         try {
             await unlinkRiotAccount();
             onUpdate();
-        } catch (err) {
-            const ax = err as AxiosError<{ message?: string }>;
-            setError(ax.response?.data?.message ?? "Failed to unlink account");
+        } catch {
+            // silently ignore, user can retry
         } finally {
             setLoading(false);
         }
@@ -334,69 +299,29 @@ function RiotAccountCard({ user, onUpdate }: { user: User; onUpdate: () => void 
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex flex-col gap-3"
                     >
-                        <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 mb-4">
-                            <AlertCircle size={14} className="text-amber-400 mt-0.5 shrink-0" />
-                            <p className="text-xs text-amber-300 leading-relaxed">
-                                Link your Riot account to participate in LoL and Valorant tournaments.
+                        <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                            <AlertCircle size={15} className="text-amber-400 mt-0.5 shrink-0" />
+                            <p className="text-xs text-amber-200 leading-relaxed">
+                                You need a Riot Games account to join LoL and Valorant tournaments. Sign in or create one on the official Riot platform.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 mb-2">
-                            <input
-                                value={gameName}
-                                onChange={e => setGameName(e.target.value)}
-                                placeholder="Game Name"
-                                className="col-span-1 px-3 py-2 text-sm rounded-xl
-                                           bg-white/5 border border-[var(--neutral-border)]/40
-                                           text-white placeholder-[var(--neutral-muted)]
-                                           focus:outline-none focus:border-[var(--brand-primary)]/60
-                                           transition-colors"
-                            />
-                            <input
-                                value={tagLine}
-                                onChange={e => setTagLine(e.target.value)}
-                                placeholder="Tag (e.g. NA1)"
-                                className="col-span-1 px-3 py-2 text-sm rounded-xl
-                                           bg-white/5 border border-[var(--neutral-border)]/40
-                                           text-white placeholder-[var(--neutral-muted)]
-                                           focus:outline-none focus:border-[var(--brand-primary)]/60
-                                           transition-colors"
-                            />
-                        </div>
-
-                        <select
-                            value={platform}
-                            onChange={e => setPlatform(e.target.value as RiotPlatform)}
-                            className="w-full px-3 py-2 text-sm rounded-xl mb-3
-                                       bg-white/5 border border-[var(--neutral-border)]/40
-                                       text-white focus:outline-none focus:border-[var(--brand-primary)]/60
-                                       transition-colors"
-                        >
-                            {RIOT_PLATFORMS.map(p => (
-                                <option key={p.value} value={p.value} className="bg-[#1a0a10]">
-                                    {p.label}
-                                </option>
-                            ))}
-                        </select>
-
-                        <button
-                            onClick={handleLink}
-                            disabled={loading || !gameName.trim() || !tagLine.trim()}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold
+                        <a
+                            href="https://account.riotgames.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold
                                        bg-[#c89b3c]/15 hover:bg-[#c89b3c]/25 border border-[#c89b3c]/30
-                                       text-[#e8b84b] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                       text-[#e8b84b] transition-all"
                         >
-                            <Link2 size={14} />
-                            {loading ? "Linking…" : "Link Riot Account"}
-                        </button>
+                            <ExternalLink size={14} />
+                            Go to Riot Account
+                        </a>
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {error && (
-                <p className="text-xs text-red-400 mt-2">{error}</p>
-            )}
         </motion.div>
     );
 }
@@ -405,16 +330,16 @@ function RiotAccountCard({ user, onUpdate }: { user: User; onUpdate: () => void 
 
 const GAME_LABELS: Record<string, { label: string; color: string }> = {
     pokemon_showdown: { label: "Pokémon", color: "#ffcc00" },
-    league_of_legends: { label: "LoL",     color: "#c89b3c" },
-    valorant:          { label: "VAL",     color: "#ff4655" },
+    league_of_legends: { label: "LoL", color: "#c89b3c" },
+    valorant: { label: "VAL", color: "#ff4655" },
 };
 
 const STATUS_STYLES: Record<string, { dot: string; text: string; label: string }> = {
-    open:        { dot: "bg-emerald-400", text: "text-emerald-400", label: "Open" },
-    pending:     { dot: "bg-amber-400",   text: "text-amber-400",   label: "Pending" },
-    in_progress: { dot: "bg-blue-400",    text: "text-blue-400",    label: "In Progress" },
-    completed:   { dot: "bg-[var(--neutral-muted)]", text: "text-[var(--neutral-muted)]", label: "Completed" },
-    cancelled:   { dot: "bg-red-500",     text: "text-red-400",     label: "Cancelled" },
+    open: { dot: "bg-emerald-400", text: "text-emerald-400", label: "Open" },
+    pending: { dot: "bg-amber-400", text: "text-amber-400", label: "Pending" },
+    in_progress: { dot: "bg-blue-400", text: "text-blue-400", label: "In Progress" },
+    completed: { dot: "bg-[var(--neutral-muted)]", text: "text-[var(--neutral-muted)]", label: "Completed" },
+    cancelled: { dot: "bg-red-500", text: "text-red-400", label: "Cancelled" },
 };
 
 function RecentLobbiesCard() {
@@ -678,8 +603,8 @@ export default function Dashboard() {
 
                 {/* ── Stats row ── */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                    <StatCard label="Wins"       value={wins}      color="#22c55e" Icon={TrendingUp} index={0} />
-                    <StatCard label="Losses"     value={losses}    color="#ef4444" Icon={Shield}     index={1} />
+                    <StatCard label="Wins" value={wins} color="#22c55e" Icon={TrendingUp} index={0} />
+                    <StatCard label="Losses" value={losses} color="#ef4444" Icon={Shield} index={1} />
                     <StatCard
                         label="Win Rate"
                         value={winRate}
