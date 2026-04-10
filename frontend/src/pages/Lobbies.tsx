@@ -244,9 +244,9 @@ const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, userRiotLinked,
                 <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/8 px-3 py-2.5 mb-4">
                     <AlertCircle size={14} className="text-amber-400 mt-0.5 shrink-0" />
                     <p className="text-xs text-amber-300 leading-relaxed">
-                        Este torneo requiere una <span className="font-semibold">cuenta Riot vinculada</span> para enviar resultados.{" "}
+                        This tournament requires a <span className="font-semibold">linked Riot account</span> to submit results.{" "}
                         <a href="/dashboard" className="underline underline-offset-2 hover:text-amber-100 transition-colors">
-                            Vincular en mi perfil →
+                            Link in your profile →
                         </a>
                     </p>
                 </div>
@@ -256,7 +256,7 @@ const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, userRiotLinked,
                 <div className="flex items-center gap-2 rounded-lg border border-green-500/25 bg-green-500/8 px-3 py-2 mb-4">
                     <CheckCircle size={13} className="text-green-400 shrink-0" />
                     <p className="text-xs text-green-300">
-                        Cuenta Riot vinculada — listo para competir
+                        Riot account linked — ready to compete
                     </p>
                 </div>
             )}
@@ -265,7 +265,7 @@ const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, userRiotLinked,
                 <div className="flex items-center gap-2 rounded-lg border border-[var(--neutral-border)]/30 bg-[var(--neutral-surface)]/30 px-3 py-2 mb-4">
                     <AlertCircle size={13} className="text-[var(--neutral-text-muted)] shrink-0" />
                     <p className="text-xs text-[var(--neutral-text-muted)]">
-                        Requiere cuenta Riot vinculada para enviar resultados
+                        Requires a linked Riot account to submit match results
                     </p>
                 </div>
             )}

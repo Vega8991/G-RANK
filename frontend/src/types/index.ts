@@ -5,6 +5,11 @@ export interface User {
   role: "USER" | "ADMIN";
   mmr: number;
   rank: string;
+  wins?: number;
+  losses?: number;
+  winRate?: number;
+  winStreak?: number;
+  totalMatches?: number;
   createdAt: string;
   updatedAt: string;
   riotGameName?: string | null;
