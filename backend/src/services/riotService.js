@@ -23,27 +23,6 @@ const PLATFORM_TO_CLUSTER = {
     'vn2':  'sea'
 };
 
-// LoL platform → Valorant platform
-const PLATFORM_TO_VAL_PLATFORM = {
-    'na1':  'na',
-    'na2':  'na',
-    'br1':  'br',
-    'la1':  'latam',
-    'la2':  'latam',
-    'euw1': 'eu',
-    'eun1': 'eu',
-    'tr1':  'eu',
-    'ru':   'eu',
-    'kr':   'kr',
-    'jp1':  'ap',
-    'oc1':  'ap',
-    'ph2':  'ap',
-    'sg2':  'ap',
-    'th2':  'ap',
-    'tw2':  'ap',
-    'vn2':  'ap'
-};
-
 // Derive cluster from a LoL match ID prefix (e.g. "NA1_1234" → "americas")
 function getClusterFromMatchId(matchId) {
     const prefix = matchId.split('_')[0].toLowerCase();
@@ -52,10 +31,6 @@ function getClusterFromMatchId(matchId) {
 
 function getClusterFromPlatform(platform) {
     return PLATFORM_TO_CLUSTER[platform.toLowerCase()] || 'americas';
-}
-
-function getValPlatformFromLolPlatform(lolPlatform) {
-    return PLATFORM_TO_VAL_PLATFORM[lolPlatform.toLowerCase()] || 'na';
 }
 
 function riotRequest(url) {
@@ -118,35 +93,29 @@ async function getLolMatchById(matchId) {
     return res.data;
 }
 
-// --- VAL-MATCH-V1 (Valorant match details) ---
-
-async function getValorantMatchById(matchId, valPlatform = 'na') {
-    const url = `https://${valPlatform}.api.riotgames.com/val/match/v1/matches/${encodeURIComponent(matchId)}`;
-    const res = await riotRequest(url);
-    return res.data;
-}
-
-async function getValorantMatchHistory(puuid, valPlatform = 'na') {
-    const url = `https://${valPlatform}.api.riotgames.com/val/match/v1/matchlists/by-puuid/${encodeURIComponent(puuid)}`;
-    const res = await riotRequest(url);
-    return res.data;
-}
-
 // --- Composite helpers ---
 
-// Full LoL ranked profile for a user given their platform
+// Full LoL ranked profile for a user given their platform.
+// Resilient: partial failures return null for that section instead of throwing.
 async function getFullLolProfile(puuid, platform) {
     const cluster = getClusterFromPlatform(platform);
 
     const [accountData, summonerData] = await Promise.all([
-        getAccountByPuuid(puuid, cluster),
-        getSummonerByPuuid(puuid, platform)
+        getAccountByPuuid(puuid, cluster).catch(() => null),
+        getSummonerByPuuid(puuid, platform).catch(() => null)
     ]);
 
-    const [rankedStats, topChampions] = await Promise.all([
-        getRankedStatsBySummonerId(summonerData.id, platform),
-        getTopChampionMasteries(puuid, platform, 5)
-    ]);
+    let rankedStats   = [];
+    let topChampions  = [];
+
+    if (summonerData?.id) {
+        [rankedStats, topChampions] = await Promise.all([
+            getRankedStatsBySummonerId(summonerData.id, platform).catch(() => []),
+            getTopChampionMasteries(puuid, platform, 5).catch(() => [])
+        ]);
+    } else {
+        topChampions = await getTopChampionMasteries(puuid, platform, 5).catch(() => []);
+    }
 
     const soloQueue = rankedStats.find(e => e.queueType === 'RANKED_SOLO_5x5') || null;
     const flexQueue  = rankedStats.find(e => e.queueType === 'RANKED_FLEX_SR') || null;
@@ -168,9 +137,6 @@ module.exports = {
     getTopChampionMasteries,
     getLolMatchIds,
     getLolMatchById,
-    getValorantMatchById,
-    getValorantMatchHistory,
     getFullLolProfile,
-    getClusterFromPlatform,
-    getValPlatformFromLolPlatform
+    getClusterFromPlatform
 };

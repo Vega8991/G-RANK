@@ -90,7 +90,7 @@ async function loginUser(req, res) {
             return;
         }
 
-        let isPasswordValid = bcrypt.compareSync(password, foundUser.password);
+                let isPasswordValid = bcrypt.compareSync(password, foundUser.password);
 
         if (!isPasswordValid) {
             res.status(401).json({
@@ -177,7 +177,8 @@ async function getProfile(req, res) {
                 riotGameName: user.riotGameName || null,
                 riotTagLine: user.riotTagLine || null,
                 riotPuuid: user.riotPuuid || null,
-                riotPlatform: user.riotPlatform || null
+                riotPlatform: user.riotPlatform || null,
+                riotCachedProfile: user.riotCachedProfile || null
             }
         });
     } catch (err) {
