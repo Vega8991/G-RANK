@@ -65,12 +65,33 @@ const linkRiotAccount = async function (req, res) {
             });
         }
 
-        await User.findByIdAndUpdate(userId, {
+        const updateData = {
             riotGameName: accountData.gameName,
             riotTagLine:  accountData.tagLine,
             riotPuuid:    accountData.puuid,
             riotPlatform: platform.toLowerCase()
-        });
+        };
+
+        // Attempt to cache ranked stats immediately — non-blocking
+        try {
+            const profile = await riotService.getFullLolProfile(accountData.puuid, platform.toLowerCase());
+            const soloQ = profile.rankedSolo;
+            updateData.riotCachedProfile = {
+                tier:          soloQ?.tier          ?? null,
+                rank:          soloQ?.rank          ?? null,
+                leaguePoints:  soloQ?.leaguePoints  ?? null,
+                rankedWins:    soloQ?.wins           ?? null,
+                rankedLosses:  soloQ?.losses         ?? null,
+                summonerLevel: profile.summoner?.summonerLevel ?? null,
+                profileIconId: profile.summoner?.profileIconId ?? null,
+                hotStreak:     soloQ?.hotStreak      ?? false,
+                lastUpdated:   new Date()
+            };
+        } catch (_) {
+            // Riot API may be slow; account still links successfully
+        }
+
+        await User.findByIdAndUpdate(userId, updateData);
 
         return res.status(200).json({
             success: true,
@@ -120,6 +141,23 @@ const getMyRiotProfile = async function (req, res) {
         }
 
         const profile = await riotService.getFullLolProfile(user.riotPuuid, user.riotPlatform);
+
+        // Update cache with fresh data
+        const soloQ = profile.rankedSolo;
+        await User.findByIdAndUpdate(req.userId, {
+            riotCachedProfile: {
+                tier:          soloQ?.tier          ?? null,
+                rank:          soloQ?.rank          ?? null,
+                leaguePoints:  soloQ?.leaguePoints  ?? null,
+                rankedWins:    soloQ?.wins           ?? null,
+                rankedLosses:  soloQ?.losses         ?? null,
+                summonerLevel: profile.summoner?.summonerLevel ?? null,
+                profileIconId: profile.summoner?.profileIconId ?? null,
+                hotStreak:     soloQ?.hotStreak      ?? false,
+                lastUpdated:   new Date()
+            }
+        });
+
         return res.status(200).json({ success: true, profile });
 
     } catch (error) {
@@ -355,75 +393,154 @@ const submitLolMatch = async function (req, res) {
     }
 };
 
-// POST /api/riot/submit-valorant-match
-// Body: { lobbyId, matchId, platform }   (platform like "na", "eu", "ap", "kr", "br", "latam")
-const submitValorantMatch = async function (req, res) {
-    const session = await mongoose.startSession();
+// ──────────────────────────────────────────────────────────
+//  RIOT OAUTH (RSO - Riot Sign On)
+// ──────────────────────────────────────────────────────────
 
+// GET /api/riot/oauth/url?platform=na1  (authenticated)
+// Returns the Riot OAuth authorization URL. The user follows it to log in with Riot.
+const getRiotOAuthUrl = async function (req, res) {
     try {
-        let result;
-        await session.withTransaction(async () => {
-            const { lobbyId, matchId, platform } = req.body;
-            if (!lobbyId || !matchId) throw new Error('lobbyId and matchId are required');
+        const { platform = 'na1' } = req.query;
 
-            const allLobbyParticipants = await LobbyParticipant.find({ lobbyId })
-                .populate('userId', 'username riotPuuid riotPlatform')
-                .session(session);
+        if (!VALID_PLATFORMS.includes(platform.toLowerCase())) {
+            return res.status(400).json({ success: false, message: `Invalid platform. Valid options: ${VALID_PLATFORMS.join(', ')}` });
+        }
 
-            for (const lp of allLobbyParticipants) {
-                if (!lp.userId.riotPuuid) throw new Error('RIOT_ACCOUNT_NOT_LINKED');
-            }
+        if (!process.env.RIOT_CLIENT_ID || !process.env.RIOT_REDIRECT_URI) {
+            return res.status(503).json({ success: false, message: 'Riot OAuth is not configured on this server.' });
+        }
 
-            // Determine Valorant platform: use request body, or derive from first participant's linked platform
-            const valPlatform = platform ||
-                riotService.getValPlatformFromLolPlatform(allLobbyParticipants[0].userId.riotPlatform || 'na1');
+        // Encode userId + platform in state so the callback can link to the right user
+        const state = Buffer.from(JSON.stringify({
+            userId:   req.userId,
+            platform: platform.toLowerCase()
+        })).toString('base64url');
 
-            let matchData;
-            try {
-                matchData = await riotService.getValorantMatchById(matchId, valPlatform);
-            } catch (err) {
-                if (err.response?.status === 404) throw new Error('MATCH_NOT_FOUND');
-                throw err;
-            }
-
-            // Valorant match structure: matchData.players[] and matchData.teams[]
-            const riotPlayers = matchData.players || [];
-            const riotTeams   = matchData.teams || [];
-            if (riotPlayers.length === 0 || riotTeams.length === 0) throw new Error('WINNER_NOT_FOUND');
-
-            const lobbyPuuids = allLobbyParticipants.map(lp => lp.userId.riotPuuid);
-            const matchedPlayers = riotPlayers.filter(p => lobbyPuuids.includes(p.puuid));
-            if (matchedPlayers.length < 2) throw new Error('PARTICIPANTS_MISMATCH');
-
-            // Determine win for each matched player via their teamId
-            function didPlayerWin(player) {
-                const team = riotTeams.find(t => t.teamId === player.teamId);
-                return team?.won === true;
-            }
-
-            const winnerRiot = matchedPlayers.find(p => didPlayerWin(p));
-            const loserRiot  = matchedPlayers.find(p => !didPlayerWin(p));
-            if (!winnerRiot || !loserRiot) throw new Error('WINNER_NOT_FOUND');
-
-            result = await resolveMatchResult(
-                lobbyId,
-                req.userId,
-                winnerRiot.puuid,
-                loserRiot.puuid,
-                matchId,
-                'valorant',
-                matchData,
-                session
-            );
+        const params = new URLSearchParams({
+            client_id:     process.env.RIOT_CLIENT_ID,
+            redirect_uri:  process.env.RIOT_REDIRECT_URI,
+            response_type: 'code',
+            scope:         'openid',
+            state
         });
 
-        return res.status(201).json(result);
+        const url = `https://auth.riotgames.com/authorize?${params.toString()}`;
+        return res.status(200).json({ success: true, url });
 
     } catch (error) {
-        const { status, message } = buildErrorResponse(error.message || 'UNKNOWN_ERROR');
-        return res.status(status).json({ success: false, message });
-    } finally {
-        await session.endSession();
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// GET /api/riot/oauth/callback?code=...&state=...  (public — called by Riot's redirect)
+const handleRiotOAuthCallback = async function (req, res) {
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+    try {
+        const { code, state, error } = req.query;
+
+        if (error) {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=${encodeURIComponent(error)}`);
+        }
+        if (!code || !state) {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=missing_params`);
+        }
+
+        // Decode state
+        let userId, platform;
+        try {
+            const decoded = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'));
+            userId   = decoded.userId;
+            platform = decoded.platform;
+        } catch {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=invalid_state`);
+        }
+
+        if (!userId || !platform) {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=invalid_state`);
+        }
+
+        // Exchange authorization code for access token
+        const axios = require('axios');
+        let tokenData;
+        try {
+            const tokenRes = await axios.post(
+                'https://auth.riotgames.com/token',
+                new URLSearchParams({
+                    grant_type:   'authorization_code',
+                    code,
+                    redirect_uri: process.env.RIOT_REDIRECT_URI
+                }).toString(),
+                {
+                    auth: {
+                        username: process.env.RIOT_CLIENT_ID,
+                        password: process.env.RIOT_CLIENT_SECRET
+                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }
+            );
+            tokenData = tokenRes.data;
+        } catch {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=token_exchange_failed`);
+        }
+
+        const accessToken = tokenData.access_token;
+        if (!accessToken) {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=no_access_token`);
+        }
+
+        // Fetch the authenticated Riot account using the OAuth bearer token
+        const cluster = riotService.getClusterFromPlatform(platform);
+        let accountData;
+        try {
+            const accountRes = await axios.get(
+                `https://${cluster}.api.riotgames.com/riot/account/v1/accounts/me`,
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+            accountData = accountRes.data; // { puuid, gameName, tagLine }
+        } catch {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=account_fetch_failed`);
+        }
+
+        const { puuid, gameName, tagLine } = accountData;
+
+        // Prevent linking a Riot account already used by another G-RANK user
+        const existing = await User.findOne({ riotPuuid: puuid, _id: { $ne: userId } });
+        if (existing) {
+            return res.redirect(`${FRONTEND_URL}/dashboard?riot_error=already_linked`);
+        }
+
+        const updateData = {
+            riotGameName: gameName,
+            riotTagLine:  tagLine,
+            riotPuuid:    puuid,
+            riotPlatform: platform
+        };
+
+        // Cache ranked stats immediately (non-blocking)
+        try {
+            const profile = await riotService.getFullLolProfile(puuid, platform);
+            const soloQ = profile.rankedSolo;
+            updateData.riotCachedProfile = {
+                tier:          soloQ?.tier          ?? null,
+                rank:          soloQ?.rank          ?? null,
+                leaguePoints:  soloQ?.leaguePoints  ?? null,
+                rankedWins:    soloQ?.wins           ?? null,
+                rankedLosses:  soloQ?.losses         ?? null,
+                summonerLevel: profile.summoner?.summonerLevel ?? null,
+                profileIconId: profile.summoner?.profileIconId ?? null,
+                hotStreak:     soloQ?.hotStreak      ?? false,
+                lastUpdated:   new Date()
+            };
+        } catch (_) {}
+
+        await User.findByIdAndUpdate(userId, updateData);
+
+        return res.redirect(`${FRONTEND_URL}/dashboard?riot_linked=1`);
+
+    } catch (error) {
+        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard?riot_error=server_error`);
     }
 };
 
@@ -433,5 +550,6 @@ module.exports = {
     getMyRiotProfile,
     getRiotProfileByRiotId,
     submitLolMatch,
-    submitValorantMatch
+    getRiotOAuthUrl,
+    handleRiotOAuthCallback
 };

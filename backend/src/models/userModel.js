@@ -92,6 +92,17 @@ let userSchema = new mongoose.Schema({
     riotPlatform: {
         type: String,
         default: null
+    },
+    riotCachedProfile: {
+        tier:          { type: String, default: null },
+        rank:          { type: String, default: null },
+        leaguePoints:  { type: Number, default: null },
+        rankedWins:    { type: Number, default: null },
+        rankedLosses:  { type: Number, default: null },
+        summonerLevel: { type: Number, default: null },
+        profileIconId: { type: Number, default: null },
+        hotStreak:     { type: Boolean, default: false },
+        lastUpdated:   { type: Date,   default: null }
     }
 });
 

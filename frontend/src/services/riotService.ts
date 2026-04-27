@@ -64,15 +64,12 @@ export async function submitLolMatch(
     return res.data;
 }
 
-export async function submitValorantMatch(
-    lobbyId: string,
-    matchId: string,
-    platform?: ValPlatform
-): Promise<RiotMatchResultResponse> {
-    const res = await axios.post(
-        `${API_URL}/riot/submit-valorant-match`,
-        { lobbyId, matchId, platform },
-        { headers: authHeaders() }
-    );
+export async function getRiotOAuthUrl(
+    platform: RiotPlatform
+): Promise<{ success: boolean; url: string }> {
+    const res = await axios.get(`${API_URL}/riot/oauth/url`, {
+        params: { platform },
+        headers: authHeaders()
+    });
     return res.data;
 }
