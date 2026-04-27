@@ -11,8 +11,11 @@ router.delete('/unlink', verifyToken, riotController.unlinkRiotAccount);
 router.get('/profile',       verifyToken, riotController.getMyRiotProfile);
 router.get('/profile/:riotId', riotController.getRiotProfileByRiotId); // public, ?platform=na1
 
-// Match submission (authenticated)
-router.post('/submit-lol-match',       verifyToken, riotController.submitLolMatch);
-router.post('/submit-valorant-match',  verifyToken, riotController.submitValorantMatch);
+// Match submission (authenticated) — LoL only, Valorant not supported with personal API key
+router.post('/submit-lol-match', verifyToken, riotController.submitLolMatch);
+
+// Riot OAuth (RSO)
+router.get('/oauth/url',      verifyToken, riotController.getRiotOAuthUrl);
+router.get('/oauth/callback',             riotController.handleRiotOAuthCallback);
 
 module.exports = router;

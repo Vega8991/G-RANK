@@ -1,3 +1,15 @@
+export interface RiotCachedProfile {
+  tier: string | null;
+  rank: string | null;
+  leaguePoints: number | null;
+  rankedWins: number | null;
+  rankedLosses: number | null;
+  summonerLevel: number | null;
+  profileIconId: number | null;
+  hotStreak: boolean;
+  lastUpdated: string | null;
+}
+
 export interface User {
   _id: string;
   username: string;
@@ -16,6 +28,7 @@ export interface User {
   riotTagLine?: string | null;
   riotPuuid?: string | null;
   riotPlatform?: string | null;
+  riotCachedProfile?: RiotCachedProfile | null;
 }
 
 export interface AuthResponse {

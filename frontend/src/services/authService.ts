@@ -53,3 +53,4 @@ export const getProfile = async (): Promise<{ user: User }> => {
 export const getToken = (): string | null => {
     return localStorage.getItem('token');
 };
+
