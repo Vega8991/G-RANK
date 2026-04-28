@@ -25,7 +25,7 @@ const lobbySchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'pending', 'completed', 'cancelled'],
+        enum: ['open', 'pending', 'in_progress', 'completed', 'cancelled'],
         default: 'open'
     },
     maxParticipants: {

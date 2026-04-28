@@ -46,6 +46,7 @@ let userSchema = new mongoose.Schema({
 
     status: {
         type: String,
+        enum: ['active', 'suspended', 'banned'],
         default: 'active'
     },
 
@@ -76,6 +77,14 @@ let userSchema = new mongoose.Schema({
         type: String,
         enum: ['USER', 'ADMIN'],
         default: 'USER'
+    },
+    passwordResetToken: {
+        type: String,
+        default: null
+    },
+    passwordResetExpires: {
+        type: Date,
+        default: null
     },
     riotGameName: {
         type: String,
