@@ -169,11 +169,11 @@ const updateLobbyStatus = async function (req, res) {
             });
         }
 
-        const validStatuses = ['open', 'pending', 'completed', 'cancelled'];
+        const validStatuses = ['open', 'pending', 'in_progress', 'completed', 'cancelled'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid status. Must be: open, pending, completed, or cancelled'
+                message: 'Invalid status. Must be: open, pending, in_progress, completed, or cancelled'
             });
         }
 

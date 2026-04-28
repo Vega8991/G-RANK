@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { login } from "../services/authService";
+import { login, resendVerification } from "../services/authService";
 import { AxiosError } from "axios";
 import Button from "../components/common/Button";
 import Aurora from "../components/ui/Aurora";
-import { Crown, Mail, Lock, Eye, EyeOff, AlertCircle, Trophy, Target, TrendingUp } from "lucide-react";
+import { Crown, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, RefreshCw, Trophy, Target, TrendingUp } from "lucide-react";
 
 const inputClassName = "w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300";
 
@@ -24,11 +24,15 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [needsVerification, setNeedsVerification] = useState(false);
+    const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
     const navigate = useNavigate();
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setMessage("");
+        setNeedsVerification(false);
+        setResendState("idle");
         setIsLoading(true);
         try {
             await login(email, password);
@@ -37,8 +41,25 @@ export default function Login() {
             const axiosErr = err as AxiosError<{ message?: string }>;
             const errorMessage = axiosErr.response?.data?.message || "Invalid credentials. Please try again.";
             setMessage(errorMessage);
+            if (axiosErr.response?.status === 403) {
+                setNeedsVerification(true);
+            }
         } finally {
             setIsLoading(false);
+        }
+    }
+
+    async function handleResend() {
+        if (!email) {
+            setMessage("Enter your email above and try again.");
+            return;
+        }
+        setResendState("sending");
+        try {
+            await resendVerification(email);
+            setResendState("sent");
+        } catch {
+            setResendState("error");
         }
     }
 
@@ -137,13 +158,52 @@ export default function Login() {
 
                         {message && (
                             <motion.div
-                                className="flex items-center gap-3 bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl px-4 py-3 mb-6"
+                                className="flex flex-col gap-3 mb-6"
                                 initial={{ opacity: 0, y: -8 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <AlertCircle size={16} className="text-[var(--status-danger)] flex-shrink-0" />
-                                <p className="text-sm text-[var(--status-danger)]">{message}</p>
+                                <div className="flex items-center gap-3 bg-[var(--status-danger)]/10 border border-[var(--status-danger)]/30 rounded-xl px-4 py-3">
+                                    <AlertCircle size={16} className="text-[var(--status-danger)] flex-shrink-0" />
+                                    <p className="text-sm text-[var(--status-danger)]">{message}</p>
+                                </div>
+
+                                {needsVerification && (
+                                    <motion.div
+                                        className="rounded-xl border px-4 py-3"
+                                        style={{ background: "rgba(245,158,11,0.07)", borderColor: "rgba(245,158,11,0.25)" }}
+                                        initial={{ opacity: 0, y: -4 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.25, delay: 0.1 }}
+                                    >
+                                        {resendState === "sent" ? (
+                                            <div className="flex items-center gap-2 text-green-400 text-sm">
+                                                <CheckCircle size={15} />
+                                                Email sent! Check your inbox (and spam folder).
+                                            </div>
+                                        ) : resendState === "error" ? (
+                                            <div className="flex items-center gap-2 text-red-400 text-sm">
+                                                <AlertCircle size={15} />
+                                                Could not send email. Try again later.
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-between gap-3">
+                                                <p className="text-xs text-amber-300/80 leading-relaxed">
+                                                    Email not verified yet. Didn't get the email?
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleResend}
+                                                    disabled={resendState === "sending"}
+                                                    className="flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 transition-colors whitespace-nowrap disabled:opacity-50"
+                                                >
+                                                    <RefreshCw size={12} className={resendState === "sending" ? "animate-spin" : ""} />
+                                                    {resendState === "sending" ? "Sending..." : "Resend email"}
+                                                </button>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
                             </motion.div>
                         )}
 
@@ -226,26 +286,6 @@ export default function Login() {
                                 )}
                             </Button>
                         </form>
-
-                        <div className="flex items-center gap-4 my-7">
-                            <div className="flex-1 h-px bg-[var(--neutral-border)]/40" />
-                            <span className="text-xs text-[var(--neutral-text-muted)]">OR</span>
-                            <div className="flex-1 h-px bg-[var(--neutral-border)]/40" />
-                        </div>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full py-3.5 text-sm font-semibold rounded-xl"
-                        >
-                            <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                            </svg>
-                            Continue with Google
-                        </Button>
 
                         <p className="text-center text-sm text-[var(--neutral-text-muted)] mt-8">
                             Don't have an account?{" "}
