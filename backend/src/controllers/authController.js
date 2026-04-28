@@ -2,7 +2,7 @@ let User = require('../models/userModel');
 let bcrypt = require('bcryptjs');
 let jwt = require('jsonwebtoken');
 let crypto = require('crypto');
-let { sendVerificationEmail } = require('../services/emailService');
+let { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 async function registerUser(req, res) {
     try {
@@ -220,4 +220,85 @@ async function verifyEmail(req, res) {
     }
 }
 
-module.exports = { registerUser, loginUser, getProfile, verifyEmail };
+async function forgotPassword(req, res) {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        user.passwordResetToken = resetToken;
+        user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await user.save();
+
+        sendPasswordResetEmail(user.email, user.username, resetToken);
+
+        res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+}
+
+async function resetPassword(req, res) {
+    try {
+        const { token, password } = req.body;
+        if (!token || !password) return res.status(400).json({ success: false, message: 'Token and password are required' });
+        if (password.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+
+        const user = await User.findOne({
+            passwordResetToken: token,
+            passwordResetExpires: { $gt: new Date() }
+        });
+
+        if (!user) return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+
+        const salt = await require('bcryptjs').genSalt(10);
+        user.password = await require('bcryptjs').hash(password, salt);
+        user.passwordResetToken = null;
+        user.passwordResetExpires = null;
+        await user.save();
+
+        res.status(200).json({ success: true, message: 'Password reset successfully. You can now log in.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+}
+
+async function getPublicProfile(req, res) {
+    try {
+        const { username } = req.params;
+        const user = await User.findOne({ username }, '-password -emailVerificationToken -passwordResetToken -passwordResetExpires -email');
+
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        res.status(200).json({
+            success: true,
+            user: {
+                _id: user._id,
+                username: user.username,
+                rank: user.rank,
+                mmr: user.mmr,
+                wins: user.wins,
+                losses: user.losses,
+                winRate: user.winRate,
+                winStreak: user.winStreak,
+                totalMatches: user.totalMatches,
+                role: user.role,
+                status: user.status,
+                createdAt: user.joinDate || user.createdAt,
+                riotGameName: user.riotGameName || null,
+                riotTagLine: user.riotTagLine || null,
+                riotPlatform: user.riotPlatform || null,
+                riotCachedProfile: user.riotCachedProfile || null,
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+}
+
+module.exports = { registerUser, loginUser, getProfile, verifyEmail, forgotPassword, resetPassword, getPublicProfile };
