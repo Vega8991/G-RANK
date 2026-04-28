@@ -116,7 +116,7 @@ const getMyLobbies = async (req, res) => {
         const participants = await LobbyParticipant.find({ userId })
             .populate('lobbyId');
 
-        const lobbies = participants.map(p => p.lobbyId);
+        const lobbies = participants.map(p => p.lobbyId).filter(Boolean);
 
         return res.status(200).json({
             success: true,
