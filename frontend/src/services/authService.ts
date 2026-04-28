@@ -21,7 +21,6 @@ export const login = async (email: string, password: string): Promise<AuthRespon
 
     if (hasToken) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
         window.dispatchEvent(new Event('auth-change'));
     }
 
@@ -30,7 +29,6 @@ export const login = async (email: string, password: string): Promise<AuthRespon
 
 export const logout = (): void => {
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
     window.dispatchEvent(new Event('auth-change'));
 };
 
