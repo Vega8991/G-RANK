@@ -574,7 +574,7 @@ function RecentLobbiesCard({ lobbies }: { lobbies: Lobby[] }) {
                     </div>
                 ) : (
                     <div className="space-y-2">
-                        {lobbies.slice(0, 4).map(function (lobby) {
+                        {lobbies.filter(Boolean).slice(0, 4).map(function (lobby) {
                             const gameCfg = GAME_COLORS[lobby.game] ?? GAME_COLORS.pokemon_showdown;
                             const GameIcon = gameCfg.Icon;
                             const statusKey = lobby.status as string;

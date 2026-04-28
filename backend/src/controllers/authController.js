@@ -45,7 +45,12 @@ async function registerUser(req, res) {
         });
 
         let savedUser = await newUser.save();
-        sendVerificationEmail(savedUser.email, savedUser.username, verificationToken);
+
+        try {
+            sendVerificationEmail(savedUser.email, savedUser.username, verificationToken);
+        } catch (emailErr) {
+            console.log('Warning: could not send verification email:', emailErr.message);
+        }
 
         res.status(201).json({
             success: true,
@@ -60,9 +65,20 @@ async function registerUser(req, res) {
             }
         });
     } catch (error) {
+        let message = 'Error creating user';
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyValue || {})[0];
+            message = field === 'email'
+                ? 'An account with this email already exists'
+                : field === 'username'
+                    ? 'This username is already taken'
+                    : 'Account already exists';
+        } else if (error.name === 'ValidationError') {
+            message = Object.values(error.errors).map(e => e.message).join(', ');
+        }
         res.status(400).json({
             success: false,
-            message: 'Error creating user',
+            message,
             error: error.message
         });
     }
@@ -301,4 +317,35 @@ async function getPublicProfile(req, res) {
     }
 }
 
-module.exports = { registerUser, loginUser, getProfile, verifyEmail, forgotPassword, resetPassword, getPublicProfile };
+async function resendVerificationEmail(req, res) {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(200).json({ success: true, message: 'If that email exists and is unverified, a new link has been sent.' });
+        }
+
+        if (user.isEmailVerified) {
+            return res.status(400).json({ success: false, message: 'This email is already verified. You can log in.' });
+        }
+
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        user.emailVerificationToken = verificationToken;
+        await user.save();
+
+        try {
+            sendVerificationEmail(user.email, user.username, verificationToken);
+        } catch (emailErr) {
+            console.log('Warning: could not send verification email:', emailErr.message);
+        }
+
+        res.status(200).json({ success: true, message: 'Verification email sent. Check your inbox.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    }
+}
+
+module.exports = { registerUser, loginUser, getProfile, verifyEmail, forgotPassword, resetPassword, getPublicProfile, resendVerificationEmail };

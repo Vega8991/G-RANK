@@ -52,6 +52,11 @@ export const getPublicProfile = async (username: string): Promise<{ user: User }
     return response.data;
 };
 
+export const resendVerification = async (email: string): Promise<{ message: string }> => {
+    const response = await axios.post(`${API_URL}/auth/resend-verification`, { email });
+    return response.data;
+};
+
 export const forgotPassword = async (email: string): Promise<{ message: string }> => {
     const response = await axios.post(`${API_URL}/auth/forgot-password`, { email });
     return response.data;
