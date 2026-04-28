@@ -8,6 +8,8 @@ let lobbyRoutes = require('./src/routes/lobbyRoutes');
 let lobbyParticipantRoutes = require('./src/routes/lobbyParticipantRoutes');
 let matchResultRoutes = require('./src/routes/matchResultRoutes');
 let leaderboardRoutes = require('./src/routes/leaderboardRoutes');
+let riotRoutes = require('./src/routes/riotRoutes');
+let adminRoutes = require('./src/routes/adminRoutes');
 
 let app = express();
 let port = process.env.PORT || 5000;
@@ -30,6 +32,8 @@ app.use('/api/lobbies', lobbyRoutes);
 app.use('/api/lobby-participants', lobbyParticipantRoutes);
 app.use('/api/match-results', matchResultRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/riot', riotRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.listen(port, () => {
     console.log('Server is running on port: ', port);

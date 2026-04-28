@@ -8,7 +8,7 @@ const lobbySchema = new mongoose.Schema({
     game: {
         type: String,
         required: true,
-        enum: ['pokemon_showdown'],
+        enum: ['pokemon_showdown', 'league_of_legends', 'valorant'],
         default: 'pokemon_showdown'
     },
     description: {

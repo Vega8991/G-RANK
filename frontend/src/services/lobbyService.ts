@@ -25,7 +25,8 @@ export const createLobby = async (
     maxParticipants: number,
     prizePool: string,
     registrationDeadline?: string,
-    matchDateTime?: string
+    matchDateTime?: string,
+    game: string = 'pokemon_showdown'
 ): Promise<{ lobby: Lobby }> => {
     const token = requireToken();
 
@@ -35,7 +36,7 @@ export const createLobby = async (
     const response = await axios.post(`${API_URL}/lobbies`, {
         name: title,
         description,
-        game: 'pokemon_showdown',
+        game,
         maxParticipants,
         prizePool,
         registrationDeadline: deadlineDate,
