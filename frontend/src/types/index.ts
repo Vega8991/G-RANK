@@ -52,7 +52,7 @@ export interface Lobby {
   matchDateTime: string;
   status: "open" | "pending" | "in_progress" | "completed" | "cancelled";
   createdBy: string | User;
-  participants: string[];
+  participants?: string[];
   prizePool?: string;
   createdAt: string;
   updatedAt: string;

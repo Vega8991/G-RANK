@@ -37,7 +37,12 @@ async function createUser(req, res) {
             user: { _id: saved._id, username: saved.username, email: saved.email, role: saved.role, rank: saved.rank, mmr: saved.mmr, status: saved.status, createdAt: saved.createdAt }
         });
     } catch (err) {
-        res.status(400).json({ success: false, message: err.message });
+        let message = err.message;
+        if (err.code === 11000) {
+            const field = Object.keys(err.keyValue || {})[0];
+            message = field === 'email' ? 'Email already in use' : field === 'username' ? 'Username already taken' : 'Duplicate value';
+        }
+        res.status(400).json({ success: false, message });
     }
 }
 
