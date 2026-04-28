@@ -2,67 +2,56 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { AuthStatus } from "../../types";
 
+function decodeJwtRole(token: string): string | null {
+    try {
+        const payload = token.split(".")[1];
+        const decoded = JSON.parse(atob(payload));
+        return decoded.role ?? null;
+    } catch {
+        return null;
+    }
+}
+
+function checkAuthStatus(): AuthStatus {
+    const token = localStorage.getItem('token');
+    if (!token) return { isLoggedIn: false, userRole: null };
+    const role = decodeJwtRole(token);
+    if (!role) {
+        localStorage.removeItem('token');
+        return { isLoggedIn: false, userRole: null };
+    }
+    return { isLoggedIn: true, userRole: role };
+}
+
 interface ProtectedRouteProps {
     isAllowed?: boolean;
     redirectTo?: string;
     requireAdmin?: boolean;
 }
 
-function checkAuthStatus(): AuthStatus {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-
-    if (!token || !userStr) {
-        return { isLoggedIn: false, userRole: null };
-    }
-
-    try {
-        const user = JSON.parse(userStr);
-        return { isLoggedIn: true, userRole: user.role || 'USER' };
-    } catch (error) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        return { isLoggedIn: false, userRole: null };
-    }
-}
-
 export default function ProtectedRoute({ isAllowed: staticIsAllowed, redirectTo = "/login", requireAdmin = false }: ProtectedRouteProps) {
     const [authStatus, setAuthStatus] = useState<AuthStatus>(checkAuthStatus());
 
     useEffect(() => {
-        const updateAuthStatus = () => {
-            setAuthStatus(checkAuthStatus());
-        };
-
-        updateAuthStatus();
-
-        window.addEventListener('storage', updateAuthStatus);
-
-        window.addEventListener('auth-change', updateAuthStatus);
-
+        const update = () => setAuthStatus(checkAuthStatus());
+        update();
+        window.addEventListener('storage', update);
+        window.addEventListener('auth-change', update);
         return () => {
-            window.removeEventListener('storage', updateAuthStatus);
-            window.removeEventListener('auth-change', updateAuthStatus);
+            window.removeEventListener('storage', update);
+            window.removeEventListener('auth-change', update);
         };
     }, []);
 
-    const isExplicitlyDenied = typeof staticIsAllowed === "boolean" && !staticIsAllowed;
-    const isNotAdmin = authStatus.userRole !== "ADMIN";
-
-    if (isExplicitlyDenied) {
+    if (typeof staticIsAllowed === "boolean" && !staticIsAllowed) {
         return <Navigate to={redirectTo} replace />;
     }
 
     if (requireAdmin) {
-        if (isNotAdmin) {
-            return <Navigate to={redirectTo} replace />;
-        }
-        return <Outlet />;
+        return authStatus.userRole === "ADMIN"
+            ? <Outlet />
+            : <Navigate to={redirectTo} replace />;
     }
 
-    if (!authStatus.isLoggedIn) {
-        return <Navigate to={redirectTo} replace />;
-    }
-
-    return <Outlet />;
+    return authStatus.isLoggedIn ? <Outlet /> : <Navigate to={redirectTo} replace />;
 }
