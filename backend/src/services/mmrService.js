@@ -7,7 +7,7 @@ const RANKS = {
     'Platinum': { min: 1500, max: 1999 },
     'Diamond': { min: 2000, max: 2499 },
     'Master': { min: 2500, max: 2999 },
-    'Elite': { min: 3000, max: Infinity }
+    'Elite': { min: 3000, max: 4000 }
 }
 
 const MMR_CHANGES = {
@@ -26,7 +26,7 @@ function getRankFromMMR(mmr) {
             return rank;
         }
     }
-    return 'Bronce';
+    return 'Bronze';
 }
 
 function calculateMMRChange(currentMMR, isWinner) {
