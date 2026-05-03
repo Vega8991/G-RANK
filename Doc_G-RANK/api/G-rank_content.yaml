@@ -1,22 +1,35 @@
 openapi: 3.0.3
 info:
   title: G-RANK API
-  version: 1.0.0
+  version: 2.0.0
   description: |
     OpenAPI specification for the G-RANK backend.
     You can import it into Postman to generate a collection with sample requests.
 
 servers:
   - url: http://localhost:5000
-    description: Local server
+    description: Local development server
 
 tags:
   - name: Auth
+    description: Registration, login, email verification and password reset
+  - name: Leaderboard
+    description: Global MMR ranking
   - name: Lobbies
+    description: Lobby management
   - name: Lobby Participants
+    description: Join and leave lobbies
   - name: Match Results
+    description: Submit replays and query results
+  - name: Riot
+    description: Riot Games account linking and LoL match submission
+  - name: Admin
+    description: Admin-only user and lobby management (requires ADMIN role)
 
 paths:
+
+  # ─── Health ────────────────────────────────────────────────────────────────
+
   /:
     get:
       tags: [Auth]
@@ -36,10 +49,12 @@ paths:
                   status:
                     type: string
 
+  # ─── Auth ──────────────────────────────────────────────────────────────────
+
   /api/auth/register:
     post:
       tags: [Auth]
-      summary: Register user
+      summary: Register a new user
       requestBody:
         required: true
         content:
@@ -52,7 +67,7 @@ paths:
               password: "123456"
       responses:
         "201":
-          description: User registered
+          description: User registered — verification email sent
           content:
             application/json:
               schema:
@@ -75,7 +90,7 @@ paths:
               password: "123456"
       responses:
         "200":
-          description: Login successful
+          description: Login successful — returns JWT token
           content:
             application/json:
               schema:
@@ -99,39 +114,33 @@ paths:
   /api/auth/profile:
     get:
       tags: [Auth]
-      summary: Get authenticated profile
+      summary: Get authenticated user profile
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: User profile
+          description: Full profile including Riot account data
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProfileResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "403":
-          description: Missing or invalid token
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /api/auth/verify-email:
     get:
       tags: [Auth]
-      summary: Verify email
+      summary: Verify email address
       parameters:
         - in: query
           name: token
           required: true
           schema:
             type: string
-          description: Verification token sent by email
+          description: Token sent to the user's email on registration
       responses:
         "200":
-          description: Email verified
+          description: Email verified successfully
           content:
             application/json:
               schema:
@@ -144,10 +153,157 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/auth/resend-verification:
+    post:
+      tags: [Auth]
+      summary: Resend email verification link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+            example:
+              email: "proplayer@example.com"
+      responses:
+        "200":
+          description: Verification email sent (response is intentionally vague to prevent enumeration)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request a password reset link
+      description: Sends a reset link to the provided email. Response is intentionally vague to prevent email enumeration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+            example:
+              email: "proplayer@example.com"
+      responses:
+        "200":
+          description: Response sent (regardless of whether email exists)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+              example:
+                success: true
+                message: "If that email exists, a reset link has been sent."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password using a valid token
+      description: Token is valid for 1 hour. Obtain it from the reset link sent to email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                  description: Reset token from the email link
+                password:
+                  type: string
+                  minLength: 6
+            example:
+              token: "abc123resettoken"
+              password: "newpassword123"
+      responses:
+        "200":
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/auth/users/{username}:
+    get:
+      tags: [Auth]
+      summary: Get public profile by username
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+          example: "proplayer"
+      responses:
+        "200":
+          description: Public user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicProfileResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Leaderboard ───────────────────────────────────────────────────────────
+
+  /api/leaderboard:
+    get:
+      tags: [Leaderboard]
+      summary: Get global leaderboard
+      description: Returns players sorted by MMR (descending). Only includes players with at least 1 match.
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of players to return (max 100)
+      responses:
+        "200":
+          description: Sorted player list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LeaderboardPlayer"
+
+  # ─── Lobbies ───────────────────────────────────────────────────────────────
+
   /api/lobbies:
     post:
       tags: [Lobbies]
-      summary: Create lobby
+      summary: Create a lobby
       security:
         - bearerAuth: []
       requestBody:
@@ -157,12 +313,12 @@ paths:
             schema:
               $ref: "#/components/schemas/CreateLobbyRequest"
             example:
-              name: "Weekly 1v1 lobby"
+              name: "Weekly 1v1"
               description: "Competitive BO1 format"
-              game: "pokemon_showdown"
+              game: "league_of_legends"
               maxParticipants: 2
-              registrationDeadline: "2026-02-25T18:00:00.000Z"
-              matchDateTime: "2026-02-25T20:00:00.000Z"
+              registrationDeadline: "2026-06-01T18:00:00.000Z"
+              matchDateTime: "2026-06-01T20:00:00.000Z"
               prizePool: 1000
       responses:
         "201":
@@ -197,7 +353,7 @@ paths:
   /api/lobbies/my-created:
     get:
       tags: [Lobbies]
-      summary: Get lobbies created by authenticated user
+      summary: Get lobbies created by the authenticated user
       security:
         - bearerAuth: []
       responses:
@@ -220,7 +376,7 @@ paths:
   /api/lobbies/sync-counts:
     post:
       tags: [Lobbies]
-      summary: Sync participant counts
+      summary: Sync participant counts across all lobbies
       responses:
         "200":
           description: Synchronization completed
@@ -243,11 +399,7 @@ paths:
       tags: [Lobbies]
       summary: Get lobby by ID
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/IdParam"
       responses:
         "200":
           description: Lobby found
@@ -270,11 +422,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/IdParam"
       requestBody:
         required: true
         content:
@@ -313,10 +461,12 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  # ─── Lobby Participants ────────────────────────────────────────────────────
+
   /api/lobby-participants/register:
     post:
       tags: [Lobby Participants]
-      summary: Register to a lobby
+      summary: Join a lobby
       security:
         - bearerAuth: []
       requestBody:
@@ -352,10 +502,42 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /api/lobby-participants/leave:
+    post:
+      tags: [Lobby Participants]
+      summary: Leave a lobby
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lobbyId]
+              properties:
+                lobbyId:
+                  type: string
+            example:
+              lobbyId: "65f0a93c8f4fca1d6c7f0001"
+      responses:
+        "200":
+          description: Left lobby successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /api/lobby-participants/my-lobbies:
     get:
       tags: [Lobby Participants]
-      summary: Get lobbies I joined
+      summary: Get lobbies the authenticated user has joined
       security:
         - bearerAuth: []
       responses:
@@ -375,10 +557,12 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  # ─── Match Results ─────────────────────────────────────────────────────────
+
   /api/match-results/submit-replay:
     post:
       tags: [Match Results]
-      summary: Submit replay to validate result and update MMR
+      summary: Submit a Pokémon Showdown replay to validate result and update MMR
       security:
         - bearerAuth: []
       requestBody:
@@ -399,7 +583,7 @@ paths:
               replayUrl: "https://replay.pokemonshowdown.com/gen9ou-1234567890"
       responses:
         "201":
-          description: Replay processed
+          description: Replay processed — MMR updated
           content:
             application/json:
               schema:
@@ -407,7 +591,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "403":
-          description: User is not registered in the lobby
+          description: User is not registered in this lobby
           content:
             application/json:
               schema:
@@ -418,7 +602,7 @@ paths:
   /api/match-results/lobby/{lobbyId}:
     get:
       tags: [Match Results]
-      summary: Get lobby results
+      summary: Get match results for a lobby
       parameters:
         - in: path
           name: lobbyId
@@ -444,12 +628,472 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  # ─── Riot ──────────────────────────────────────────────────────────────────
+
+  /api/riot/link:
+    post:
+      tags: [Riot]
+      summary: Link a Riot account to the authenticated user
+      description: Looks up the account via the Riot API and caches ranked stats. Only one Riot account per G-RANK user.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiotLinkRequest"
+            example:
+              gameName: "Faker"
+              tagLine: "KR1"
+              platform: "kr"
+      responses:
+        "200":
+          description: Riot account linked successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiotLinkResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Riot account not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Riot account already linked to another G-RANK account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Riot API unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/riot/unlink:
+    delete:
+      tags: [Riot]
+      summary: Unlink the Riot account from the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Riot account unlinked
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/riot/profile:
+    get:
+      tags: [Riot]
+      summary: Get full LoL profile for the authenticated user
+      description: Fetches fresh ranked stats from Riot API and updates the cache.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Full LoL profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiotProfileResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: No Riot account linked or summoner not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/riot/profile/{riotId}:
+    get:
+      tags: [Riot]
+      summary: Public LoL profile lookup by Riot ID
+      description: |
+        `riotId` must be in `gameName-tagLine` format (dash as separator).
+        Pass `platform` as a query parameter (default: `na1`).
+      parameters:
+        - in: path
+          name: riotId
+          required: true
+          schema:
+            type: string
+          example: "Faker-KR1"
+        - in: query
+          name: platform
+          required: false
+          schema:
+            type: string
+            default: na1
+          example: "kr"
+      responses:
+        "200":
+          description: LoL profile found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiotProfileResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/riot/submit-lol-match:
+    post:
+      tags: [Riot]
+      summary: Submit a League of Legends match ID to validate result and update MMR
+      description: |
+        Both lobby participants must have linked Riot accounts.
+        The match is fetched from the Riot API, the winner is determined automatically,
+        and MMR is updated for both players. Uses a MongoDB transaction for atomicity.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitLolMatchRequest"
+            example:
+              lobbyId: "65f0a93c8f4fca1d6c7f0001"
+              matchId: "NA1_1234567890"
+      responses:
+        "201":
+          description: Match verified — MMR updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitReplayResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: User not registered in this lobby
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/riot/oauth/url:
+    get:
+      tags: [Riot]
+      summary: Get Riot OAuth (RSO) authorization URL
+      description: |
+        Returns a URL that the user should open in their browser to authenticate with Riot.
+        Requires `RIOT_CLIENT_ID` and `RIOT_REDIRECT_URI` to be set in the server's `.env`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: platform
+          required: false
+          schema:
+            type: string
+            default: na1
+      responses:
+        "200":
+          description: OAuth URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  url:
+                    type: string
+                    format: uri
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          description: Riot OAuth not configured on this server
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/riot/oauth/callback:
+    get:
+      tags: [Riot]
+      summary: Riot OAuth callback (called by Riot's redirect)
+      description: |
+        This endpoint is called automatically by Riot after the user completes OAuth.
+        It exchanges the authorization code for an access token, fetches the Riot account,
+        and links it to the G-RANK user. Redirects to the frontend dashboard on completion.
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+        - in: query
+          name: state
+          schema:
+            type: string
+        - in: query
+          name: error
+          schema:
+            type: string
+      responses:
+        "302":
+          description: Redirect to frontend dashboard with `?riot_linked=1` on success or `?riot_error=...` on failure
+
+  # ─── Admin ─────────────────────────────────────────────────────────────────
+
+  /api/admin/stats:
+    get:
+      tags: [Admin]
+      summary: Get platform statistics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  stats:
+                    $ref: "#/components/schemas/AdminStats"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/admin/users:
+    get:
+      tags: [Admin]
+      summary: Get all users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Full user list (passwords excluded)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Admin]
+      summary: Create a user (bypasses email verification)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminCreateUserRequest"
+            example:
+              username: "newplayer"
+              email: "newplayer@example.com"
+              password: "123456"
+              role: "USER"
+              rank: "Bronze"
+              mmr: 250
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: "#/components/schemas/AdminUser"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/admin/users/{id}:
+    patch:
+      tags: [Admin]
+      summary: Update a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUpdateUserRequest"
+            example:
+              role: "ADMIN"
+              status: "suspended"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: "#/components/schemas/AdminUser"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Admin]
+      summary: Delete a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/admin/lobbies:
+    get:
+      tags: [Admin]
+      summary: Get all lobbies (admin view)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Full lobby list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lobbies:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Lobby"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /api/admin/lobbies/{id}:
+    patch:
+      tags: [Admin]
+      summary: Update any lobby field
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminUpdateLobbyRequest"
+      responses:
+        "200":
+          description: Lobby updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  lobby:
+                    $ref: "#/components/schemas/Lobby"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Admin]
+      summary: Delete a lobby
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Lobby deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+# ─── Components ─────────────────────────────────────────────────────────────
+
 components:
+
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  parameters:
+    IdParam:
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      description: MongoDB ObjectId
 
   responses:
     BadRequest:
@@ -459,7 +1103,13 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
-      description: Unauthorized
+      description: Missing or invalid JWT token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Insufficient permissions
       content:
         application/json:
           schema:
@@ -472,6 +1122,9 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
+
+    # ── Generic ──────────────────────────────────────────────────────────────
+
     ErrorResponse:
       type: object
       properties:
@@ -480,9 +1133,19 @@ components:
           example: false
         message:
           type: string
-          example: "Error message"
         error:
           type: string
+
+    SuccessMessage:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+
+    # ── User ─────────────────────────────────────────────────────────────────
 
     UserPublic:
       type: object
@@ -496,6 +1159,7 @@ components:
           format: email
         rank:
           type: string
+          enum: [Bronze, Silver, Gold, Platinum, Diamond, Master, Elite]
         mmr:
           type: number
         winRate:
@@ -509,6 +1173,111 @@ components:
         role:
           type: string
           enum: [USER, ADMIN]
+        riotGameName:
+          type: string
+          nullable: true
+        riotTagLine:
+          type: string
+          nullable: true
+        riotPuuid:
+          type: string
+          nullable: true
+        riotPlatform:
+          type: string
+          nullable: true
+        riotCachedProfile:
+          $ref: "#/components/schemas/RiotCachedProfile"
+
+    PublicProfile:
+      type: object
+      description: Profile visible without authentication (no email)
+      properties:
+        _id:
+          type: string
+        username:
+          type: string
+        rank:
+          type: string
+        mmr:
+          type: number
+        wins:
+          type: number
+        losses:
+          type: number
+        winRate:
+          type: number
+        winStreak:
+          type: number
+        totalMatches:
+          type: number
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        riotGameName:
+          type: string
+          nullable: true
+        riotTagLine:
+          type: string
+          nullable: true
+        riotPlatform:
+          type: string
+          nullable: true
+        riotCachedProfile:
+          $ref: "#/components/schemas/RiotCachedProfile"
+
+    AdminUser:
+      type: object
+      description: Full user record returned to admins (passwords excluded)
+      properties:
+        _id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        rank:
+          type: string
+        mmr:
+          type: number
+        status:
+          type: string
+          enum: [active, suspended]
+        isEmailVerified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    LeaderboardPlayer:
+      type: object
+      properties:
+        username:
+          type: string
+        mmr:
+          type: number
+        rank:
+          type: string
+        wins:
+          type: number
+        losses:
+          type: number
+        winRate:
+          type: number
+        winStreak:
+          type: number
+        totalMatches:
+          type: number
+
+    # ── Auth requests / responses ─────────────────────────────────────────────
 
     RegisterRequest:
       type: object
@@ -552,6 +1321,7 @@ components:
           type: string
         token:
           type: string
+          description: JWT — include as `Authorization: Bearer <token>` on subsequent requests
         user:
           $ref: "#/components/schemas/UserPublic"
 
@@ -563,6 +1333,102 @@ components:
         user:
           $ref: "#/components/schemas/UserPublic"
 
+    PublicProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        user:
+          $ref: "#/components/schemas/PublicProfile"
+
+    # ── Admin requests ────────────────────────────────────────────────────────
+
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        totalLobbies:
+          type: integer
+        activeLobbies:
+          type: integer
+        suspendedUsers:
+          type: integer
+
+    AdminCreateUserRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [USER, ADMIN]
+          default: USER
+        rank:
+          type: string
+          default: Bronze
+        mmr:
+          type: number
+          default: 250
+        status:
+          type: string
+          enum: [active, suspended]
+          default: active
+
+    AdminUpdateUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        rank:
+          type: string
+        mmr:
+          type: number
+        status:
+          type: string
+          enum: [active, suspended]
+
+    AdminUpdateLobbyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        game:
+          type: string
+        maxParticipants:
+          type: integer
+        status:
+          type: string
+          enum: [open, pending, completed, cancelled]
+        prizePool:
+          type: number
+        registrationDeadline:
+          type: string
+          format: date-time
+        matchDateTime:
+          type: string
+          format: date-time
+
+    # ── Lobby ─────────────────────────────────────────────────────────────────
+
     Lobby:
       type: object
       properties:
@@ -572,7 +1438,7 @@ components:
           type: string
         game:
           type: string
-          enum: [pokemon_showdown]
+          enum: [league_of_legends, pokemon_showdown]
         description:
           type: string
         registrationDeadline:
@@ -611,7 +1477,8 @@ components:
           type: string
         game:
           type: string
-          default: pokemon_showdown
+          enum: [league_of_legends, pokemon_showdown]
+          default: league_of_legends
         description:
           type: string
         registrationDeadline:
@@ -665,6 +1532,8 @@ components:
         mmrChange:
           type: number
 
+    # ── Match Results ─────────────────────────────────────────────────────────
+
     MatchResult:
       type: object
       properties:
@@ -675,6 +1544,7 @@ components:
         replayUrl:
           type: string
           format: uri
+          nullable: true
         winnerId:
           oneOf:
             - type: string
@@ -754,3 +1624,129 @@ components:
           $ref: "#/components/schemas/PlayerResultInfo"
         loser:
           $ref: "#/components/schemas/PlayerResultInfo"
+
+    # ── Riot ──────────────────────────────────────────────────────────────────
+
+    RiotCachedProfile:
+      type: object
+      nullable: true
+      properties:
+        tier:
+          type: string
+          nullable: true
+          example: "GOLD"
+        rank:
+          type: string
+          nullable: true
+          example: "II"
+        leaguePoints:
+          type: integer
+          nullable: true
+        rankedWins:
+          type: integer
+          nullable: true
+        rankedLosses:
+          type: integer
+          nullable: true
+        summonerLevel:
+          type: integer
+          nullable: true
+        profileIconId:
+          type: integer
+          nullable: true
+        hotStreak:
+          type: boolean
+        lastUpdated:
+          type: string
+          format: date-time
+
+    RiotLinkRequest:
+      type: object
+      required: [gameName, tagLine, platform]
+      properties:
+        gameName:
+          type: string
+          description: Riot in-game name (without tag)
+          example: "Faker"
+        tagLine:
+          type: string
+          description: Tag (without #)
+          example: "KR1"
+        platform:
+          type: string
+          description: "Regional platform. Options: na1, br1, la1, la2, euw1, eun1, tr1, ru, kr, jp1, oc1, ph2, sg2, th2, tw2, vn2"
+          example: "kr"
+
+    RiotLinkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        riotAccount:
+          type: object
+          properties:
+            gameName:
+              type: string
+            tagLine:
+              type: string
+            puuid:
+              type: string
+            platform:
+              type: string
+
+    RiotProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        profile:
+          type: object
+          properties:
+            summoner:
+              type: object
+              properties:
+                summonerLevel:
+                  type: integer
+                profileIconId:
+                  type: integer
+            rankedSolo:
+              type: object
+              nullable: true
+              properties:
+                tier:
+                  type: string
+                rank:
+                  type: string
+                leaguePoints:
+                  type: integer
+                wins:
+                  type: integer
+                losses:
+                  type: integer
+                hotStreak:
+                  type: boolean
+            topChampions:
+              type: array
+              items:
+                type: object
+                properties:
+                  championId:
+                    type: integer
+                  championPoints:
+                    type: integer
+                  championLevel:
+                    type: integer
+
+    SubmitLolMatchRequest:
+      type: object
+      required: [lobbyId, matchId]
+      properties:
+        lobbyId:
+          type: string
+          description: G-RANK lobby ObjectId
+        matchId:
+          type: string
+          description: "Riot match ID (e.g. NA1_1234567890)"
+          example: "NA1_1234567890"
