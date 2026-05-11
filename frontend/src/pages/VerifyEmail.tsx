@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Crown, CheckCircle, XCircle, Loader } from "lucide-react";
 import Aurora from "../components/ui/Aurora";
-import axios from "axios";
-import { API_URL } from "../config/api";
+import apiClient from "../services/apiClient";
 
 type Status = "loading" | "success" | "error";
 
@@ -13,19 +12,23 @@ export default function VerifyEmail() {
     const token = searchParams.get("token") ?? "";
     const [status, setStatus] = useState<Status>("loading");
     const [message, setMessage] = useState("");
+    const hasCalledRef = useRef(false);
 
     useEffect(() => {
+        if (hasCalledRef.current) return;
+        hasCalledRef.current = true;
+
         if (!token) {
             setStatus("error");
             setMessage("Missing verification token.");
             return;
         }
-        axios.get(`${API_URL}/auth/verify-email?token=${token}`)
+        apiClient.get(`/auth/verify-email?token=${token}`)
             .then(res => {
-                setMessage(res.data.message || "Email verified successfully!");
+                setMessage((res.data as { message?: string }).message || "Email verified successfully!");
                 setStatus("success");
             })
-            .catch(err => {
+            .catch((err: { response?: { data?: { message?: string } } }) => {
                 setMessage(err.response?.data?.message || "Invalid or expired token.");
                 setStatus("error");
             });

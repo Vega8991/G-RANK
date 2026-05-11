@@ -5,6 +5,7 @@ import "./index.css";
 
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Spinner from "./components/common/Spinner";
 
 const LandingPage     = lazy(() => import("./pages/LandingPage"));
 const Login           = lazy(() => import("./pages/Login"));
@@ -20,7 +21,7 @@ const Profile         = lazy(() => import("./pages/Profile"));
 const Admin           = lazy(() => import("./pages/Admin"));
 
 function withSuspense(element: React.ReactElement) {
-  return <Suspense fallback={null}>{element}</Suspense>;
+  return <Suspense fallback={<Spinner />}>{element}</Suspense>;
 }
 
 const publicRoutes: RouteObject[] = [

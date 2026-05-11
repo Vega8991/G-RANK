@@ -1,5 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { memo, useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AxiosError } from "axios";
 import {
@@ -8,16 +7,12 @@ import {
     ChevronDown, Search, RefreshCw,
     Crown, Flame, Star, Award, Gem,
     Swords, Crosshair, Zap,
-    TrendingUp, Activity, Lock
+    Activity, Lock
 } from "lucide-react";
 import Silk from "../components/ui/Silk";
-import { getProfile, logout } from "../services/authService";
-import {
-    getAdminStats, adminGetUsers, adminCreateUser, adminUpdateUser, adminDeleteUser,
-    adminGetLobbies, adminUpdateLobby, adminDeleteLobby,
-    type AdminStats, type CreateUserPayload, type UpdateUserPayload, type UpdateLobbyPayload
-} from "../services/adminService";
+import { useAdmin } from "../hooks/useAdmin";
 import type { User, Lobby } from "../types";
+import type { CreateUserPayload, UpdateUserPayload, UpdateLobbyPayload } from "../services/adminService";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -25,12 +20,12 @@ const RANKS = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Eli
 
 const RANK_COLOR: Record<string, string> = {
     Bronze: "#cd7f32", Silver: "#c0c0c0", Gold: "#ffd700",
-    Platinum: "#e5e4e2", Diamond: "#b9f2ff", Master: "#9b30ff", Elite: "#dc143c"
+    Platinum: "#e5e4e2", Diamond: "#b9f2ff", Master: "#9b30ff", Elite: "#dc143c",
 };
 
 const RANK_ICON: Record<string, typeof Award> = {
     Bronze: Award, Silver: Star, Gold: Trophy,
-    Platinum: Gem, Diamond: Gem, Master: Crown, Elite: Flame
+    Platinum: Gem, Diamond: Gem, Master: Crown, Elite: Flame,
 };
 
 const LOBBY_STATUS = ["open", "pending", "in_progress", "completed", "cancelled"] as const;
@@ -188,7 +183,9 @@ function UserModal({ user, onSave, onClose }: UserModalProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError]     = useState<string | null>(null);
 
-    function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })); }
+    function setField(key: string, value: string) {
+        setForm(prev => ({ ...prev, [key]: value }));
+    }
 
     async function handleSubmit() {
         setError(null);
@@ -214,8 +211,7 @@ function UserModal({ user, onSave, onClose }: UserModalProps) {
         }
     }
 
-    const inputCls = "w-full h-10 rounded-xl px-3 text-sm outline-none text-white transition-all"
-        + " bg-white/5 border border-white/10 focus:border-[var(--brand-primary)]/50 focus:bg-white/8";
+    const inputCls = "w-full h-10 rounded-xl px-3 text-sm outline-none text-white transition-all bg-white/5 border border-white/10 focus:border-[var(--brand-primary)]/50 focus:bg-white/8";
     const labelCls = "block text-[10px] font-bold tracking-widest uppercase text-white/30 mb-1.5";
 
     return (
@@ -250,36 +246,36 @@ function UserModal({ user, onSave, onClose }: UserModalProps) {
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={labelCls}>Username</label>
-                                <input className={inputCls} value={form.username} onChange={e => set("username", e.target.value)} placeholder="ProPlayer" />
+                                <input className={inputCls} value={form.username} onChange={e => setField("username", e.target.value)} placeholder="ProPlayer" />
                             </div>
                             <div>
                                 <label className={labelCls}>Email</label>
-                                <input className={inputCls} type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="user@email.com" />
+                                <input className={inputCls} type="email" value={form.email} onChange={e => setField("email", e.target.value)} placeholder="user@email.com" />
                             </div>
                         </div>
 
                         <div>
                             <label className={labelCls}>{isCreate ? "Password" : "New Password (leave blank to keep)"}</label>
-                            <input className={inputCls} type="password" value={form.password} onChange={e => set("password", e.target.value)} placeholder={isCreate ? "Min 6 characters" : "Leave blank to keep current"} />
+                            <input className={inputCls} type="password" value={form.password} onChange={e => setField("password", e.target.value)} placeholder={isCreate ? "Min 6 characters" : "Leave blank to keep current"} />
                         </div>
 
                         <div className="grid grid-cols-3 gap-3">
                             <div>
                                 <label className={labelCls}>Role</label>
-                                <select className={inputCls + " cursor-pointer"} value={form.role} onChange={e => set("role", e.target.value)}>
+                                <select className={inputCls + " cursor-pointer"} value={form.role} onChange={e => setField("role", e.target.value)}>
                                     <option value="USER">User</option>
                                     <option value="ADMIN">Admin</option>
                                 </select>
                             </div>
                             <div>
                                 <label className={labelCls}>Rank</label>
-                                <select className={inputCls + " cursor-pointer"} value={form.rank} onChange={e => set("rank", e.target.value)}>
+                                <select className={inputCls + " cursor-pointer"} value={form.rank} onChange={e => setField("rank", e.target.value)}>
                                     {RANKS.map(r => <option key={r} value={r}>{r}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className={labelCls}>Status</label>
-                                <select className={inputCls + " cursor-pointer"} value={form.status} onChange={e => set("status", e.target.value)}>
+                                <select className={inputCls + " cursor-pointer"} value={form.status} onChange={e => setField("status", e.target.value)}>
                                     <option value="active">Active</option>
                                     <option value="suspended">Suspended</option>
                                     <option value="banned">Banned</option>
@@ -289,7 +285,7 @@ function UserModal({ user, onSave, onClose }: UserModalProps) {
 
                         <div>
                             <label className={labelCls}>MMR</label>
-                            <input className={inputCls} type="number" min={0} value={form.mmr} onChange={e => set("mmr", e.target.value)} placeholder="250" />
+                            <input className={inputCls} type="number" min={0} value={form.mmr} onChange={e => setField("mmr", e.target.value)} placeholder="250" />
                         </div>
                     </div>
 
@@ -323,17 +319,19 @@ function LobbyModal({ lobby, onSave, onClose }: {
     lobby: Lobby; onSave: (data: UpdateLobbyPayload) => Promise<void>; onClose: () => void;
 }) {
     const [form, setForm] = useState({
-        name:          lobby.name,
-        description:   lobby.description,
-        game:          lobby.game,
+        name:            lobby.name,
+        description:     lobby.description,
+        game:            lobby.game,
         maxParticipants: String(lobby.maxParticipants),
-        status:        lobby.status,
-        prizePool:     lobby.prizePool ?? "",
+        status:          lobby.status,
+        prizePool:       lobby.prizePool ?? "",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError]     = useState<string | null>(null);
 
-    function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })); }
+    function setField(key: string, value: string) {
+        setForm(prev => ({ ...prev, [key]: value }));
+    }
 
     async function handleSubmit() {
         setError(null);
@@ -356,8 +354,7 @@ function LobbyModal({ lobby, onSave, onClose }: {
         }
     }
 
-    const inputCls = "w-full h-10 rounded-xl px-3 text-sm outline-none text-white transition-all"
-        + " bg-white/5 border border-white/10 focus:border-[var(--brand-primary)]/50";
+    const inputCls = "w-full h-10 rounded-xl px-3 text-sm outline-none text-white transition-all bg-white/5 border border-white/10 focus:border-[var(--brand-primary)]/50";
     const labelCls = "block text-[10px] font-bold tracking-widest uppercase text-white/30 mb-1.5";
 
     return (
@@ -391,21 +388,19 @@ function LobbyModal({ lobby, onSave, onClose }: {
                     <div className="space-y-4">
                         <div>
                             <label className={labelCls}>Name</label>
-                            <input className={inputCls} value={form.name} onChange={e => set("name", e.target.value)} />
+                            <input className={inputCls} value={form.name} onChange={e => setField("name", e.target.value)} />
                         </div>
-
                         <div>
                             <label className={labelCls}>Description</label>
                             <textarea
                                 className="w-full rounded-xl px-3 py-2.5 text-sm outline-none text-white transition-all bg-white/5 border border-white/10 focus:border-[var(--brand-primary)]/50 resize-none"
-                                rows={2} value={form.description} onChange={e => set("description", e.target.value)}
+                                rows={2} value={form.description} onChange={e => setField("description", e.target.value)}
                             />
                         </div>
-
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={labelCls}>Game</label>
-                                <select className={inputCls + " cursor-pointer"} value={form.game} onChange={e => set("game", e.target.value)}>
+                                <select className={inputCls + " cursor-pointer"} value={form.game} onChange={e => setField("game", e.target.value)}>
                                     <option value="pokemon_showdown">Pokémon Showdown</option>
                                     <option value="league_of_legends">League of Legends</option>
                                     <option value="valorant">Valorant</option>
@@ -413,20 +408,19 @@ function LobbyModal({ lobby, onSave, onClose }: {
                             </div>
                             <div>
                                 <label className={labelCls}>Status</label>
-                                <select className={inputCls + " cursor-pointer"} value={form.status} onChange={e => set("status", e.target.value)}>
+                                <select className={inputCls + " cursor-pointer"} value={form.status} onChange={e => setField("status", e.target.value)}>
                                     {LOBBY_STATUS.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
                                 </select>
                             </div>
                         </div>
-
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <label className={labelCls}>Max Participants</label>
-                                <input className={inputCls} type="number" min={2} value={form.maxParticipants} onChange={e => set("maxParticipants", e.target.value)} />
+                                <input className={inputCls} type="number" min={2} value={form.maxParticipants} onChange={e => setField("maxParticipants", e.target.value)} />
                             </div>
                             <div>
                                 <label className={labelCls}>Prize Pool</label>
-                                <input className={inputCls} value={form.prizePool} onChange={e => set("prizePool", e.target.value)} placeholder="e.g. $500" />
+                                <input className={inputCls} value={form.prizePool} onChange={e => setField("prizePool", e.target.value)} placeholder="e.g. $500" />
                             </div>
                         </div>
                     </div>
@@ -481,19 +475,11 @@ function UsersTable({ users, onEdit, onDelete }: {
             </div>
 
             <div className="rounded-2xl overflow-hidden border border-white/5">
-                {/* Header */}
                 <div className="grid px-4 py-3 text-[10px] font-bold tracking-widest uppercase text-white/25 border-b border-white/5"
                     style={{ gridTemplateColumns: "40px 1fr 1fr 100px 90px 90px 80px 80px" }}>
-                    <span>#</span>
-                    <span>Username</span>
-                    <span>Email</span>
-                    <span>Rank</span>
-                    <span>MMR</span>
-                    <span>Status</span>
-                    <span>Role</span>
-                    <span className="text-right">Actions</span>
+                    <span>#</span><span>Username</span><span>Email</span><span>Rank</span>
+                    <span>MMR</span><span>Status</span><span>Role</span><span className="text-right">Actions</span>
                 </div>
-
                 <div className="divide-y divide-white/4">
                     <AnimatePresence initial={false}>
                         {filtered.length === 0 ? (
@@ -548,8 +534,8 @@ function LobbiesTable({ lobbies, onEdit, onDelete }: {
     onEdit: (l: Lobby) => void;
     onDelete: (l: Lobby) => void;
 }) {
-    const [search, setSearch]   = useState("");
-    const [filter, setFilter]   = useState("all");
+    const [search, setSearch]     = useState("");
+    const [filter, setFilter]     = useState("all");
     const [showFilter, setShowFilter] = useState(false);
     const filterRef = useRef<HTMLDivElement>(null);
 
@@ -601,16 +587,9 @@ function LobbiesTable({ lobbies, onEdit, onDelete }: {
             <div className="rounded-2xl overflow-hidden border border-white/5">
                 <div className="grid px-4 py-3 text-[10px] font-bold tracking-widest uppercase text-white/25 border-b border-white/5"
                     style={{ gridTemplateColumns: "40px 1fr 120px 100px 110px 100px 90px 80px" }}>
-                    <span>#</span>
-                    <span>Tournament</span>
-                    <span>Game</span>
-                    <span>Participants</span>
-                    <span>Status</span>
-                    <span>Prize</span>
-                    <span>Created</span>
-                    <span className="text-right">Actions</span>
+                    <span>#</span><span>Tournament</span><span>Game</span><span>Participants</span>
+                    <span>Status</span><span>Prize</span><span>Created</span><span className="text-right">Actions</span>
                 </div>
-
                 <div className="divide-y divide-white/4">
                     <AnimatePresence initial={false}>
                         {filtered.length === 0 ? (
@@ -695,95 +674,22 @@ function Toast({ message, ok, onDone }: { message: string; ok: boolean; onDone: 
 type Tab = "users" | "lobbies";
 
 export default function Admin() {
-    const navigate = useNavigate();
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
-    const [stats,   setStats]   = useState<AdminStats | null>(null);
-    const [users,   setUsers]   = useState<User[]>([]);
-    const [lobbies, setLobbies] = useState<Lobby[]>([]);
-    const [tab, setTab]         = useState<Tab>("users");
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+    const {
+        currentUser, stats, users, lobbies, loading, toast, setToast,
+        handleSaveUser, handleDeleteUser, handleSaveLobby, handleDeleteLobby, handleRefresh,
+    } = useAdmin();
 
-    const [editUser,   setEditUser]   = useState<User | null | "__create__">(null);
-    const [editLobby,  setEditLobby]  = useState<Lobby | null>(null);
-    const [deleteUser, setDeleteUser] = useState<User | null>(null);
+    const [tab, setTab]             = useState<Tab>("users");
+    const [editUser, setEditUser]   = useState<User | "__create__" | null>(null);
+    const [editLobby, setEditLobby] = useState<Lobby | null>(null);
+    const [deleteUser, setDeleteUser]   = useState<User | null>(null);
     const [deleteLobby, setDeleteLobby] = useState<Lobby | null>(null);
+    const [refreshing, setRefreshing]   = useState(false);
 
-    const [toast, setToast] = useState<{ message: string; ok: boolean } | null>(null);
-
-    function showToast(message: string, ok = true) { setToast({ message, ok }); }
-
-    const loadAll = useCallback(async function () {
-        try {
-            const [s, u, l] = await Promise.all([getAdminStats(), adminGetUsers(), adminGetLobbies()]);
-            setStats(s);
-            setUsers(u);
-            setLobbies(l);
-        } catch {
-            showToast("Failed to load data", false);
-        }
-    }, []);
-
-    useEffect(function () {
-        (async () => {
-            try {
-                const { user } = await getProfile();
-                if (user.role !== "ADMIN") { navigate("/dashboard"); return; }
-                setCurrentUser(user);
-                await loadAll();
-            } catch {
-                logout();
-                navigate("/login");
-            } finally {
-                setLoading(false);
-            }
-        })();
-    }, [navigate, loadAll]);
-
-    async function handleRefresh() {
+    async function onRefresh() {
         setRefreshing(true);
-        await loadAll();
+        await handleRefresh();
         setRefreshing(false);
-        showToast("Data refreshed");
-    }
-
-    async function handleSaveUser(data: CreateUserPayload | UpdateUserPayload) {
-        if (editUser === "__create__") {
-            const u = await adminCreateUser(data as CreateUserPayload);
-            setUsers(prev => [u, ...prev]);
-            showToast("User created");
-        } else if (editUser) {
-            const u = await adminUpdateUser(editUser._id, data);
-            setUsers(prev => prev.map(x => x._id === u._id ? u : x));
-            showToast("User updated");
-        }
-        await loadAll();
-    }
-
-    async function handleConfirmDeleteUser() {
-        if (!deleteUser) return;
-        await adminDeleteUser(deleteUser._id);
-        setUsers(prev => prev.filter(u => u._id !== deleteUser._id));
-        setDeleteUser(null);
-        showToast("User deleted");
-        await loadAll();
-    }
-
-    async function handleSaveLobby(data: UpdateLobbyPayload) {
-        if (!editLobby) return;
-        const l = await adminUpdateLobby(editLobby._id, data);
-        setLobbies(prev => prev.map(x => x._id === l._id ? l : x));
-        showToast("Tournament updated");
-        await loadAll();
-    }
-
-    async function handleConfirmDeleteLobby() {
-        if (!deleteLobby) return;
-        await adminDeleteLobby(deleteLobby._id);
-        setLobbies(prev => prev.filter(l => l._id !== deleteLobby._id));
-        setDeleteLobby(null);
-        showToast("Tournament deleted");
-        await loadAll();
     }
 
     if (loading) {
@@ -804,7 +710,7 @@ export default function Admin() {
             <div className="relative z-10 pointer-events-auto">
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20 pt-10 pb-16 space-y-6">
 
-                    {/* ── Header ── */}
+                    {/* Header */}
                     <motion.div className="flex flex-col md:flex-row md:items-end justify-between gap-4"
                         initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
                         <div>
@@ -819,23 +725,21 @@ export default function Admin() {
                                 Logged in as <span className="text-white/60 font-semibold">{currentUser?.username}</span>
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={handleRefresh} disabled={refreshing}
-                                className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold text-white/40 hover:text-white bg-white/4 border border-white/8 hover:border-white/16 transition-all disabled:opacity-40">
-                                <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-                                Refresh
-                            </button>
-                        </div>
+                        <button onClick={onRefresh} disabled={refreshing}
+                            className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold text-white/40 hover:text-white bg-white/4 border border-white/8 hover:border-white/16 transition-all disabled:opacity-40">
+                            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+                            Refresh
+                        </button>
                     </motion.div>
 
-                    {/* ── Stats ── */}
+                    {/* Stats */}
                     {stats && (
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             {[
-                                { label: "Total Users",    value: stats.totalUsers,    icon: Users,    color: "#dc143c", bg: "rgba(220,20,60,0.15)"   },
-                                { label: "Tournaments",    value: stats.totalLobbies,  icon: Trophy,   color: "#3B82F6", bg: "rgba(59,130,246,0.15)"  },
-                                { label: "Active Now",     value: stats.activeLobbies, icon: Activity, color: "#22c55e", bg: "rgba(34,197,94,0.15)"   },
-                                { label: "Suspended",      value: stats.suspendedUsers,icon: Shield,   color: "#f59e0b", bg: "rgba(245,158,11,0.15)"  },
+                                { label: "Total Users",  value: stats.totalUsers,     icon: Users,    color: "#dc143c", bg: "rgba(220,20,60,0.15)"  },
+                                { label: "Tournaments",  value: stats.totalLobbies,   icon: Trophy,   color: "#3B82F6", bg: "rgba(59,130,246,0.15)" },
+                                { label: "Active Now",   value: stats.activeLobbies,  icon: Activity, color: "#22c55e", bg: "rgba(34,197,94,0.15)"  },
+                                { label: "Suspended",    value: stats.suspendedUsers, icon: Shield,   color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
                             ].map((s, i) => (
                                 <motion.div key={s.label} transition={{ delay: i * 0.08 }}>
                                     <StatCard {...s} />
@@ -844,12 +748,11 @@ export default function Admin() {
                         </div>
                     )}
 
-                    {/* ── Tabs ── */}
+                    {/* Tabs */}
                     <motion.div className="relative rounded-2xl overflow-hidden border border-white/5"
                         style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))" }}
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
 
-                        {/* Tab bar */}
                         <div className="flex items-center justify-between px-6 pt-5 pb-0 border-b border-white/5">
                             <div className="flex items-center gap-1">
                                 {([
@@ -881,26 +784,15 @@ export default function Admin() {
                             )}
                         </div>
 
-                        {/* Tab content */}
                         <div className="p-6">
                             <AnimatePresence mode="wait">
                                 <motion.div key={tab}
-                                    initial={{ opacity: 0, y: 8 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -8 }}
-                                    transition={{ duration: 0.25 }}>
+                                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>
                                     {tab === "users" ? (
-                                        <UsersTable
-                                            users={users}
-                                            onEdit={u => setEditUser(u)}
-                                            onDelete={u => setDeleteUser(u)}
-                                        />
+                                        <UsersTable users={users} onEdit={u => setEditUser(u)} onDelete={u => setDeleteUser(u)} />
                                     ) : (
-                                        <LobbiesTable
-                                            lobbies={lobbies}
-                                            onEdit={l => setEditLobby(l)}
-                                            onDelete={l => setDeleteLobby(l)}
-                                        />
+                                        <LobbiesTable lobbies={lobbies} onEdit={l => setEditLobby(l)} onDelete={l => setDeleteLobby(l)} />
                                     )}
                                 </motion.div>
                             </AnimatePresence>
@@ -910,33 +802,33 @@ export default function Admin() {
                 </div>
             </div>
 
-            {/* ── Modals ── */}
+            {/* Modals */}
             <AnimatePresence>
-                {(editUser !== null) && (
+                {editUser !== null && (
                     <UserModal
                         user={editUser === "__create__" ? null : editUser}
-                        onSave={handleSaveUser}
+                        onSave={data => handleSaveUser(editUser, data)}
                         onClose={() => setEditUser(null)}
                     />
                 )}
                 {editLobby && (
                     <LobbyModal
                         lobby={editLobby}
-                        onSave={handleSaveLobby}
+                        onSave={data => handleSaveLobby(editLobby, data)}
                         onClose={() => setEditLobby(null)}
                     />
                 )}
                 {deleteUser && (
                     <ConfirmDialog
                         message={`Delete user "${deleteUser.username}"? This is permanent.`}
-                        onConfirm={handleConfirmDeleteUser}
+                        onConfirm={async () => { await handleDeleteUser(deleteUser); setDeleteUser(null); }}
                         onCancel={() => setDeleteUser(null)}
                     />
                 )}
                 {deleteLobby && (
                     <ConfirmDialog
                         message={`Delete tournament "${deleteLobby.name}"? This is permanent.`}
-                        onConfirm={handleConfirmDeleteLobby}
+                        onConfirm={async () => { await handleDeleteLobby(deleteLobby); setDeleteLobby(null); }}
                         onCancel={() => setDeleteLobby(null)}
                     />
                 )}

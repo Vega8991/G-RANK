@@ -263,7 +263,7 @@ function FeaturesInlineSection() {
                         }
                     }}
                 >
-                    {FEATURES.map(function (feature, idx) {
+                    {FEATURES.map(function (feature) {
                         let IconComponent = feature.icon;
                         return (
                             <motion.div

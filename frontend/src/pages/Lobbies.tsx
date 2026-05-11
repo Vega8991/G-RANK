@@ -1,13 +1,10 @@
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { AxiosError } from "axios";
+import { memo, useDeferredValue, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Filter, Search, Trophy, Users, CheckCircle2, Plus, LogOut, Swords, Crosshair, Zap, AlertCircle, CheckCircle } from "lucide-react";
 import Button from "../components/common/Button";
 import Silk from "../components/ui/Silk";
-import { createLobby, getAllLobbies, getMyLobbies, registerToLobby, leaveLobby, syncParticipantCounts } from "../services/lobbyService";
-import { submitReplay } from "../services/matchService";
-import { getProfile } from "../services/authService";
-import type { MatchResultResponse, Lobby } from "../types";
+import { useLobbies } from "../hooks/useLobbies";
+import type { Lobby } from "../types";
 
 type GameType = "pokemon_showdown" | "league_of_legends" | "valorant";
 
@@ -81,11 +78,6 @@ const FILTERS: Array<{ value: LobbyStatusFilter; label: string }> = [
     { value: "completed",   label: "Completed"   },
     { value: "cancelled",   label: "Cancelled"   }
 ];
-
-function getErrorMessage(err: unknown): string {
-    const axiosErr = err as AxiosError<{ message?: string }>;
-    return axiosErr.response?.data?.message || "Error";
-}
 
 function formatDate(value: string): string {
     if (!value) return "Date pending";
@@ -325,8 +317,8 @@ const LobbyCard = memo(function LobbyCard({ lobby, isRegistered, userRiotLinked,
 });
 
 export default function Lobbies() {
-    const [lobbies, setLobbies] = useState<Lobby[]>([]);
-    const [myLobbies, setMyLobbies] = useState<Lobby[]>([]);
+    const { lobbies, myLobbies, userRiotLinked, message, result, handleRegister, handleLeave, handleCreate: submitCreateLobby, handleSubmitReplay } = useLobbies();
+
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [maxParticipants, setMaxParticipants] = useState("");
@@ -337,81 +329,37 @@ export default function Lobbies() {
     const [selectedGame, setSelectedGame] = useState<GameType>("pokemon_showdown");
     const [selectedLobby, setSelectedLobby] = useState("");
     const [replayUrl, setReplayUrl] = useState("");
-    const [message, setMessage] = useState("");
-    const [result, setResult] = useState<MatchResultResponse | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedStatus, setSelectedStatus] = useState<LobbyStatusFilter>("all");
-    const [userRiotLinked, setUserRiotLinked] = useState<boolean | null>(null);
     const deferredSearchQuery = useDeferredValue(searchQuery);
     const registrationDeadlineRef = useRef<HTMLInputElement>(null);
     const matchDateTimeRef = useRef<HTMLInputElement>(null);
     const createPanelRef = useRef<HTMLDivElement>(null);
 
-    useEffect(function () {
-        getProfile()
-            .then(function (res) { setUserRiotLinked(!!res.user.riotPuuid); })
-            .catch(function () { setUserRiotLinked(null); });
-    }, []);
-
-    const loadData = useCallback(async function (options?: { shouldSync?: boolean }) {
-        setMessage("");
-        const shouldSync = options?.shouldSync ?? false;
-        if (shouldSync) {
-            try { await syncParticipantCounts(); } catch (err) { console.error("Error syncing participant counts:", err); }
-        }
-        const [allLobbiesResult, myLobbiesResult] = await Promise.allSettled([getAllLobbies(), getMyLobbies()]);
-        if (allLobbiesResult.status === "fulfilled") {
-            setLobbies(Array.isArray(allLobbiesResult.value.lobbies) ? allLobbiesResult.value.lobbies.filter(hasLobbyId) : []);
-        } else {
-            console.error("Error loading lobbies:", allLobbiesResult.reason);
-            setMessage(getErrorMessage(allLobbiesResult.reason));
-        }
-        if (myLobbiesResult.status === "fulfilled") {
-            setMyLobbies(Array.isArray(myLobbiesResult.value.lobbies) ? myLobbiesResult.value.lobbies.filter(hasLobbyId) : []);
-        } else {
-            setMyLobbies([]);
-        }
-    }, []);
-
-    useEffect(function () { void loadData({ shouldSync: true }); }, [loadData]);
-
-    const handleRegister = useCallback(async function (id: string) {
-        try {
-            await registerToLobby(id);
-            setMessage("Successfully registered");
-            void loadData();
-        } catch (err) { setMessage(getErrorMessage(err)); }
-    }, [loadData]);
-
-    const handleLeave = useCallback(async function (id: string) {
-        try {
-            await leaveLobby(id);
-            setMessage("Left lobby successfully");
-            void loadData();
-        } catch (err) { setMessage(getErrorMessage(err)); }
-    }, [loadData]);
-
     async function handleCreate(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         try {
-            await createLobby(name, description, parseInt(maxParticipants) || 0, hasPrize ? prizePool : "", registrationDeadline, matchDateTime, selectedGame);
-            setMessage("Lobby created successfully");
+            await submitCreateLobby({
+                name,
+                description,
+                maxParticipants: parseInt(maxParticipants) || 0,
+                prizePool: hasPrize ? prizePool : "",
+                registrationDeadline,
+                matchDateTime,
+                game: selectedGame,
+            });
             setName(""); setDescription(""); setMaxParticipants("");
             setHasPrize(false); setPrizePool(""); setRegistrationDeadline(""); setMatchDateTime("");
             setSelectedGame("pokemon_showdown");
-            void loadData({ shouldSync: true });
-        } catch (err) { setMessage(getErrorMessage(err)); }
+        } catch { /* error shown via message state in hook */ }
     }
 
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
         try {
-            const res = await submitReplay(selectedLobby, replayUrl);
-            setResult(res);
-            setMessage("Replay submitted successfully");
+            await handleSubmitReplay(selectedLobby, replayUrl);
             setReplayUrl("");
-            void loadData();
-        } catch (err) { setMessage(getErrorMessage(err)); }
+        } catch { /* error shown via message state */ }
     }
 
     const filteredLobbies = useMemo(function () {

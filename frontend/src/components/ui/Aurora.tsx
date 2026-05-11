@@ -141,6 +141,7 @@ interface AuroraProps {
 
 export default function Aurora(props: AuroraProps) {
     const { colorStops = ['#5227FF', '#7cff67', '#5227FF'], amplitude = 1.0, blend = 0.5 } = props;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const propsRef = useRef<AuroraProps>(props);
     propsRef.current = props;
 
@@ -148,7 +149,7 @@ export default function Aurora(props: AuroraProps) {
 
     useEffect(() => {
         const ctn = ctnDom.current;
-        if (!ctn) return;
+        if (!ctn || prefersReducedMotion) return;
 
         const renderer = new Renderer({
             alpha: true,
@@ -229,6 +230,10 @@ export default function Aurora(props: AuroraProps) {
             gl.getExtension('WEBGL_lose_context')?.loseContext();
         };
     }, [amplitude]);
+
+    if (prefersReducedMotion) {
+        return <div style={{ width: '100%', height: '100%', background: colorStops[0] ?? '#5227FF', opacity: blend }} />;
+    }
 
     return <div ref={ctnDom} className="w-full h-full" />;
 }

@@ -4,6 +4,8 @@ import { Crown, Home, Trophy, User, Shield, ChevronDown, LogOut, LayoutDashboard
 import { prefetchRoute } from "../services/routePrefetch";
 import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
 import { getNavInfo, logout, type NavInfo } from "../services/authService";
+import { AUTH_CHANGE_EVENT } from "../constants/events";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 
 const TargetCursor = lazy(() => import("../components/cursor/TargetCursor"));
 
@@ -20,6 +22,15 @@ export default function AppLayout() {
     const [navInfo, setNavInfo] = useState<NavInfo | null>(getNavInfo);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
+    // Add the custom-cursor class so CSS hides the default cursor.
+    // Removed when the component unmounts or when ErrorBoundary catches a TargetCursor failure.
+    useEffect(() => {
+        document.documentElement.classList.add('custom-cursor');
+        return () => {
+            document.documentElement.classList.remove('custom-cursor');
+        };
+    }, []);
+
     const lobbiesViewportRef     = useViewportPrefetch("lobbies");
     const leaderboardViewportRef = useViewportPrefetch("leaderboard");
     const dashboardViewportRef   = useViewportPrefetch("dashboard");
@@ -28,10 +39,10 @@ export default function AppLayout() {
 
     useEffect(() => {
         function update() { setNavInfo(getNavInfo()); }
-        window.addEventListener('auth-change', update);
+        window.addEventListener(AUTH_CHANGE_EVENT, update);
         window.addEventListener('storage', update);
         return () => {
-            window.removeEventListener('auth-change', update);
+            window.removeEventListener(AUTH_CHANGE_EVENT, update);
             window.removeEventListener('storage', update);
         };
     }, []);
@@ -62,15 +73,17 @@ export default function AppLayout() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-            <Suspense fallback={null}>
-                <TargetCursor
-                    spinDuration={2.8}
-                    hideDefaultCursor
-                    parallaxOn
-                    hoverDuration={0.6}
-                    targetSelector="a, button, input, select, textarea, [role='button']"
-                />
-            </Suspense>
+            <ErrorBoundary onError={() => document.documentElement.classList.remove('custom-cursor')}>
+                <Suspense fallback={null}>
+                    <TargetCursor
+                        spinDuration={2.8}
+                        hideDefaultCursor
+                        parallaxOn
+                        hoverDuration={0.6}
+                        targetSelector="a, button, input, select, textarea, [role='button']"
+                    />
+                </Suspense>
+            </ErrorBoundary>
 
             <nav className="border-b border-[#2a2a2a] sticky top-0 z-40 backdrop-blur-lg bg-[#0a0a0a]/95">
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20">

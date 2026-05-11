@@ -1,13 +1,5 @@
-import axios from 'axios';
-import { API_URL } from '../config/api';
-import { getToken } from './authService';
+import apiClient from './apiClient';
 import type { User, Lobby } from '../types';
-
-function authHeaders() {
-    const token = getToken();
-    if (!token) throw new Error('No token');
-    return { Authorization: `Bearer ${token}` };
-}
 
 export interface AdminStats {
     totalUsers: number;
@@ -48,39 +40,39 @@ export interface UpdateLobbyPayload {
 }
 
 export async function getAdminStats(): Promise<AdminStats> {
-    const res = await axios.get(`${API_URL}/admin/stats`, { headers: authHeaders() });
-    return res.data.stats;
+    const res = await apiClient.get('/admin/stats');
+    return (res.data as { stats: AdminStats }).stats;
 }
 
 export async function adminGetUsers(): Promise<User[]> {
-    const res = await axios.get(`${API_URL}/admin/users`, { headers: authHeaders() });
-    return res.data.users;
+    const res = await apiClient.get('/admin/users');
+    return (res.data as { users: User[] }).users;
 }
 
 export async function adminCreateUser(payload: CreateUserPayload): Promise<User> {
-    const res = await axios.post(`${API_URL}/admin/users`, payload, { headers: authHeaders() });
-    return res.data.user;
+    const res = await apiClient.post('/admin/users', payload);
+    return (res.data as { user: User }).user;
 }
 
 export async function adminUpdateUser(id: string, payload: UpdateUserPayload): Promise<User> {
-    const res = await axios.patch(`${API_URL}/admin/users/${id}`, payload, { headers: authHeaders() });
-    return res.data.user;
+    const res = await apiClient.patch(`/admin/users/${id}`, payload);
+    return (res.data as { user: User }).user;
 }
 
 export async function adminDeleteUser(id: string): Promise<void> {
-    await axios.delete(`${API_URL}/admin/users/${id}`, { headers: authHeaders() });
+    await apiClient.delete(`/admin/users/${id}`);
 }
 
 export async function adminGetLobbies(): Promise<Lobby[]> {
-    const res = await axios.get(`${API_URL}/admin/lobbies`, { headers: authHeaders() });
-    return res.data.lobbies;
+    const res = await apiClient.get('/admin/lobbies');
+    return (res.data as { lobbies: Lobby[] }).lobbies;
 }
 
 export async function adminUpdateLobby(id: string, payload: UpdateLobbyPayload): Promise<Lobby> {
-    const res = await axios.patch(`${API_URL}/admin/lobbies/${id}`, payload, { headers: authHeaders() });
-    return res.data.lobby;
+    const res = await apiClient.patch(`/admin/lobbies/${id}`, payload);
+    return (res.data as { lobby: Lobby }).lobby;
 }
 
 export async function adminDeleteLobby(id: string): Promise<void> {
-    await axios.delete(`${API_URL}/admin/lobbies/${id}`, { headers: authHeaders() });
+    await apiClient.delete(`/admin/lobbies/${id}`);
 }

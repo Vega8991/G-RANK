@@ -280,7 +280,7 @@ const TargetCursor: React.FC<TargetCursorProps> = ({
     }
   }, [spinDuration, isMobile]);
 
-  if (isMobile) {
+  if (isMobile || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     return null;
   }
 
