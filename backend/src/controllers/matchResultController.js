@@ -5,18 +5,16 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const { calculateMMRChange, updateUserStats } = require('../services/mmrService');
 
-// Map error types to HTTP status codes and messages
 const ERROR_RESPONSES = {
     'LOBBY_NOT_FOUND':       { status: 404, message: 'Lobby not found' },
     'LOBBY_NOT_PENDING':     { status: 400, message: 'Lobby is not in pending status' },
     'NOT_REGISTERED':        { status: 403, message: 'You are not registered in this lobby' },
     'ALREADY_SUBMITTED':     { status: 400, message: 'You have already submitted results for this lobby' },
     'INVALID_REPLAY_URL':    { status: 400, message: 'Invalid replay URL or replay not found' },
-    'WINNER_NOT_FOUND':      { status: 400, message: 'Could not find winner in replay data' },
+    'WINNER_NOT_FOUND':      { status: 400, message: 'Could not determine match winner' },
     'PARTICIPANTS_MISMATCH': { status: 400, message: 'Could not match replay participants with lobby participants' }
 };
 
-// Submit a Pokémon Showdown replay URL to record the match result and update MMR
 const submitReplay = async function (req, res) {
     const session = await mongoose.startSession();
     let submitResult;
@@ -27,12 +25,10 @@ const submitReplay = async function (req, res) {
             const lobbyId = req.body.lobbyId;
             const replayUrl = req.body.replayUrl;
 
-            // Step 1: Load and validate the lobby
             const lobby = await Lobby.findById(lobbyId).session(session);
             if (!lobby) throw new Error('LOBBY_NOT_FOUND');
             if (lobby.status !== 'pending') throw new Error('LOBBY_NOT_PENDING');
 
-            // Step 2: Check that the submitter is a registered participant
             const submitterParticipant = await LobbyParticipant.findOne({
                 lobbyId: lobbyId,
                 userId: userId
@@ -40,9 +36,6 @@ const submitReplay = async function (req, res) {
             if (!submitterParticipant) throw new Error('NOT_REGISTERED');
             if (submitterParticipant.hasSubmittedResults) throw new Error('ALREADY_SUBMITTED');
 
-            // Step 3: Fetch the replay data from Pokémon Showdown
-            // Example URL: https://replay.pokemonshowdown.com/gen9randombattle-12345
-            // The JSON version is at: https://replay.pokemonshowdown.com/gen9randombattle-12345.json
             const replayId = replayUrl.split('pokemonshowdown.com/')[1];
             const replayJsonUrl = `https://replay.pokemonshowdown.com/${replayId}.json`;
 
@@ -54,8 +47,6 @@ const submitReplay = async function (req, res) {
                 throw new Error('INVALID_REPLAY_URL');
             }
 
-            // Step 4: Parse the winner from the replay log
-            // The replay log contains a line like "|win|PlayerName" when the match ends
             let winnerName = null;
             if (replayData.log) {
                 const winLine = replayData.log.match(/\|win\|(.+)/);
@@ -65,7 +56,6 @@ const submitReplay = async function (req, res) {
             }
             if (!winnerName) throw new Error('WINNER_NOT_FOUND');
 
-            // Step 5: Load all participants (exactly 2) with their user info
             const allParticipants = await LobbyParticipant.find({ lobbyId: lobbyId })
                 .populate('userId', 'username mmr')
                 .session(session);
@@ -74,7 +64,6 @@ const submitReplay = async function (req, res) {
                 throw new Error('INVALID_PARTICIPANT_COUNT:' + allParticipants.length);
             }
 
-            // Step 6: Match the winner name from the replay to a participant
             let winnerParticipant = null;
             let loserParticipant = null;
 
@@ -91,7 +80,6 @@ const submitReplay = async function (req, res) {
 
             if (!winnerParticipant || !loserParticipant) throw new Error('PARTICIPANTS_MISMATCH');
 
-            // Step 7: Save the match result record
             await MatchResult.create([{
                 lobbyId: lobbyId,
                 replayUrl: replayUrl,
@@ -102,7 +90,6 @@ const submitReplay = async function (req, res) {
                 submittedBy: userId
             }], { session: session });
 
-            // Step 8: Calculate and apply MMR changes
             const winnerMMRBefore = winnerParticipant.userId.mmr;
             const loserMMRBefore = loserParticipant.userId.mmr;
 
@@ -115,7 +102,6 @@ const submitReplay = async function (req, res) {
             const updatedWinner = winnerUpdateResult.user;
             const updatedLoser = loserUpdateResult.user;
 
-            // Step 9: Record MMR changes on each participant record
             winnerParticipant.mmrAfter = updatedWinner.mmr;
             winnerParticipant.mmrChange = winnerMMRChange;
             await winnerParticipant.save({ session: session });
@@ -124,11 +110,9 @@ const submitReplay = async function (req, res) {
             loserParticipant.mmrChange = loserMMRChange;
             await loserParticipant.save({ session: session });
 
-            // Mark this user as having submitted results so they can't submit again
             submitterParticipant.hasSubmittedResults = true;
             await submitterParticipant.save({ session: session });
 
-            // Step 10: Close the lobby
             lobby.status = 'completed';
             await lobby.save({ session: session });
 
@@ -161,7 +145,6 @@ const submitReplay = async function (req, res) {
     } catch (error) {
         const errorMessage = error.message || 'UNKNOWN_ERROR';
 
-        // Handle the special case where participant count is embedded in the error code
         if (errorMessage.startsWith('INVALID_PARTICIPANT_COUNT')) {
             const participantCount = errorMessage.split(':')[1];
             return res.status(400).json({
@@ -187,7 +170,6 @@ const submitReplay = async function (req, res) {
     }
 };
 
-// Get the match results for a specific lobby
 const getLobbyResults = async function (req, res) {
     try {
         const lobbyId = req.params.lobbyId;

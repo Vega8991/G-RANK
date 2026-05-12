@@ -35,7 +35,7 @@ export function useDashboard() {
         } catch (err: unknown) {
             const status = (err as { response?: { status?: number } }).response?.status;
             if (status === 401 || status === 403) {
-                logout();
+                await logout();
                 navigate("/login");
             } else {
                 setLoadError(true);
@@ -43,8 +43,6 @@ export function useDashboard() {
         }
     }, [navigate]);
 
-    // Load profile and lobbies in parallel on mount.
-    // If lobbies fail, show an empty list instead of crashing.
     useEffect(function () {
         void loadProfile();
         getMyLobbies()
@@ -52,7 +50,6 @@ export function useDashboard() {
             .catch(function () { setLobbies([]); });
     }, [loadProfile]);
 
-    // Handle Riot OAuth result query params (?riot_linked=1 or ?riot_error=...)
     useEffect(function () {
         const linked = searchParams.get("riot_linked");
         const error = searchParams.get("riot_error");
@@ -66,8 +63,8 @@ export function useDashboard() {
         }
     }, [searchParams, setSearchParams]);
 
-    function handleLogout() {
-        logout();
+    async function handleLogout() {
+        await logout();
         navigate("/login");
     }
 

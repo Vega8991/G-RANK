@@ -7,61 +7,34 @@ export interface NavInfo {
     role: 'USER' | 'ADMIN';
 }
 
-interface JwtPayload {
+interface AuthInfo {
     username: string;
     role: string;
     exp: number;
 }
 
-// Read the data stored inside a JWT token without verifying its signature.
-// A JWT has three parts separated by dots: "header.payload.signature"
-// We only read the middle part (payload), which contains the username, role, and expiry date.
-// Security note: the REAL security check happens on the backend — it verifies the signature.
-// Here we just read the data so the UI knows whether to show the login button or the username.
-function decodeToken(token: string): JwtPayload | null {
+function getAuthInfoCookie(): AuthInfo | null {
     try {
-        // Split "header.payload.signature" and take the middle part
-        const payloadBase64 = token.split('.')[1];
-
-        // atob() decodes a Base64 string back to plain text
-        const payloadJson = atob(payloadBase64);
-        const payload = JSON.parse(payloadJson) as JwtPayload;
-
-        if (!payload.username || !payload.role || !payload.exp) return null;
-
-        // Check if token has expired (exp is in seconds, Date.now() is in milliseconds)
-        const nowInSeconds = Date.now() / 1000;
-        if (nowInSeconds > payload.exp) {
-            localStorage.removeItem('token');
-            return null;
-        }
-
-        return payload;
+        const match = document.cookie.split('; ').find(c => c.startsWith('auth_info='));
+        if (!match) return null;
+        const raw = decodeURIComponent(match.slice('auth_info='.length));
+        const info = JSON.parse(raw) as AuthInfo;
+        if (!info.username || !info.role || !info.exp) return null;
+        if (Date.now() / 1000 > info.exp) return null;
+        return info;
     } catch {
-        // If anything goes wrong (malformed token, etc.), treat it as invalid
         return null;
     }
 }
 
-// Get the username and role from the stored JWT. Returns null if not logged in or token expired.
 export function getNavInfo(): NavInfo | null {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    const payload = decodeToken(token);
-    if (!payload) return null;
-
-    return {
-        username: payload.username,
-        role: payload.role as 'USER' | 'ADMIN',
-    };
+    const info = getAuthInfoCookie();
+    if (!info) return null;
+    return { username: info.username, role: info.role as 'USER' | 'ADMIN' };
 }
 
-// Returns true if there is a valid, non-expired token in localStorage.
 export function isTokenValid(): boolean {
-    const token = localStorage.getItem('token');
-    if (!token) return false;
-    return decodeToken(token) !== null;
+    return getAuthInfoCookie() !== null;
 }
 
 export const register = async (username: string, email: string, password: string): Promise<AuthResponse> => {
@@ -71,26 +44,17 @@ export const register = async (username: string, email: string, password: string
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/login', { email, password });
-    const data = response.data as AuthResponse;
-    if (data.token) {
-        localStorage.setItem('token', data.token);
-        window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
-    }
-    return data;
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    return response.data as AuthResponse;
 };
 
-export const logout = (): void => {
-    localStorage.removeItem('token');
+export const logout = async (): Promise<void> => {
+    await apiClient.post('/auth/logout');
     window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 };
 
 export const getProfile = async (): Promise<{ user: User }> => {
     const response = await apiClient.get('/auth/profile');
-    return response.data as { user: User };
-};
-
-export const getPublicProfile = async (username: string): Promise<{ user: User }> => {
-    const response = await apiClient.get(`/auth/users/${username}`);
     return response.data as { user: User };
 };
 
@@ -109,6 +73,3 @@ export const resetPassword = async (token: string, password: string): Promise<{ 
     return response.data as { message: string };
 };
 
-export const getToken = (): string | null => {
-    return localStorage.getItem('token');
-};

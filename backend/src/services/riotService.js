@@ -2,7 +2,6 @@ const axios = require('axios');
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
-// LoL platform → regional cluster (for match history & account lookups)
 const PLATFORM_TO_CLUSTER = {
     'na1':  'americas',
     'na2':  'americas',
@@ -23,7 +22,6 @@ const PLATFORM_TO_CLUSTER = {
     'vn2':  'sea'
 };
 
-// Derive cluster from a LoL match ID prefix (e.g. "NA1_1234" → "americas")
 function getClusterFromMatchId(matchId) {
     const prefix = matchId.split('_')[0].toLowerCase();
     return PLATFORM_TO_CLUSTER[prefix] || 'americas';
@@ -40,37 +38,29 @@ function riotRequest(url) {
     });
 }
 
-// --- Account-V1 (cross-game) ---
-
 async function getAccountByRiotId(gameName, tagLine, cluster = 'americas') {
     const url = `https://${cluster}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`;
     const res = await riotRequest(url);
-    return res.data; // { puuid, gameName, tagLine }
+    return res.data;
 }
 
 async function getAccountByPuuid(puuid, cluster = 'americas') {
     const url = `https://${cluster}.api.riotgames.com/riot/account/v1/accounts/by-puuid/${encodeURIComponent(puuid)}`;
     const res = await riotRequest(url);
-    return res.data; // { puuid, gameName, tagLine }
+    return res.data;
 }
-
-// --- Summoner-V4 (LoL only) ---
 
 async function getSummonerByPuuid(puuid, platform = 'na1') {
     const url = `https://${platform}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${encodeURIComponent(puuid)}`;
     const res = await riotRequest(url);
-    return res.data; // { id, accountId, puuid, name, profileIconId, revisionDate, summonerLevel }
+    return res.data;
 }
-
-// --- League-V4 (LoL ranked stats) ---
 
 async function getRankedStatsBySummonerId(summonerId, platform = 'na1') {
     const url = `https://${platform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${encodeURIComponent(summonerId)}`;
     const res = await riotRequest(url);
-    return res.data; // Array of LeagueEntryDTO
+    return res.data;
 }
-
-// --- Champion-Mastery-V4 ---
 
 async function getTopChampionMasteries(puuid, platform = 'na1', count = 5) {
     const url = `https://${platform}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${encodeURIComponent(puuid)}/top?count=${count}`;
@@ -78,12 +68,10 @@ async function getTopChampionMasteries(puuid, platform = 'na1', count = 5) {
     return res.data;
 }
 
-// --- Match-V5 (LoL match history & details) ---
-
 async function getLolMatchIds(puuid, cluster = 'americas', count = 20) {
     const url = `https://${cluster}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?count=${count}`;
     const res = await riotRequest(url);
-    return res.data; // Array of matchId strings
+    return res.data;
 }
 
 async function getLolMatchById(matchId) {
@@ -93,10 +81,6 @@ async function getLolMatchById(matchId) {
     return res.data;
 }
 
-// --- Composite helpers ---
-
-// Full LoL ranked profile for a user given their platform.
-// Resilient: partial failures return null for that section instead of throwing.
 async function getFullLolProfile(puuid, platform) {
     const cluster = getClusterFromPlatform(platform);
 
@@ -105,8 +89,8 @@ async function getFullLolProfile(puuid, platform) {
         getSummonerByPuuid(puuid, platform).catch(() => null)
     ]);
 
-    let rankedStats   = [];
-    let topChampions  = [];
+    let rankedStats  = [];
+    let topChampions = [];
 
     if (summonerData?.id) {
         [rankedStats, topChampions] = await Promise.all([
@@ -129,6 +113,21 @@ async function getFullLolProfile(puuid, platform) {
     };
 }
 
+function buildCachedProfile(profile) {
+    const soloQueue = profile.rankedSolo;
+    return {
+        tier:          soloQueue ? soloQueue.tier         : null,
+        rank:          soloQueue ? soloQueue.rank         : null,
+        leaguePoints:  soloQueue ? soloQueue.leaguePoints : null,
+        rankedWins:    soloQueue ? soloQueue.wins         : null,
+        rankedLosses:  soloQueue ? soloQueue.losses       : null,
+        summonerLevel: profile.summoner ? profile.summoner.summonerLevel : null,
+        profileIconId: profile.summoner ? profile.summoner.profileIconId : null,
+        hotStreak:     soloQueue ? soloQueue.hotStreak : false,
+        lastUpdated:   new Date()
+    };
+}
+
 module.exports = {
     getAccountByRiotId,
     getAccountByPuuid,
@@ -138,5 +137,6 @@ module.exports = {
     getLolMatchIds,
     getLolMatchById,
     getFullLolProfile,
-    getClusterFromPlatform
+    getClusterFromPlatform,
+    buildCachedProfile
 };

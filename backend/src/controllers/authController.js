@@ -1,14 +1,12 @@
 const User = require('../models/userModel');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { hashPassword, comparePassword } = require('../utils/passwordUtils');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 async function registerUser(req, res) {
     try {
-        const username = req.body.username;
-        const email = req.body.email;
-        const password = req.body.password;
+        const { username, email, password } = req.body;
 
         if (!username || !email || !password) {
             return res.status(400).json({
@@ -32,15 +30,12 @@ async function registerUser(req, res) {
             });
         }
 
-        const salt = bcrypt.genSaltSync(10);
-        const hashedPassword = bcrypt.hashSync(password, salt);
-
         const verificationToken = crypto.randomBytes(32).toString('hex');
 
         const newUser = new User({
             username: username,
             email: email,
-            password: hashedPassword,
+            password: hashPassword(password),
             emailVerificationToken: verificationToken
         });
 
@@ -49,7 +44,7 @@ async function registerUser(req, res) {
         try {
             sendVerificationEmail(savedUser.email, savedUser.username, verificationToken);
         } catch (emailError) {
-            console.log('Warning: could not send verification email:', emailError.message);
+            // non-critical
         }
 
         res.status(201).json({
@@ -68,7 +63,6 @@ async function registerUser(req, res) {
         let message = 'Error creating user';
 
         if (error.code === 11000) {
-            // MongoDB duplicate key error — figure out which field is duplicated
             const duplicateField = Object.keys(error.keyValue || {})[0];
 
             if (duplicateField === 'email') {
@@ -79,7 +73,6 @@ async function registerUser(req, res) {
                 message = 'Account already exists';
             }
         } else if (error.name === 'ValidationError') {
-            // Mongoose validation error — combine all error messages into one string
             const validationMessages = Object.values(error.errors).map(function (e) { return e.message; });
             message = validationMessages.join(', ');
         }
@@ -94,8 +87,7 @@ async function registerUser(req, res) {
 
 async function loginUser(req, res) {
     try {
-        const email = req.body.email;
-        const password = req.body.password;
+        const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
@@ -113,9 +105,7 @@ async function loginUser(req, res) {
             });
         }
 
-        const isPasswordValid = bcrypt.compareSync(password, foundUser.password);
-
-        if (!isPasswordValid) {
+        if (!comparePassword(password, foundUser.password)) {
             return res.status(401).json({
                 success: false,
                 message: 'Invalid password'
@@ -129,37 +119,31 @@ async function loginUser(req, res) {
             });
         }
 
-        const secretKey = process.env.JWT_SECRET;
-        const expirationTime = process.env.JWT_EXPIRE;
-
+        const role = foundUser.role || 'USER';
         const token = jwt.sign(
-            {
-                userId: foundUser._id,
-                email: foundUser.email,
-                username: foundUser.username,
-                role: foundUser.role || 'USER'
-            },
-            secretKey,
-            { expiresIn: expirationTime }
+            { userId: foundUser._id, email: foundUser.email, username: foundUser.username, role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRE }
         );
 
-        res.status(200).json({
-            success: true,
-            message: 'Login successful',
-            token: token,
-            user: {
-                id: foundUser._id,
-                username: foundUser.username,
-                email: foundUser.email,
-                rank: foundUser.rank,
-                mmr: foundUser.mmr,
-                winRate: foundUser.winRate,
-                winStreak: foundUser.winStreak,
-                wins: foundUser.wins,
-                losses: foundUser.losses,
-                role: foundUser.role || 'USER'
-            }
+        const decoded = jwt.decode(token);
+        const maxAge = (decoded.exp - Math.floor(Date.now() / 1000)) * 1000;
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge,
         });
+
+        res.cookie('auth_info', JSON.stringify({ username: foundUser.username, role, exp: decoded.exp }), {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge,
+        });
+
+        res.status(200).json({ success: true, message: 'Login successful' });
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -171,8 +155,7 @@ async function loginUser(req, res) {
 
 async function getProfile(req, res) {
     try {
-        const userId = req.userId;
-        const user = await User.findById(userId);
+        const user = await User.findById(req.userId);
 
         if (!user) {
             return res.status(404).json({
@@ -212,8 +195,7 @@ async function getProfile(req, res) {
 
 async function verifyEmail(req, res) {
     try {
-        const token = req.query.token;
-        const user = await User.findOne({ emailVerificationToken: token });
+        const user = await User.findOne({ emailVerificationToken: req.query.token });
 
         if (!user) {
             return res.status(404).json({
@@ -241,7 +223,7 @@ async function verifyEmail(req, res) {
 
 async function forgotPassword(req, res) {
     try {
-        const email = req.body.email;
+        const { email } = req.body;
 
         if (!email) {
             return res.status(400).json({ success: false, message: 'Email is required' });
@@ -249,8 +231,6 @@ async function forgotPassword(req, res) {
 
         const user = await User.findOne({ email: email });
 
-        // We always return the same message whether the email exists or not.
-        // This prevents attackers from discovering which emails are registered.
         if (!user) {
             return res.status(200).json({
                 success: true,
@@ -260,7 +240,7 @@ async function forgotPassword(req, res) {
 
         const resetToken = crypto.randomBytes(32).toString('hex');
         user.passwordResetToken = resetToken;
-        user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // expires in 1 hour
+        user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
         await user.save();
 
         sendPasswordResetEmail(user.email, user.username, resetToken);
@@ -276,8 +256,7 @@ async function forgotPassword(req, res) {
 
 async function resetPassword(req, res) {
     try {
-        const token = req.body.token;
-        const password = req.body.password;
+        const { token, password } = req.body;
 
         if (!token || !password) {
             return res.status(400).json({
@@ -293,10 +272,9 @@ async function resetPassword(req, res) {
             });
         }
 
-        // Find the user who owns this reset token, and only if it hasn't expired yet
         const user = await User.findOne({
             passwordResetToken: token,
-            passwordResetExpires: { $gt: new Date() } // $gt means "greater than" — token must still be in the future
+            passwordResetExpires: { $gt: new Date() }
         });
 
         if (!user) {
@@ -306,8 +284,7 @@ async function resetPassword(req, res) {
             });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        user.password = hashPassword(password);
         user.passwordResetToken = null;
         user.passwordResetExpires = null;
         await user.save();
@@ -323,11 +300,8 @@ async function resetPassword(req, res) {
 
 async function getPublicProfile(req, res) {
     try {
-        const username = req.params.username;
-
-        // Fetch user but exclude sensitive fields
         const user = await User.findOne(
-            { username: username },
+            { username: req.params.username },
             '-password -emailVerificationToken -passwordResetToken -passwordResetExpires -email'
         );
 
@@ -349,7 +323,7 @@ async function getPublicProfile(req, res) {
                 totalMatches: user.totalMatches,
                 role: user.role,
                 status: user.status,
-                createdAt: user.joinDate || user.createdAt,
+                createdAt: user.joinDate,
                 riotGameName: user.riotGameName || null,
                 riotTagLine: user.riotTagLine || null,
                 riotPlatform: user.riotPlatform || null,
@@ -363,7 +337,7 @@ async function getPublicProfile(req, res) {
 
 async function resendVerificationEmail(req, res) {
     try {
-        const email = req.body.email;
+        const { email } = req.body;
 
         if (!email) {
             return res.status(400).json({ success: false, message: 'Email is required' });
@@ -392,7 +366,7 @@ async function resendVerificationEmail(req, res) {
         try {
             sendVerificationEmail(user.email, user.username, verificationToken);
         } catch (emailError) {
-            console.log('Warning: could not send verification email:', emailError.message);
+            // non-critical
         }
 
         res.status(200).json({ success: true, message: 'Verification email sent. Check your inbox.' });
@@ -401,9 +375,16 @@ async function resendVerificationEmail(req, res) {
     }
 }
 
+function logoutUser(req, res) {
+    res.clearCookie('token',     { httpOnly: true,  secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+    res.clearCookie('auth_info', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+    res.status(200).json({ success: true, message: 'Logged out' });
+}
+
 module.exports = {
     registerUser,
     loginUser,
+    logoutUser,
     getProfile,
     verifyEmail,
     forgotPassword,

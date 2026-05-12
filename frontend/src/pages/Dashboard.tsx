@@ -68,7 +68,6 @@ export default function Dashboard() {
             <div className="relative z-10 pointer-events-auto">
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20 pt-12 pb-16 space-y-5">
 
-                    {/* Riot OAuth result banner */}
                     <AnimatePresence>
                         {oauthMsg && (
                             <motion.div
@@ -87,7 +86,6 @@ export default function Dashboard() {
                         )}
                     </AnimatePresence>
 
-                    {/* Profile hero */}
                     <motion.div
                         className="relative rounded-2xl overflow-hidden"
                         initial={{ opacity: 0, y: 28 }}
@@ -101,7 +99,6 @@ export default function Dashboard() {
                         <div className="relative z-10 p-8">
                             <p className="text-[10px] font-bold tracking-[0.3em] uppercase text-white/20 mb-6">Player Profile</p>
                             <div className="flex flex-col md:flex-row md:items-center gap-8">
-                                {/* Avatar */}
                                 <div className="relative shrink-0">
                                     <div
                                         className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black"
@@ -121,7 +118,6 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                {/* Info */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex flex-wrap items-center gap-2 mb-2">
                                         <h1 className="text-3xl md:text-4xl font-black tracking-tight">{user.username}</h1>
@@ -135,7 +131,6 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                {/* Rank + MMR + Logout */}
                                 <div className="flex items-center gap-6 shrink-0">
                                     <div className="text-center">
                                         <div className="flex items-center gap-2 mb-1">
@@ -165,7 +160,6 @@ export default function Dashboard() {
                         </div>
                     </motion.div>
 
-                    {/* Stat cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         <StatCard label="Wins" value={wins} icon={TrendingUp} color="var(--status-success)" bg="rgba(34,197,94,0.15)" delay={0} />
                         <StatCard label="Losses" value={losses} icon={TrendingDown} color="#ef4444" bg="rgba(239,68,68,0.15)" delay={80} />
@@ -173,16 +167,13 @@ export default function Dashboard() {
                         <StatCard label="Win Streak" value={winStreak} icon={winStreak >= 3 ? Flame : Zap} color={winStreak >= 3 ? "#dc143c" : "#9b30ff"} bg={winStreak >= 3 ? "rgba(220,20,60,0.15)" : "rgba(155,48,255,0.15)"} delay={240} />
                     </div>
 
-                    {/* MMR Progress */}
                     <MmrProgressCard user={user} />
 
-                    {/* Riot account + Recent lobbies */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                         <RecentLobbiesCard lobbies={lobbies} />
                         <RiotAccountCard user={user} onUpdate={loadProfile} />
                     </div>
 
-                    {/* Quick actions */}
                     <motion.div
                         className="flex flex-wrap gap-3"
                         initial={{ opacity: 0, y: 20 }}

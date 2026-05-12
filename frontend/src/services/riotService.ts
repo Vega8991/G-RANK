@@ -4,7 +4,6 @@ import type {
     RiotFullProfile,
     RiotMatchResultResponse,
     RiotPlatform,
-    ValPlatform
 } from '../types';
 
 export async function linkRiotAccount(
@@ -41,15 +40,6 @@ export async function submitLolMatch(
     matchId: string
 ): Promise<RiotMatchResultResponse> {
     const res = await apiClient.post('/riot/submit-lol-match', { lobbyId, matchId });
-    return res.data as RiotMatchResultResponse;
-}
-
-export async function submitValorantMatch(
-    lobbyId: string,
-    matchId: string,
-    platform?: ValPlatform
-): Promise<RiotMatchResultResponse> {
-    const res = await apiClient.post('/riot/submit-valorant-match', { lobbyId, matchId, platform });
     return res.data as RiotMatchResultResponse;
 }
 

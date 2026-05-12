@@ -2,9 +2,7 @@ import { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
     children: ReactNode;
-    // What to show when the child throws. Defaults to nothing (null).
     fallback?: ReactNode;
-    // Called when an error is caught. Useful for removing side effects (e.g. cursor class).
     onError?: () => void;
 }
 

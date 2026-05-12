@@ -37,7 +37,6 @@ export function useAdmin() {
         }
     }, []);
 
-    // On mount: verify the user is an admin, then load data.
     useEffect(function () {
         (async () => {
             try {
@@ -49,7 +48,7 @@ export function useAdmin() {
                 setCurrentUser(user);
                 await loadAll();
             } catch {
-                logout();
+                await logout();
                 navigate("/login");
             } finally {
                 setLoading(false);

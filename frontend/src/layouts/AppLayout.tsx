@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Crown, Home, Trophy, User, Shield, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
+import { Crown, Home, Trophy, Shield, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
 import { prefetchRoute } from "../services/routePrefetch";
 import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
 import { getNavInfo, logout, type NavInfo } from "../services/authService";
@@ -22,8 +22,6 @@ export default function AppLayout() {
     const [navInfo, setNavInfo] = useState<NavInfo | null>(getNavInfo);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
-    // Add the custom-cursor class so CSS hides the default cursor.
-    // Removed when the component unmounts or when ErrorBoundary catches a TargetCursor failure.
     useEffect(() => {
         document.documentElement.classList.add('custom-cursor');
         return () => {
@@ -40,10 +38,8 @@ export default function AppLayout() {
     useEffect(() => {
         function update() { setNavInfo(getNavInfo()); }
         window.addEventListener(AUTH_CHANGE_EVENT, update);
-        window.addEventListener('storage', update);
         return () => {
             window.removeEventListener(AUTH_CHANGE_EVENT, update);
-            window.removeEventListener('storage', update);
         };
     }, []);
 
@@ -54,8 +50,8 @@ export default function AppLayout() {
         return () => document.removeEventListener('mousedown', handler);
     }, [dropdownOpen]);
 
-    function handleLogout() {
-        logout();
+    async function handleLogout() {
+        await logout();
         setDropdownOpen(false);
         navigate('/login');
     }
@@ -89,7 +85,6 @@ export default function AppLayout() {
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20">
                     <div className="flex items-center justify-between h-16">
 
-                        {/* Logo + nav links */}
                         <div className="flex items-center gap-12">
                             <NavLink to="/" className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded bg-[#dc143c] flex items-center justify-center">
@@ -124,7 +119,6 @@ export default function AppLayout() {
                             </div>
                         </div>
 
-                        {/* Auth area */}
                         <div className="flex items-center gap-3">
                             {navInfo ? (
                                 <div className="relative">
@@ -150,11 +144,6 @@ export default function AppLayout() {
                                             style={{ background: "rgba(10,10,10,0.98)", backdropFilter: "blur(20px)" }}
                                             onMouseDown={e => e.stopPropagation()}
                                         >
-                                            <NavLink to={`/profile/${navInfo.username}`}
-                                                onClick={() => setDropdownOpen(false)}
-                                                className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#d1d5db] hover:text-white hover:bg-white/5 transition-colors">
-                                                <User size={14} /> My Profile
-                                            </NavLink>
                                             <NavLink to="/dashboard"
                                                 onClick={() => setDropdownOpen(false)}
                                                 className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#d1d5db] hover:text-white hover:bg-white/5 transition-colors">

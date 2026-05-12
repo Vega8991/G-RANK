@@ -32,13 +32,8 @@ export interface User {
 }
 
 export interface AuthResponse {
-  token: string;
-  user: User;
-}
-
-export interface AuthStatus {
-  isLoggedIn: boolean;
-  userRole: string | null;
+  success: boolean;
+  message: string;
 }
 
 export interface Lobby {
@@ -92,15 +87,11 @@ export interface ApiResponse<T = unknown> {
   data?: T;
 }
 
-// ─── Riot Games ────────────────────────────────────────────────────────────────
-
 export type RiotPlatform =
   | 'na1' | 'na2' | 'br1' | 'la1' | 'la2'
   | 'euw1' | 'eun1' | 'tr1' | 'ru'
   | 'kr' | 'jp1'
   | 'oc1' | 'ph2' | 'sg2' | 'th2' | 'tw2' | 'vn2';
-
-export type ValPlatform = 'na' | 'eu' | 'ap' | 'kr' | 'br' | 'latam';
 
 export interface RiotAccount {
   gameName: string;

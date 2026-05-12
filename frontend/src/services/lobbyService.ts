@@ -10,7 +10,6 @@ export const createLobby = async (
     matchDateTime?: string,
     game: string = 'pokemon_showdown'
 ): Promise<{ lobby: Lobby }> => {
-    // If no dates are provided, default to 24h and 48h from now
     const deadlineDate = registrationDeadline
         ? new Date(registrationDeadline)
         : new Date(Date.now() + 24 * 60 * 60 * 1000);

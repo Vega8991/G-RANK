@@ -45,13 +45,12 @@ export function useLobbies() {
         setMessage("");
         const shouldSync = options?.shouldSync ?? false;
         if (shouldSync) {
-            try { await syncParticipantCounts(); } catch (err) { console.error("Error syncing participant counts:", err); }
+            try { await syncParticipantCounts(); } catch { }
         }
         const [allLobbiesResult, myLobbiesResult] = await Promise.allSettled([getAllLobbies(), getMyLobbies()]);
         if (allLobbiesResult.status === "fulfilled") {
             setLobbies(Array.isArray(allLobbiesResult.value.lobbies) ? allLobbiesResult.value.lobbies.filter(hasLobbyId) : []);
         } else {
-            console.error("Error loading lobbies:", allLobbiesResult.reason);
             setMessage(getErrorMessage(allLobbiesResult.reason));
         }
         if (myLobbiesResult.status === "fulfilled") {

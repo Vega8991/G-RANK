@@ -1,8 +1,7 @@
 const User  = require('../models/userModel');
 const Lobby = require('../models/lobbyModel');
-const bcrypt = require('bcryptjs');
+const { hashPassword } = require('../utils/passwordUtils');
 
-// Get all users (excluding password and sensitive tokens)
 async function getAllUsers(req, res) {
     try {
         const users = await User.find({}, '-password -emailVerificationToken').sort({ createdAt: -1 });
@@ -12,16 +11,9 @@ async function getAllUsers(req, res) {
     }
 }
 
-// Create a new user directly (admin only — skips the normal email verification flow)
 async function createUser(req, res) {
     try {
-        const username = req.body.username;
-        const email = req.body.email;
-        const password = req.body.password;
-        const role = req.body.role;
-        const rank = req.body.rank;
-        const mmr = req.body.mmr;
-        const status = req.body.status;
+        const { username, email, password, role, rank, mmr, status } = req.body;
 
         if (!username || !email || !password) {
             return res.status(400).json({
@@ -30,18 +22,15 @@ async function createUser(req, res) {
             });
         }
 
-        const salt = bcrypt.genSaltSync(10);
-        const hashedPassword = bcrypt.hashSync(password, salt);
-
         const newUser = new User({
             username: username,
             email: email,
-            password: hashedPassword,
+            password: hashPassword(password),
             role: role || 'USER',
             rank: rank || 'Bronze',
             mmr: mmr !== undefined ? mmr : 250,
             status: status || 'active',
-            isEmailVerified: true // admin-created users skip email verification
+            isEmailVerified: true
         });
 
         const savedUser = await newUser.save();
@@ -63,7 +52,6 @@ async function createUser(req, res) {
         let message = err.message;
 
         if (err.code === 11000) {
-            // MongoDB duplicate key error
             const duplicateField = Object.keys(err.keyValue || {})[0];
             if (duplicateField === 'email') {
                 message = 'Email already in use';
@@ -78,12 +66,10 @@ async function createUser(req, res) {
     }
 }
 
-// Update a user's fields. Only the fields sent in the request body are changed.
 async function updateUser(req, res) {
     try {
         const fieldsToUpdate = {};
 
-        // Only include a field if it was actually sent in the request
         if (req.body.username !== undefined) fieldsToUpdate.username = req.body.username;
         if (req.body.email    !== undefined) fieldsToUpdate.email    = req.body.email;
         if (req.body.role     !== undefined) fieldsToUpdate.role     = req.body.role;
@@ -91,17 +77,15 @@ async function updateUser(req, res) {
         if (req.body.mmr      !== undefined) fieldsToUpdate.mmr      = req.body.mmr;
         if (req.body.status   !== undefined) fieldsToUpdate.status   = req.body.status;
 
-        // Hash the new password if one was provided
         if (req.body.password) {
-            const salt = bcrypt.genSaltSync(10);
-            fieldsToUpdate.password = bcrypt.hashSync(req.body.password, salt);
+            fieldsToUpdate.password = hashPassword(req.body.password);
         }
 
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             fieldsToUpdate,
             {
-                new: true, // return the updated document instead of the old one
+                new: true,
                 select: '-password -emailVerificationToken'
             }
         );
@@ -116,7 +100,6 @@ async function updateUser(req, res) {
     }
 }
 
-// Permanently delete a user
 async function deleteUser(req, res) {
     try {
         const deletedUser = await User.findByIdAndDelete(req.params.id);
@@ -129,7 +112,6 @@ async function deleteUser(req, res) {
     }
 }
 
-// Get all lobbies
 async function adminGetAllLobbies(req, res) {
     try {
         const lobbies = await Lobby.find()
@@ -141,7 +123,6 @@ async function adminGetAllLobbies(req, res) {
     }
 }
 
-// Update a lobby's fields. Only the fields sent in the request body are changed.
 async function adminUpdateLobby(req, res) {
     try {
         const fieldsToUpdate = {};
@@ -171,7 +152,6 @@ async function adminUpdateLobby(req, res) {
     }
 }
 
-// Permanently delete a lobby
 async function adminDeleteLobby(req, res) {
     try {
         const deletedLobby = await Lobby.findByIdAndDelete(req.params.id);
@@ -184,14 +164,12 @@ async function adminDeleteLobby(req, res) {
     }
 }
 
-// Get dashboard stats for the admin panel
 async function getStats(req, res) {
     try {
-        // Run all four database counts at the same time for speed
         const [totalUsers, totalLobbies, activeLobbies, suspendedUsers] = await Promise.all([
             User.countDocuments(),
             Lobby.countDocuments(),
-            Lobby.countDocuments({ status: { $in: ['open', 'in_progress'] } }), // $in = "any of these values"
+            Lobby.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
             User.countDocuments({ status: 'suspended' })
         ]);
 
