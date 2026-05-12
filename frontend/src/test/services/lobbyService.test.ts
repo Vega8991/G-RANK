@@ -1,127 +1,120 @@
-import axios from 'axios';
-import { API_URL } from '../../config/api';
+import apiClient from '../../services/apiClient';
 import {
     createLobby,
     getAllLobbies,
     registerToLobby,
     leaveLobby,
     getMyLobbies,
-    syncParticipantCounts
+    syncParticipantCounts,
 } from '../../services/lobbyService';
-import { getToken } from '../../services/authService';
 
-vi.mock('axios');
-vi.mock('../../services/authService', () => ({
-    getToken: vi.fn()
+vi.mock('../../services/apiClient', () => ({
+    default: {
+        get: vi.fn(),
+        post: vi.fn(),
+    }
 }));
 
 describe('lobbyService', () => {
-
-    const mockedAxios = vi.mocked(axios);
-    const mockedGetToken = vi.mocked(getToken);
+    const mockedApiClient = vi.mocked(apiClient);
 
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    it('createLobby throws when token is missing', async () => {
-        mockedGetToken.mockReturnValueOnce(null);
+    it('createLobby calls POST /lobbies with the correct fields', async () => {
+        mockedApiClient.post.mockResolvedValueOnce({ data: { lobby: { _id: '1', name: 'My Lobby' } } });
 
-        await expect(
-            createLobby('Lobby test', 'Desc', 8, '$50')
-        ).rejects.toThrow('No authentication token found');
-    });
+        const result = await createLobby('My Lobby', 'A lobby', 8, '$50', '2026-12-01', '2026-12-02');
 
-    it('createLobby sends request with auth header and payload', async () => {
-        mockedGetToken.mockReturnValueOnce('token-123');
-        mockedAxios.post.mockResolvedValueOnce({ data: { lobby: { id: '1' } } });
-
-        const result = await createLobby('My Lobby', 'Desc', 8, '$50', '2026-03-30', '2026-03-31');
-
-        expect(mockedAxios.post).toHaveBeenCalledWith(
-            `${API_URL}/lobbies`,
+        expect(mockedApiClient.post).toHaveBeenCalledWith(
+            '/lobbies',
             expect.objectContaining({
                 name: 'My Lobby',
-                description: 'Desc',
-                game: 'pokemon_showdown',
+                description: 'A lobby',
                 maxParticipants: 8,
-                prizePool: '$50'
-            }),
-            {
-                headers: {
-                    Authorization: 'Bearer token-123'
-                }
-            }
+                prizePool: '$50',
+                game: 'pokemon_showdown',
+            })
         );
-        expect(result).toEqual({ lobby: { id: '1' } });
+        expect(result).toEqual({ lobby: { _id: '1', name: 'My Lobby' } });
     });
 
-    it('getAllLobbies calls public lobbies endpoint', async () => {
-        mockedAxios.get.mockResolvedValueOnce({ data: { lobbies: [] } });
+    it('createLobby uses Date objects for the dates', async () => {
+        mockedApiClient.post.mockResolvedValueOnce({ data: { lobby: {} } });
+
+        await createLobby('My Lobby', 'Desc', 4, '$0', '2026-12-01', '2026-12-02');
+
+        const sentBody = (mockedApiClient.post as ReturnType<typeof vi.fn>).mock.calls[0][1] as Record<string, unknown>;
+        expect(sentBody.registrationDeadline).toBeInstanceOf(Date);
+        expect(sentBody.matchDateTime).toBeInstanceOf(Date);
+    });
+
+    it('createLobby uses default dates when none are provided', async () => {
+        mockedApiClient.post.mockResolvedValueOnce({ data: { lobby: {} } });
+
+        const before = Date.now();
+        await createLobby('My Lobby', 'Desc', 4, '$0');
+        const after = Date.now();
+
+        const sentBody = (mockedApiClient.post as ReturnType<typeof vi.fn>).mock.calls[0][1] as Record<string, unknown>;
+        const deadline = (sentBody.registrationDeadline as Date).getTime();
+        const matchTime = (sentBody.matchDateTime as Date).getTime();
+
+        expect(deadline).toBeGreaterThanOrEqual(before + 24 * 60 * 60 * 1000 - 100);
+        expect(deadline).toBeLessThanOrEqual(after  + 24 * 60 * 60 * 1000 + 100);
+        expect(matchTime).toBeGreaterThanOrEqual(before + 48 * 60 * 60 * 1000 - 100);
+        expect(matchTime).toBeLessThanOrEqual(after  + 48 * 60 * 60 * 1000 + 100);
+    });
+
+    it('getAllLobbies calls GET /lobbies', async () => {
+        mockedApiClient.get.mockResolvedValueOnce({ data: { lobbies: [] } });
 
         const result = await getAllLobbies();
 
-        expect(mockedAxios.get).toHaveBeenCalledWith(`${API_URL}/lobbies`);
+        expect(mockedApiClient.get).toHaveBeenCalledWith('/lobbies');
         expect(result).toEqual({ lobbies: [] });
     });
 
-    it('registerToLobby sends lobbyId and token', async () => {
-        mockedGetToken.mockReturnValueOnce('token-123');
-        mockedAxios.post.mockResolvedValueOnce({ data: { message: 'joined' } });
+    it('registerToLobby calls POST /lobby-participants/register with the lobbyId', async () => {
+        mockedApiClient.post.mockResolvedValueOnce({ data: { message: 'joined' } });
 
-        const result = await registerToLobby('lobby-1');
+        const result = await registerToLobby('lobby-123');
 
-        expect(mockedAxios.post).toHaveBeenCalledWith(
-            `${API_URL}/lobby-participants/register`,
-            { lobbyId: 'lobby-1' },
-            {
-                headers: {
-                    Authorization: 'Bearer token-123'
-                }
-            }
+        expect(mockedApiClient.post).toHaveBeenCalledWith(
+            '/lobby-participants/register',
+            { lobbyId: 'lobby-123' }
         );
         expect(result).toEqual({ message: 'joined' });
     });
 
-    it('leaveLobby sends lobbyId and token', async () => {
-        mockedGetToken.mockReturnValueOnce('token-123');
-        mockedAxios.post.mockResolvedValueOnce({ data: { message: 'left' } });
+    it('leaveLobby calls POST /lobby-participants/leave with the lobbyId', async () => {
+        mockedApiClient.post.mockResolvedValueOnce({ data: { message: 'left' } });
 
-        const result = await leaveLobby('lobby-1');
+        const result = await leaveLobby('lobby-123');
 
-        expect(mockedAxios.post).toHaveBeenCalledWith(
-            `${API_URL}/lobby-participants/leave`,
-            { lobbyId: 'lobby-1' },
-            {
-                headers: {
-                    Authorization: 'Bearer token-123'
-                }
-            }
+        expect(mockedApiClient.post).toHaveBeenCalledWith(
+            '/lobby-participants/leave',
+            { lobbyId: 'lobby-123' }
         );
         expect(result).toEqual({ message: 'left' });
     });
 
-    it('getMyLobbies sends authenticated get request', async () => {
-        mockedGetToken.mockReturnValueOnce('token-123');
-        mockedAxios.get.mockResolvedValueOnce({ data: { lobbies: [{ id: '1' }] } });
+    it('getMyLobbies calls GET /lobby-participants/my-lobbies', async () => {
+        mockedApiClient.get.mockResolvedValueOnce({ data: { lobbies: [{ _id: '1' }] } });
 
         const result = await getMyLobbies();
 
-        expect(mockedAxios.get).toHaveBeenCalledWith(`${API_URL}/lobby-participants/my-lobbies`, {
-            headers: {
-                Authorization: 'Bearer token-123'
-            }
-        });
-        expect(result).toEqual({ lobbies: [{ id: '1' }] });
+        expect(mockedApiClient.get).toHaveBeenCalledWith('/lobby-participants/my-lobbies');
+        expect(result).toEqual({ lobbies: [{ _id: '1' }] });
     });
 
-    it('syncParticipantCounts calls sync endpoint', async () => {
-        mockedAxios.post.mockResolvedValueOnce({ data: { message: 'synced' } });
+    it('syncParticipantCounts calls POST /lobbies/sync-counts', async () => {
+        mockedApiClient.post.mockResolvedValueOnce({ data: { message: 'synced' } });
 
         const result = await syncParticipantCounts();
 
-        expect(mockedAxios.post).toHaveBeenCalledWith(`${API_URL}/lobbies/sync-counts`);
+        expect(mockedApiClient.post).toHaveBeenCalledWith('/lobbies/sync-counts');
         expect(result).toEqual({ message: 'synced' });
     });
-
 });
