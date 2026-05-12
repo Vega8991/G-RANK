@@ -1,13 +1,11 @@
 const User  = require('../models/userModel');
 const Lobby = require('../models/lobbyModel');
-const bcrypt = require('bcryptjs');
-
-// ─── Users ─────────────────────────────────────────────────────────────────────
+const { hashPassword } = require('../utils/passwordUtils');
 
 async function getAllUsers(req, res) {
     try {
         const users = await User.find({}, '-password -emailVerificationToken').sort({ createdAt: -1 });
-        res.json({ success: true, users });
+        res.json({ success: true, users: users });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
@@ -16,53 +14,87 @@ async function getAllUsers(req, res) {
 async function createUser(req, res) {
     try {
         const { username, email, password, role, rank, mmr, status } = req.body;
+
         if (!username || !email || !password) {
-            return res.status(400).json({ success: false, message: 'username, email and password required' });
+            return res.status(400).json({
+                success: false,
+                message: 'username, email and password are required'
+            });
         }
-        const salt = bcrypt.genSaltSync(10);
-        const hashed = bcrypt.hashSync(password, salt);
-        const user = new User({
-            username,
-            email,
-            password: hashed,
+
+        const newUser = new User({
+            username: username,
+            email: email,
+            password: hashPassword(password),
             role: role || 'USER',
             rank: rank || 'Bronze',
-            mmr: mmr ?? 250,
+            mmr: mmr !== undefined ? mmr : 250,
             status: status || 'active',
             isEmailVerified: true
         });
-        const saved = await user.save();
+
+        const savedUser = await newUser.save();
+
         res.status(201).json({
             success: true,
-            user: { _id: saved._id, username: saved.username, email: saved.email, role: saved.role, rank: saved.rank, mmr: saved.mmr, status: saved.status, createdAt: saved.createdAt }
+            user: {
+                _id: savedUser._id,
+                username: savedUser.username,
+                email: savedUser.email,
+                role: savedUser.role,
+                rank: savedUser.rank,
+                mmr: savedUser.mmr,
+                status: savedUser.status,
+                createdAt: savedUser.createdAt
+            }
         });
     } catch (err) {
         let message = err.message;
+
         if (err.code === 11000) {
-            const field = Object.keys(err.keyValue || {})[0];
-            message = field === 'email' ? 'Email already in use' : field === 'username' ? 'Username already taken' : 'Duplicate value';
+            const duplicateField = Object.keys(err.keyValue || {})[0];
+            if (duplicateField === 'email') {
+                message = 'Email already in use';
+            } else if (duplicateField === 'username') {
+                message = 'Username already taken';
+            } else {
+                message = 'Duplicate value';
+            }
         }
-        res.status(400).json({ success: false, message });
+
+        res.status(400).json({ success: false, message: message });
     }
 }
 
 async function updateUser(req, res) {
     try {
-        const { username, email, role, rank, mmr, status, password } = req.body;
-        const update = {};
-        if (username !== undefined) update.username = username;
-        if (email    !== undefined) update.email    = email;
-        if (role     !== undefined) update.role     = role;
-        if (rank     !== undefined) update.rank     = rank;
-        if (mmr      !== undefined) update.mmr      = mmr;
-        if (status   !== undefined) update.status   = status;
-        if (password) {
-            const salt = bcrypt.genSaltSync(10);
-            update.password = bcrypt.hashSync(password, salt);
+        const fieldsToUpdate = {};
+
+        if (req.body.username !== undefined) fieldsToUpdate.username = req.body.username;
+        if (req.body.email    !== undefined) fieldsToUpdate.email    = req.body.email;
+        if (req.body.role     !== undefined) fieldsToUpdate.role     = req.body.role;
+        if (req.body.rank     !== undefined) fieldsToUpdate.rank     = req.body.rank;
+        if (req.body.mmr      !== undefined) fieldsToUpdate.mmr      = req.body.mmr;
+        if (req.body.status   !== undefined) fieldsToUpdate.status   = req.body.status;
+
+        if (req.body.password) {
+            fieldsToUpdate.password = hashPassword(req.body.password);
         }
-        const user = await User.findByIdAndUpdate(req.params.id, update, { new: true, select: '-password -emailVerificationToken' });
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-        res.json({ success: true, user });
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            fieldsToUpdate,
+            {
+                new: true,
+                select: '-password -emailVerificationToken'
+            }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.json({ success: true, user: updatedUser });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
     }
@@ -70,20 +102,22 @@ async function updateUser(req, res) {
 
 async function deleteUser(req, res) {
     try {
-        const user = await User.findByIdAndDelete(req.params.id);
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        const deletedUser = await User.findByIdAndDelete(req.params.id);
+        if (!deletedUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
         res.json({ success: true, message: 'User deleted' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 }
 
-// ─── Lobbies ───────────────────────────────────────────────────────────────────
-
 async function adminGetAllLobbies(req, res) {
     try {
-        const lobbies = await Lobby.find().populate('createdBy', 'username').sort({ createdAt: -1 });
-        res.json({ success: true, lobbies });
+        const lobbies = await Lobby.find()
+            .populate('createdBy', 'username')
+            .sort({ createdAt: -1 });
+        res.json({ success: true, lobbies: lobbies });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -91,19 +125,28 @@ async function adminGetAllLobbies(req, res) {
 
 async function adminUpdateLobby(req, res) {
     try {
-        const { name, description, game, maxParticipants, status, prizePool, registrationDeadline, matchDateTime } = req.body;
-        const update = {};
-        if (name                !== undefined) update.name                = name;
-        if (description         !== undefined) update.description         = description;
-        if (game                !== undefined) update.game                = game;
-        if (maxParticipants     !== undefined) update.maxParticipants     = maxParticipants;
-        if (status              !== undefined) update.status              = status;
-        if (prizePool           !== undefined) update.prizePool           = prizePool;
-        if (registrationDeadline !== undefined) update.registrationDeadline = registrationDeadline;
-        if (matchDateTime       !== undefined) update.matchDateTime       = matchDateTime;
-        const lobby = await Lobby.findByIdAndUpdate(req.params.id, update, { new: true }).populate('createdBy', 'username');
-        if (!lobby) return res.status(404).json({ success: false, message: 'Lobby not found' });
-        res.json({ success: true, lobby });
+        const fieldsToUpdate = {};
+
+        if (req.body.name                !== undefined) fieldsToUpdate.name                = req.body.name;
+        if (req.body.description         !== undefined) fieldsToUpdate.description         = req.body.description;
+        if (req.body.game                !== undefined) fieldsToUpdate.game                = req.body.game;
+        if (req.body.maxParticipants     !== undefined) fieldsToUpdate.maxParticipants     = req.body.maxParticipants;
+        if (req.body.status              !== undefined) fieldsToUpdate.status              = req.body.status;
+        if (req.body.prizePool           !== undefined) fieldsToUpdate.prizePool           = req.body.prizePool;
+        if (req.body.registrationDeadline !== undefined) fieldsToUpdate.registrationDeadline = req.body.registrationDeadline;
+        if (req.body.matchDateTime       !== undefined) fieldsToUpdate.matchDateTime       = req.body.matchDateTime;
+
+        const updatedLobby = await Lobby.findByIdAndUpdate(
+            req.params.id,
+            fieldsToUpdate,
+            { new: true }
+        ).populate('createdBy', 'username');
+
+        if (!updatedLobby) {
+            return res.status(404).json({ success: false, message: 'Lobby not found' });
+        }
+
+        res.json({ success: true, lobby: updatedLobby });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
     }
@@ -111,15 +154,15 @@ async function adminUpdateLobby(req, res) {
 
 async function adminDeleteLobby(req, res) {
     try {
-        const lobby = await Lobby.findByIdAndDelete(req.params.id);
-        if (!lobby) return res.status(404).json({ success: false, message: 'Lobby not found' });
+        const deletedLobby = await Lobby.findByIdAndDelete(req.params.id);
+        if (!deletedLobby) {
+            return res.status(404).json({ success: false, message: 'Lobby not found' });
+        }
         res.json({ success: true, message: 'Lobby deleted' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 }
-
-// ─── Stats ─────────────────────────────────────────────────────────────────────
 
 async function getStats(req, res) {
     try {
@@ -129,10 +172,28 @@ async function getStats(req, res) {
             Lobby.countDocuments({ status: { $in: ['open', 'in_progress'] } }),
             User.countDocuments({ status: 'suspended' })
         ]);
-        res.json({ success: true, stats: { totalUsers, totalLobbies, activeLobbies, suspendedUsers } });
+
+        res.json({
+            success: true,
+            stats: {
+                totalUsers: totalUsers,
+                totalLobbies: totalLobbies,
+                activeLobbies: activeLobbies,
+                suspendedUsers: suspendedUsers
+            }
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 }
 
-module.exports = { getAllUsers, createUser, updateUser, deleteUser, adminGetAllLobbies, adminUpdateLobby, adminDeleteLobby, getStats };
+module.exports = {
+    getAllUsers,
+    createUser,
+    updateUser,
+    deleteUser,
+    adminGetAllLobbies,
+    adminUpdateLobby,
+    adminDeleteLobby,
+    getStats
+};

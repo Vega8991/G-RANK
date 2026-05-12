@@ -5,95 +5,90 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const { calculateMMRChange, updateUserStats } = require('../services/mmrService');
 
+const ERROR_RESPONSES = {
+    'LOBBY_NOT_FOUND':       { status: 404, message: 'Lobby not found' },
+    'LOBBY_NOT_PENDING':     { status: 400, message: 'Lobby is not in pending status' },
+    'NOT_REGISTERED':        { status: 403, message: 'You are not registered in this lobby' },
+    'ALREADY_SUBMITTED':     { status: 400, message: 'You have already submitted results for this lobby' },
+    'INVALID_REPLAY_URL':    { status: 400, message: 'Invalid replay URL or replay not found' },
+    'WINNER_NOT_FOUND':      { status: 400, message: 'Could not determine match winner' },
+    'PARTICIPANTS_MISMATCH': { status: 400, message: 'Could not match replay participants with lobby participants' }
+};
+
 const submitReplay = async function (req, res) {
     const session = await mongoose.startSession();
-    
+    let submitResult;
+
     try {
-        let result;
         await session.withTransaction(async () => {
             const userId = req.userId;
-            const { lobbyId, replayUrl } = req.body;
+            const lobbyId = req.body.lobbyId;
+            const replayUrl = req.body.replayUrl;
 
             const lobby = await Lobby.findById(lobbyId).session(session);
-            if (!lobby) {
-                throw new Error('LOBBY_NOT_FOUND');
-            }
+            if (!lobby) throw new Error('LOBBY_NOT_FOUND');
+            if (lobby.status !== 'pending') throw new Error('LOBBY_NOT_PENDING');
 
-            if (lobby.status !== 'pending') {
-                throw new Error('LOBBY_NOT_PENDING');
-            }
-
-            const participant = await LobbyParticipant.findOne({
+            const submitterParticipant = await LobbyParticipant.findOne({
                 lobbyId: lobbyId,
                 userId: userId
             }).session(session);
-
-            if (!participant) {
-                throw new Error('NOT_REGISTERED');
-            }
-
-            if (participant.hasSubmittedResults) {
-                throw new Error('ALREADY_SUBMITTED');
-            }
+            if (!submitterParticipant) throw new Error('NOT_REGISTERED');
+            if (submitterParticipant.hasSubmittedResults) throw new Error('ALREADY_SUBMITTED');
 
             const replayId = replayUrl.split('pokemonshowdown.com/')[1];
             const replayJsonUrl = `https://replay.pokemonshowdown.com/${replayId}.json`;
 
             let replayData;
             try {
-                const response = await axios.get(replayJsonUrl);
-                replayData = response.data;
-            } catch (error) {
+                const replayResponse = await axios.get(replayJsonUrl);
+                replayData = replayResponse.data;
+            } catch (fetchError) {
                 throw new Error('INVALID_REPLAY_URL');
             }
 
-            let winner = null;
+            let winnerName = null;
             if (replayData.log) {
-                const winMatch = replayData.log.match(/\|win\|(.+)/);
-                if (winMatch && winMatch[1]) {
-                    winner = winMatch[1].trim();
+                const winLine = replayData.log.match(/\|win\|(.+)/);
+                if (winLine && winLine[1]) {
+                    winnerName = winLine[1].trim();
                 }
             }
+            if (!winnerName) throw new Error('WINNER_NOT_FOUND');
 
-            if (!winner) {
-                throw new Error('WINNER_NOT_FOUND');
-            }
-
-            const allParticipants = await LobbyParticipant.find({
-                lobbyId: lobbyId
-            }).populate('userId', 'username mmr').session(session);
+            const allParticipants = await LobbyParticipant.find({ lobbyId: lobbyId })
+                .populate('userId', 'username mmr')
+                .session(session);
 
             if (allParticipants.length !== 2) {
-                throw new Error(`INVALID_PARTICIPANT_COUNT:${allParticipants.length}`);
+                throw new Error('INVALID_PARTICIPANT_COUNT:' + allParticipants.length);
             }
 
-            let winnerId = null;
-            let loserId = null;
+            let winnerParticipant = null;
+            let loserParticipant = null;
 
-            for (let participant of allParticipants) {
-                if (participant.userId.username.toLowerCase() === winner.toLowerCase()) {
-                    winnerId = participant.userId._id;
+            for (let i = 0; i < allParticipants.length; i++) {
+                const participant = allParticipants[i];
+                const participantUsername = participant.userId.username;
+
+                if (participantUsername.toLowerCase() === winnerName.toLowerCase()) {
+                    winnerParticipant = participant;
                 } else {
-                    loserId = participant.userId._id;
+                    loserParticipant = participant;
                 }
             }
 
-            if (!winnerId || !loserId) {
-                throw new Error('PARTICIPANTS_MISMATCH');
-            }
+            if (!winnerParticipant || !loserParticipant) throw new Error('PARTICIPANTS_MISMATCH');
 
-            const matchResult = await MatchResult.create([{
+            await MatchResult.create([{
                 lobbyId: lobbyId,
                 replayUrl: replayUrl,
-                winnerId: winnerId,
-                loserId: loserId,
+                winnerId: winnerParticipant.userId._id,
+                loserId: loserParticipant.userId._id,
                 replayData: replayData,
                 verified: true,
                 submittedBy: userId
             }], { session: session });
-
-            const winnerParticipant = allParticipants.find(p => p.userId._id.toString() === winnerId.toString());
-            const loserParticipant = allParticipants.find(p => p.userId._id.toString() === loserId.toString());
 
             const winnerMMRBefore = winnerParticipant.userId.mmr;
             const loserMMRBefore = loserParticipant.userId.mmr;
@@ -101,8 +96,8 @@ const submitReplay = async function (req, res) {
             const winnerMMRChange = calculateMMRChange(winnerMMRBefore, true);
             const loserMMRChange = calculateMMRChange(loserMMRBefore, false);
 
-            const winnerUpdateResult = await updateUserStats(winnerId, true, winnerMMRChange, session);
-            const loserUpdateResult = await updateUserStats(loserId, false, loserMMRChange, session);
+            const winnerUpdateResult = await updateUserStats(winnerParticipant.userId._id, true, winnerMMRChange, session);
+            const loserUpdateResult = await updateUserStats(loserParticipant.userId._id, false, loserMMRChange, session);
 
             const updatedWinner = winnerUpdateResult.user;
             const updatedLoser = loserUpdateResult.user;
@@ -115,89 +110,60 @@ const submitReplay = async function (req, res) {
             loserParticipant.mmrChange = loserMMRChange;
             await loserParticipant.save({ session: session });
 
-            participant.hasSubmittedResults = true;
-            await participant.save({ session: session });
+            submitterParticipant.hasSubmittedResults = true;
+            await submitterParticipant.save({ session: session });
 
             lobby.status = 'completed';
             await lobby.save({ session: session });
 
-            result = {
+            submitResult = {
                 success: true,
                 message: 'Replay submitted and verified successfully',
-                result: matchResult[0],
-                winner: {
-                    username: winnerParticipant.userId.username,
-                    mmrBefore: winnerMMRBefore,
-                    mmrChange: winnerMMRChange,
-                    mmrAfter: updatedWinner.mmr,
-                    newRank: updatedWinner.rank,
-                    wins: updatedWinner.wins,
-                    losses: updatedWinner.losses,
-                    winRate: updatedWinner.winRate,
-                    winStreak: updatedWinner.winStreak
-                },
-                loser: {
-                    username: loserParticipant.userId.username,
-                    mmrBefore: loserMMRBefore,
-                    mmrChange: loserMMRChange,
-                    mmrAfter: updatedLoser.mmr,
-                    newRank: updatedLoser.rank,
-                    wins: updatedLoser.wins,
-                    losses: updatedLoser.losses,
-                    winRate: updatedLoser.winRate,
-                    winStreak: updatedLoser.winStreak
+                result: {
+                    winner: {
+                        username: winnerParticipant.userId.username,
+                        mmrChange: {
+                            before: winnerMMRBefore,
+                            change: winnerMMRChange,
+                            after: updatedWinner.mmr
+                        }
+                    },
+                    loser: {
+                        username: loserParticipant.userId.username,
+                        mmrChange: {
+                            before: loserMMRBefore,
+                            change: loserMMRChange,
+                            after: updatedLoser.mmr
+                        }
+                    }
                 }
             };
         });
 
-        return res.status(201).json(result);
+        return res.status(201).json(submitResult);
 
     } catch (error) {
-        const errorCode = error.message || 'UNKNOWN_ERROR';
-        let statusCode = 500;
-        let message = 'Error submitting replay';
+        const errorMessage = error.message || 'UNKNOWN_ERROR';
 
-        switch (true) {
-            case errorCode === 'LOBBY_NOT_FOUND':
-                statusCode = 404;
-                message = 'Lobby not found';
-                break;
-            case errorCode === 'LOBBY_NOT_PENDING':
-                statusCode = 400;
-                message = 'Lobby is not in pending status';
-                break;
-            case errorCode === 'NOT_REGISTERED':
-                statusCode = 403;
-                message = 'You are not registered in this lobby';
-                break;
-            case errorCode === 'ALREADY_SUBMITTED':
-                statusCode = 400;
-                message = 'You have already submitted results for this lobby';
-                break;
-            case errorCode === 'INVALID_REPLAY_URL':
-                statusCode = 400;
-                message = 'Invalid replay URL or replay not found';
-                break;
-            case errorCode === 'WINNER_NOT_FOUND':
-                statusCode = 400;
-                message = 'Could not find winner in replay data';
-                break;
-            case errorCode.startsWith('INVALID_PARTICIPANT_COUNT'):
-                statusCode = 400;
-                const count = errorCode.split(':')[1];
-                message = `Lobby must have exactly 2 participants. Found: ${count}`;
-                break;
-            case errorCode === 'PARTICIPANTS_MISMATCH':
-                statusCode = 400;
-                message = 'Could not match replay participants with lobby participants';
-                break;
-            default:
-                message = error.message || message;
+        if (errorMessage.startsWith('INVALID_PARTICIPANT_COUNT')) {
+            const participantCount = errorMessage.split(':')[1];
+            return res.status(400).json({
+                success: false,
+                message: `Lobby must have exactly 2 participants. Found: ${participantCount}`
+            });
         }
 
-        return res.status(statusCode).json({
+        const errorInfo = ERROR_RESPONSES[errorMessage];
+        if (errorInfo) {
+            return res.status(errorInfo.status).json({
+                success: false,
+                message: errorInfo.message
+            });
+        }
+
+        return res.status(500).json({
             success: false,
-            message: message
+            message: errorMessage
         });
     } finally {
         await session.endSession();

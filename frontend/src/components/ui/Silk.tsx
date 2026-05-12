@@ -127,6 +127,7 @@ export interface SilkProps {
 
 const Silk: React.FC<SilkProps> = ({ speed = 5, scale = 1, color = '#7B7481', noiseIntensity = 1.5, rotation = 0 }) => {
   const meshRef = useRef<Mesh>(null);
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const uniforms = useMemo<SilkUniforms>(
     () => ({
@@ -139,6 +140,10 @@ const Silk: React.FC<SilkProps> = ({ speed = 5, scale = 1, color = '#7B7481', no
     }),
     [speed, scale, noiseIntensity, color, rotation]
   );
+
+  if (prefersReducedMotion) {
+    return <div style={{ width: '100%', height: '100%', background: color }} />;
+  }
 
   return (
     <Canvas dpr={[1, 2]} frameloop="always">

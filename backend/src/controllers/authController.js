@@ -1,14 +1,12 @@
-let User = require('../models/userModel');
-let bcrypt = require('bcryptjs');
-let jwt = require('jsonwebtoken');
-let crypto = require('crypto');
-let { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
+const User = require('../models/userModel');
+const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { hashPassword, comparePassword } = require('../utils/passwordUtils');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 async function registerUser(req, res) {
     try {
-        let username = req.body.username;
-        let email = req.body.email;
-        let password = req.body.password;
+        const { username, email, password } = req.body;
 
         if (!username || !email || !password) {
             return res.status(400).json({
@@ -32,24 +30,21 @@ async function registerUser(req, res) {
             });
         }
 
-        let salt = bcrypt.genSaltSync(10);
-        let hashedPassword = bcrypt.hashSync(password, salt);
+        const verificationToken = crypto.randomBytes(32).toString('hex');
 
-        let verificationToken = crypto.randomBytes(32).toString('hex');
-
-        let newUser = new User({
+        const newUser = new User({
             username: username,
             email: email,
-            password: hashedPassword,
+            password: hashPassword(password),
             emailVerificationToken: verificationToken
         });
 
-        let savedUser = await newUser.save();
+        const savedUser = await newUser.save();
 
         try {
             sendVerificationEmail(savedUser.email, savedUser.username, verificationToken);
-        } catch (emailErr) {
-            console.log('Warning: could not send verification email:', emailErr.message);
+        } catch (emailError) {
+            // non-critical
         }
 
         res.status(201).json({
@@ -66,19 +61,25 @@ async function registerUser(req, res) {
         });
     } catch (error) {
         let message = 'Error creating user';
+
         if (error.code === 11000) {
-            const field = Object.keys(error.keyValue || {})[0];
-            message = field === 'email'
-                ? 'An account with this email already exists'
-                : field === 'username'
-                    ? 'This username is already taken'
-                    : 'Account already exists';
+            const duplicateField = Object.keys(error.keyValue || {})[0];
+
+            if (duplicateField === 'email') {
+                message = 'An account with this email already exists';
+            } else if (duplicateField === 'username') {
+                message = 'This username is already taken';
+            } else {
+                message = 'Account already exists';
+            }
         } else if (error.name === 'ValidationError') {
-            message = Object.values(error.errors).map(e => e.message).join(', ');
+            const validationMessages = Object.values(error.errors).map(function (e) { return e.message; });
+            message = validationMessages.join(', ');
         }
+
         res.status(400).json({
             success: false,
-            message,
+            message: message,
             error: error.message
         });
     }
@@ -86,8 +87,7 @@ async function registerUser(req, res) {
 
 async function loginUser(req, res) {
     try {
-        let email = req.body.email;
-        let password = req.body.password;
+        const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).json({
@@ -96,65 +96,54 @@ async function loginUser(req, res) {
             });
         }
 
-        let foundUser = await User.findOne({ email: email });
+        const foundUser = await User.findOne({ email: email });
 
         if (!foundUser) {
-            res.status(404).json({
+            return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
-            return;
         }
 
-                let isPasswordValid = bcrypt.compareSync(password, foundUser.password);
-
-        if (!isPasswordValid) {
-            res.status(401).json({
+        if (!comparePassword(password, foundUser.password)) {
+            return res.status(401).json({
                 success: false,
                 message: 'Invalid password'
             });
-            return;
         }
 
         if (!foundUser.isEmailVerified) {
-            res.status(403).json({
+            return res.status(403).json({
                 success: false,
                 message: 'Please verify your email before logging in'
             });
-            return;
         }
 
-        let secretKey = process.env.JWT_SECRET;
-        let expirationTime = process.env.JWT_EXPIRE;
-
-        let token = jwt.sign(
-            {
-                userId: foundUser._id,
-                email: foundUser.email,
-                username: foundUser.username,
-                role: foundUser.role || 'USER'
-            },
-            secretKey,
-            { expiresIn: expirationTime }
+        const role = foundUser.role || 'USER';
+        const token = jwt.sign(
+            { userId: foundUser._id, email: foundUser.email, username: foundUser.username, role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRE }
         );
 
-        res.status(200).json({
-            success: true,
-            message: 'Login successful',
-            token: token,
-            user: {
-                id: foundUser._id,
-                username: foundUser.username,
-                email: foundUser.email,
-                rank: foundUser.rank,
-                mmr: foundUser.mmr,
-                winRate: foundUser.winRate,
-                winStreak: foundUser.winStreak,
-                wins: foundUser.wins,
-                losses: foundUser.losses,
-                role: foundUser.role || 'USER'
-            }
+        const decoded = jwt.decode(token);
+        const maxAge = (decoded.exp - Math.floor(Date.now() / 1000)) * 1000;
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge,
         });
+
+        res.cookie('auth_info', JSON.stringify({ username: foundUser.username, role, exp: decoded.exp }), {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge,
+        });
+
+        res.status(200).json({ success: true, message: 'Login successful' });
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -166,15 +155,13 @@ async function loginUser(req, res) {
 
 async function getProfile(req, res) {
     try {
-        let userId = req.userId;
-        let user = await User.findById(userId);
+        const user = await User.findById(req.userId);
 
         if (!user) {
-            res.status(404).json({
+            return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
-            return;
         }
 
         res.status(200).json({
@@ -197,26 +184,24 @@ async function getProfile(req, res) {
                 riotCachedProfile: user.riotCachedProfile || null
             }
         });
-    } catch (err) {
+    } catch (error) {
         res.status(500).json({
             success: false,
             message: 'Server error',
-            error: err.message
+            error: error.message
         });
     }
 }
 
 async function verifyEmail(req, res) {
     try {
-        let token = req.query.token;
-        let user = await User.findOne({ emailVerificationToken: token });
+        const user = await User.findOne({ emailVerificationToken: req.query.token });
 
         if (!user) {
-            res.status(404).json({
+            return res.status(404).json({
                 success: false,
                 message: 'Invalid or expired token'
             });
-            return;
         }
 
         user.isEmailVerified = true;
@@ -239,21 +224,31 @@ async function verifyEmail(req, res) {
 async function forgotPassword(req, res) {
     try {
         const { email } = req.body;
-        if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
 
-        const user = await User.findOne({ email });
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const user = await User.findOne({ email: email });
+
         if (!user) {
-            return res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+            return res.status(200).json({
+                success: true,
+                message: 'If that email exists, a reset link has been sent.'
+            });
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
         user.passwordResetToken = resetToken;
-        user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
         await user.save();
 
         sendPasswordResetEmail(user.email, user.username, resetToken);
 
-        res.status(200).json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+        res.status(200).json({
+            success: true,
+            message: 'If that email exists, a reset link has been sent.'
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
@@ -262,23 +257,42 @@ async function forgotPassword(req, res) {
 async function resetPassword(req, res) {
     try {
         const { token, password } = req.body;
-        if (!token || !password) return res.status(400).json({ success: false, message: 'Token and password are required' });
-        if (password.length < 6) return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+
+        if (!token || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token and password are required'
+            });
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Password must be at least 6 characters'
+            });
+        }
 
         const user = await User.findOne({
             passwordResetToken: token,
             passwordResetExpires: { $gt: new Date() }
         });
 
-        if (!user) return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid or expired reset token'
+            });
+        }
 
-        const salt = await require('bcryptjs').genSalt(10);
-        user.password = await require('bcryptjs').hash(password, salt);
+        user.password = hashPassword(password);
         user.passwordResetToken = null;
         user.passwordResetExpires = null;
         await user.save();
 
-        res.status(200).json({ success: true, message: 'Password reset successfully. You can now log in.' });
+        res.status(200).json({
+            success: true,
+            message: 'Password reset successfully. You can now log in.'
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server error', error: error.message });
     }
@@ -286,10 +300,14 @@ async function resetPassword(req, res) {
 
 async function getPublicProfile(req, res) {
     try {
-        const { username } = req.params;
-        const user = await User.findOne({ username }, '-password -emailVerificationToken -passwordResetToken -passwordResetExpires -email');
+        const user = await User.findOne(
+            { username: req.params.username },
+            '-password -emailVerificationToken -passwordResetToken -passwordResetExpires -email'
+        );
 
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
         res.status(200).json({
             success: true,
@@ -305,11 +323,11 @@ async function getPublicProfile(req, res) {
                 totalMatches: user.totalMatches,
                 role: user.role,
                 status: user.status,
-                createdAt: user.joinDate || user.createdAt,
+                createdAt: user.joinDate,
                 riotGameName: user.riotGameName || null,
                 riotTagLine: user.riotTagLine || null,
                 riotPlatform: user.riotPlatform || null,
-                riotCachedProfile: user.riotCachedProfile || null,
+                riotCachedProfile: user.riotCachedProfile || null
             }
         });
     } catch (error) {
@@ -320,16 +338,25 @@ async function getPublicProfile(req, res) {
 async function resendVerificationEmail(req, res) {
     try {
         const { email } = req.body;
-        if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
 
-        const user = await User.findOne({ email });
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const user = await User.findOne({ email: email });
 
         if (!user) {
-            return res.status(200).json({ success: true, message: 'If that email exists and is unverified, a new link has been sent.' });
+            return res.status(200).json({
+                success: true,
+                message: 'If that email exists and is unverified, a new link has been sent.'
+            });
         }
 
         if (user.isEmailVerified) {
-            return res.status(400).json({ success: false, message: 'This email is already verified. You can log in.' });
+            return res.status(400).json({
+                success: false,
+                message: 'This email is already verified. You can log in.'
+            });
         }
 
         const verificationToken = crypto.randomBytes(32).toString('hex');
@@ -338,8 +365,8 @@ async function resendVerificationEmail(req, res) {
 
         try {
             sendVerificationEmail(user.email, user.username, verificationToken);
-        } catch (emailErr) {
-            console.log('Warning: could not send verification email:', emailErr.message);
+        } catch (emailError) {
+            // non-critical
         }
 
         res.status(200).json({ success: true, message: 'Verification email sent. Check your inbox.' });
@@ -348,4 +375,20 @@ async function resendVerificationEmail(req, res) {
     }
 }
 
-module.exports = { registerUser, loginUser, getProfile, verifyEmail, forgotPassword, resetPassword, getPublicProfile, resendVerificationEmail };
+function logoutUser(req, res) {
+    res.clearCookie('token',     { httpOnly: true,  secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+    res.clearCookie('auth_info', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+    res.status(200).json({ success: true, message: 'Logged out' });
+}
+
+module.exports = {
+    registerUser,
+    loginUser,
+    logoutUser,
+    getProfile,
+    verifyEmail,
+    forgotPassword,
+    resetPassword,
+    getPublicProfile,
+    resendVerificationEmail
+};

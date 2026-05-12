@@ -1,4 +1,4 @@
-export type RouteKey = "landing" | "login" | "register" | "forgot" | "dashboard" | "lobbies" | "leaderboard" | "profile" | "admin";
+export type RouteKey = "landing" | "login" | "register" | "forgot" | "dashboard" | "lobbies" | "leaderboard" | "admin";
 
 const routeLoaders: Record<RouteKey, () => Promise<unknown>> = {
     landing: function () { return import("../pages/LandingPage"); },
@@ -8,7 +8,6 @@ const routeLoaders: Record<RouteKey, () => Promise<unknown>> = {
     dashboard: function () { return import("../pages/Dashboard"); },
     lobbies: function () { return import("../pages/Lobbies"); },
     leaderboard: function () { return import("../pages/Leaderboard"); },
-    profile: function () { return import("../pages/Profile"); },
     admin: function () { return import("../pages/Admin"); }
 };
 

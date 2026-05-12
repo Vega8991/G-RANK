@@ -75,6 +75,7 @@ export default function LiquidEther({
     autoResumeDelay = 1000,
     autoRampDuration = 0.6
 }: LiquidEtherProps): React.ReactElement {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const mountRef = useRef<HTMLDivElement | null>(null);
     const webglRef = useRef<LiquidEtherWebGL | null>(null);
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
@@ -84,7 +85,7 @@ export default function LiquidEther({
     const resizeRafRef = useRef<number | null>(null);
 
     useEffect(() => {
-        if (!mountRef.current) return;
+        if (!mountRef.current || prefersReducedMotion) return;
 
         function makePaletteTexture(stops: string[]): THREE.DataTexture {
             let arr: string[];
@@ -1261,6 +1262,10 @@ export default function LiquidEther({
         autoResumeDelay,
         autoRampDuration
     ]);
+
+    if (prefersReducedMotion) {
+        return <div className={`w-full h-full overflow-hidden ${className || ''}`} style={{ background: colors[0] ?? '#000', ...style }} />;
+    }
 
     return (
         <div

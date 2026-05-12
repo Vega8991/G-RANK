@@ -5,7 +5,7 @@ import { register } from "../services/authService";
 import { AxiosError } from "axios";
 import Button from "../components/common/Button";
 import Aurora from "../components/ui/Aurora";
-import { Crown, User, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Trophy, Target, TrendingUp } from "lucide-react";
+import { Crown, Eye, EyeOff, AlertCircle, CheckCircle2, Trophy, Target, TrendingUp } from "lucide-react";
 
 const inputClassName = "w-full bg-[var(--neutral-bg)]/60 border border-[var(--neutral-border)]/50 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[var(--neutral-text-muted)]/60 outline-none focus:border-[var(--brand-primary)]/60 focus:ring-2 focus:ring-[var(--brand-primary)]/20 transition-all duration-300";
 

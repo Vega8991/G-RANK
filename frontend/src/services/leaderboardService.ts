@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { API_URL } from '../config/api';
+import apiClient from './apiClient';
 
 export interface LeaderboardPlayer {
     _id: string;
@@ -15,6 +14,6 @@ export interface LeaderboardPlayer {
 }
 
 export async function getLeaderboard(limit = 50): Promise<LeaderboardPlayer[]> {
-    const response = await axios.get(`${API_URL}/leaderboard`, { params: { limit } });
-    return response.data.players;
+    const response = await apiClient.get('/leaderboard', { params: { limit } });
+    return (response.data as { players: LeaderboardPlayer[] }).players;
 }

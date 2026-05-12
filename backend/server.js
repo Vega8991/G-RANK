@@ -1,20 +1,25 @@
-let express = require('express');
-let cors = require('cors');
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
-let connectToDatabase = require('./src/config/database');
-let authRoutes = require('./src/routes/authRoutes');
-let lobbyRoutes = require('./src/routes/lobbyRoutes');
-let lobbyParticipantRoutes = require('./src/routes/lobbyParticipantRoutes');
-let matchResultRoutes = require('./src/routes/matchResultRoutes');
-let leaderboardRoutes = require('./src/routes/leaderboardRoutes');
-let riotRoutes = require('./src/routes/riotRoutes');
-let adminRoutes = require('./src/routes/adminRoutes');
+const connectToDatabase = require('./src/config/database');
+const authRoutes = require('./src/routes/authRoutes');
+const lobbyRoutes = require('./src/routes/lobbyRoutes');
+const lobbyParticipantRoutes = require('./src/routes/lobbyParticipantRoutes');
+const matchResultRoutes = require('./src/routes/matchResultRoutes');
+const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
+const riotRoutes = require('./src/routes/riotRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 
-let app = express();
-let port = process.env.PORT || 5000;
+const app = express();
+const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 
 connectToDatabase();
@@ -35,7 +40,4 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/riot', riotRoutes);
 app.use('/api/admin', adminRoutes);
 
-app.listen(port, () => {
-    console.log('Server is running on port: ', port);
-    console.log('API available at: http://localhost:' + port);
-});
+app.listen(port);

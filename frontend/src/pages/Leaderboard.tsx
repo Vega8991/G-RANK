@@ -5,8 +5,6 @@ import { NavLink } from "react-router-dom";
 import Silk from "../components/ui/Silk";
 import { getLeaderboard, type LeaderboardPlayer } from "../services/leaderboardService";
 
-// ─── Tier derivation ──────────────────────────────────────────────────────────
-
 type Tier = "elite" | "master" | "diamond" | "platinum" | "gold" | "silver" | "bronze";
 
 function getTier(rank: string): Tier {
@@ -41,7 +39,6 @@ function getRankAccentColor(pos: number): string {
     return RANK_3_COLOR;
 }
 
-// ─── Background ───────────────────────────────────────────────────────────────
 
 const LeaderboardBackground = memo(function LeaderboardBackground() {
     return (
@@ -59,8 +56,6 @@ const LeaderboardBackground = memo(function LeaderboardBackground() {
         </div>
     );
 });
-
-// ─── Podium card (top 3) ──────────────────────────────────────────────────────
 
 function PodiumCard({ player, pos, index }: { player: LeaderboardPlayer; pos: number; index: number }) {
     const accentColor = getRankAccentColor(pos);
@@ -122,8 +117,6 @@ function PodiumCard({ player, pos, index }: { player: LeaderboardPlayer; pos: nu
     );
 }
 
-// ─── Table row ────────────────────────────────────────────────────────────────
-
 function TableRow({ player, pos, index }: { player: LeaderboardPlayer; pos: number; index: number }) {
     const tierCfg = TIER_CONFIG[getTier(player.rank)];
     const TierIcon = tierCfg.icon;
@@ -176,8 +169,6 @@ function TableRow({ player, pos, index }: { player: LeaderboardPlayer; pos: numb
     );
 }
 
-// ─── Skeleton loaders ─────────────────────────────────────────────────────────
-
 function PodiumSkeleton() {
     return (
         <div className="rounded-2xl p-6 backdrop-blur-xl border border-white/10 bg-white/5 animate-pulse">
@@ -202,8 +193,6 @@ function RowSkeleton({ index }: { index: number }) {
         </tr>
     );
 }
-
-// ─── Footer ───────────────────────────────────────────────────────────────────
 
 function LeaderboardFooter() {
     return (
@@ -251,8 +240,6 @@ function LeaderboardFooter() {
     );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
-
 export default function Leaderboard() {
     const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -289,7 +276,6 @@ export default function Leaderboard() {
                 </section>
 
                 <section className="max-w-[1512px] mx-auto px-6 md:px-20 py-10">
-                    {/* ── Podium ── */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
                         {loading
                             ? [0, 1, 2].map(i => <PodiumSkeleton key={i} />)
@@ -299,7 +285,6 @@ export default function Leaderboard() {
                         }
                     </div>
 
-                    {/* ── Rankings table ── */}
                     {error ? (
                         <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
                             <p className="text-red-400">{error}</p>

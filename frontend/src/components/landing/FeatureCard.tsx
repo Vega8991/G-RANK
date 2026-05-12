@@ -13,7 +13,7 @@ interface FeatureCardProps {
     index: number;
 }
 
-export default function FeatureCard({ feature, index }: FeatureCardProps) {
+export default function FeatureCard({ feature }: FeatureCardProps) {
     const IconComponent = feature.icon;
 
     return (

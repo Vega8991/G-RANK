@@ -5,6 +5,7 @@ import "./index.css";
 
 import AppLayout from "./layouts/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Spinner from "./components/common/Spinner";
 
 const LandingPage     = lazy(() => import("./pages/LandingPage"));
 const Login           = lazy(() => import("./pages/Login"));
@@ -16,11 +17,10 @@ const NotFound        = lazy(() => import("./pages/NotFound"));
 const Dashboard       = lazy(() => import("./pages/Dashboard"));
 const Lobbies         = lazy(() => import("./pages/Lobbies"));
 const Leaderboard     = lazy(() => import("./pages/Leaderboard"));
-const Profile         = lazy(() => import("./pages/Profile"));
 const Admin           = lazy(() => import("./pages/Admin"));
 
 function withSuspense(element: React.ReactElement) {
-  return <Suspense fallback={null}>{element}</Suspense>;
+  return <Suspense fallback={<Spinner />}>{element}</Suspense>;
 }
 
 const publicRoutes: RouteObject[] = [
@@ -31,7 +31,6 @@ const publicRoutes: RouteObject[] = [
   { path: "/reset-password",  element: withSuspense(<ResetPassword />) },
   { path: "/verify-email",    element: withSuspense(<VerifyEmail />) },
   { path: "/leaderboard",     element: withSuspense(<Leaderboard />) },
-  { path: "/profile/:username", element: withSuspense(<Profile />) },
 ];
 
 const protectedRoutes: RouteObject[] = [

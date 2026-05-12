@@ -1,9 +1,11 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Crown, Home, Trophy, User, Shield, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
+import { Crown, Home, Trophy, Shield, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
 import { prefetchRoute } from "../services/routePrefetch";
 import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
 import { getNavInfo, logout, type NavInfo } from "../services/authService";
+import { AUTH_CHANGE_EVENT } from "../constants/events";
+import ErrorBoundary from "../components/common/ErrorBoundary";
 
 const TargetCursor = lazy(() => import("../components/cursor/TargetCursor"));
 
@@ -20,6 +22,13 @@ export default function AppLayout() {
     const [navInfo, setNavInfo] = useState<NavInfo | null>(getNavInfo);
     const [dropdownOpen, setDropdownOpen] = useState(false);
 
+    useEffect(() => {
+        document.documentElement.classList.add('custom-cursor');
+        return () => {
+            document.documentElement.classList.remove('custom-cursor');
+        };
+    }, []);
+
     const lobbiesViewportRef     = useViewportPrefetch("lobbies");
     const leaderboardViewportRef = useViewportPrefetch("leaderboard");
     const dashboardViewportRef   = useViewportPrefetch("dashboard");
@@ -28,11 +37,9 @@ export default function AppLayout() {
 
     useEffect(() => {
         function update() { setNavInfo(getNavInfo()); }
-        window.addEventListener('auth-change', update);
-        window.addEventListener('storage', update);
+        window.addEventListener(AUTH_CHANGE_EVENT, update);
         return () => {
-            window.removeEventListener('auth-change', update);
-            window.removeEventListener('storage', update);
+            window.removeEventListener(AUTH_CHANGE_EVENT, update);
         };
     }, []);
 
@@ -43,8 +50,8 @@ export default function AppLayout() {
         return () => document.removeEventListener('mousedown', handler);
     }, [dropdownOpen]);
 
-    function handleLogout() {
-        logout();
+    async function handleLogout() {
+        await logout();
         setDropdownOpen(false);
         navigate('/login');
     }
@@ -62,21 +69,22 @@ export default function AppLayout() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white relative">
-            <Suspense fallback={null}>
-                <TargetCursor
-                    spinDuration={2.8}
-                    hideDefaultCursor
-                    parallaxOn
-                    hoverDuration={0.6}
-                    targetSelector="a, button, input, select, textarea, [role='button']"
-                />
-            </Suspense>
+            <ErrorBoundary onError={() => document.documentElement.classList.remove('custom-cursor')}>
+                <Suspense fallback={null}>
+                    <TargetCursor
+                        spinDuration={2.8}
+                        hideDefaultCursor
+                        parallaxOn
+                        hoverDuration={0.6}
+                        targetSelector="a, button, input, select, textarea, [role='button']"
+                    />
+                </Suspense>
+            </ErrorBoundary>
 
             <nav className="border-b border-[#2a2a2a] sticky top-0 z-40 backdrop-blur-lg bg-[#0a0a0a]/95">
                 <div className="max-w-[1512px] mx-auto px-6 md:px-20">
                     <div className="flex items-center justify-between h-16">
 
-                        {/* Logo + nav links */}
                         <div className="flex items-center gap-12">
                             <NavLink to="/" className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded bg-[#dc143c] flex items-center justify-center">
@@ -111,7 +119,6 @@ export default function AppLayout() {
                             </div>
                         </div>
 
-                        {/* Auth area */}
                         <div className="flex items-center gap-3">
                             {navInfo ? (
                                 <div className="relative">
@@ -137,11 +144,6 @@ export default function AppLayout() {
                                             style={{ background: "rgba(10,10,10,0.98)", backdropFilter: "blur(20px)" }}
                                             onMouseDown={e => e.stopPropagation()}
                                         >
-                                            <NavLink to={`/profile/${navInfo.username}`}
-                                                onClick={() => setDropdownOpen(false)}
-                                                className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#d1d5db] hover:text-white hover:bg-white/5 transition-colors">
-                                                <User size={14} /> My Profile
-                                            </NavLink>
                                             <NavLink to="/dashboard"
                                                 onClick={() => setDropdownOpen(false)}
                                                 className="flex items-center gap-2.5 px-4 py-3 text-sm text-[#d1d5db] hover:text-white hover:bg-white/5 transition-colors">
