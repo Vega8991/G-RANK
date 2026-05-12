@@ -1,68 +1,31 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
-import type { AuthStatus } from "../../types";
+import { AUTH_CHANGE_EVENT } from "../../constants/events";
+import { getNavInfo } from "../../services/authService";
+import type { NavInfo } from "../../services/authService";
 
 interface ProtectedRouteProps {
-    isAllowed?: boolean;
     redirectTo?: string;
     requireAdmin?: boolean;
 }
 
-function checkAuthStatus(): AuthStatus {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
-
-    if (!token || !userStr) {
-        return { isLoggedIn: false, userRole: null };
-    }
-
-    try {
-        const user = JSON.parse(userStr);
-        return { isLoggedIn: true, userRole: user.role || 'USER' };
-    } catch (error) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        return { isLoggedIn: false, userRole: null };
-    }
-}
-
-export default function ProtectedRoute({ isAllowed: staticIsAllowed, redirectTo = "/login", requireAdmin = false }: ProtectedRouteProps) {
-    const [authStatus, setAuthStatus] = useState<AuthStatus>(checkAuthStatus());
+export default function ProtectedRoute({ redirectTo = "/login", requireAdmin = false }: ProtectedRouteProps) {
+    const [navInfo, setNavInfo] = useState<NavInfo | null>(() => getNavInfo());
 
     useEffect(() => {
-        const updateAuthStatus = () => {
-            setAuthStatus(checkAuthStatus());
-        };
+        function update() {
+            setNavInfo(getNavInfo());
+        }
 
-        updateAuthStatus();
-
-        window.addEventListener('storage', updateAuthStatus);
-
-        window.addEventListener('auth-change', updateAuthStatus);
-
+        window.addEventListener(AUTH_CHANGE_EVENT, update);
         return () => {
-            window.removeEventListener('storage', updateAuthStatus);
-            window.removeEventListener('auth-change', updateAuthStatus);
+            window.removeEventListener(AUTH_CHANGE_EVENT, update);
         };
     }, []);
 
-    const isExplicitlyDenied = typeof staticIsAllowed === "boolean" && !staticIsAllowed;
-    const isNotAdmin = authStatus.userRole !== "ADMIN";
-
-    if (isExplicitlyDenied) {
-        return <Navigate to={redirectTo} replace />;
-    }
-
     if (requireAdmin) {
-        if (isNotAdmin) {
-            return <Navigate to={redirectTo} replace />;
-        }
-        return <Outlet />;
+        return navInfo?.role === 'ADMIN' ? <Outlet /> : <Navigate to={redirectTo} replace />;
     }
 
-    if (!authStatus.isLoggedIn) {
-        return <Navigate to={redirectTo} replace />;
-    }
-
-    return <Outlet />;
+    return navInfo !== null ? <Outlet /> : <Navigate to={redirectTo} replace />;
 }

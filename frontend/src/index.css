@@ -92,12 +92,17 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Hide the default cursor only when the custom WebGL cursor is active */
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+
 @layer base {
   * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    cursor: none !important;
     @apply border-border outline-ring/50;
   }
 

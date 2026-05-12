@@ -1,7 +1,7 @@
 const Lobby = require('../models/lobbyModel');
 const LobbyParticipant = require('../models/lobbyParticipantModel');
 
-const createLobby = async function (req, res) {
+async function createLobby(req, res) {
     try {
         const userId = req.userId;
 
@@ -51,7 +51,7 @@ const createLobby = async function (req, res) {
             });
         }
 
-        const lobbyData = {
+        const newLobby = await Lobby.create({
             name: req.body.name,
             game: req.body.game || 'pokemon_showdown',
             description: req.body.description,
@@ -60,9 +60,7 @@ const createLobby = async function (req, res) {
             maxParticipants: req.body.maxParticipants || 2,
             prizePool: req.body.prizePool || '',
             createdBy: userId
-        };
-
-        const newLobby = await Lobby.create(lobbyData);
+        });
 
         return res.status(201).json({
             success: true,
@@ -77,9 +75,9 @@ const createLobby = async function (req, res) {
             error: error.message
         });
     }
-};
+}
 
-const getAllLobbies = async (req, res) => {
+async function getAllLobbies(req, res) {
     try {
         const lobbies = await Lobby.find()
             .populate('createdBy', 'username');
@@ -95,14 +93,11 @@ const getAllLobbies = async (req, res) => {
             error: error.message
         });
     }
-};
+}
 
-
-const getLobbyById = async function (req, res) {
+async function getLobbyById(req, res) {
     try {
-        const lobbyId = req.params.id;
-
-        const lobby = await Lobby.findById(lobbyId)
+        const lobby = await Lobby.findById(req.params.id)
             .populate('createdBy', 'username');
 
         if (!lobby) {
@@ -124,13 +119,11 @@ const getLobbyById = async function (req, res) {
             error: error.message
         });
     }
-};
+}
 
-const getMyCreatedLobbies = async function (req, res) {
+async function getMyCreatedLobbies(req, res) {
     try {
-        const userId = req.userId;
-
-        const lobbies = await Lobby.find({ createdBy: userId })
+        const lobbies = await Lobby.find({ createdBy: req.userId })
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
@@ -145,11 +138,10 @@ const getMyCreatedLobbies = async function (req, res) {
             error: error.message
         });
     }
-};
+}
 
-const updateLobbyStatus = async function (req, res) {
+async function updateLobbyStatus(req, res) {
     try {
-        const userId = req.userId;
         const lobbyId = req.params.id;
         const { status } = req.body;
 
@@ -162,18 +154,18 @@ const updateLobbyStatus = async function (req, res) {
             });
         }
 
-        if (lobby.createdBy.toString() !== userId) {
+        if (lobby.createdBy.toString() !== req.userId) {
             return res.status(403).json({
                 success: false,
                 message: 'Only the lobby creator can update its status'
             });
         }
 
-        const validStatuses = ['open', 'pending', 'completed', 'cancelled'];
+        const validStatuses = ['open', 'pending', 'in_progress', 'completed', 'cancelled'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid status. Must be: open, pending, completed, or cancelled'
+                message: 'Invalid status. Must be: open, pending, in_progress, completed, or cancelled'
             });
         }
 
@@ -193,9 +185,9 @@ const updateLobbyStatus = async function (req, res) {
             error: error.message
         });
     }
-};
+}
 
-const syncParticipantCounts = async function (req, res) {
+async function syncParticipantCounts(req, res) {
     try {
         const lobbies = await Lobby.find();
         let updatedCount = 0;
@@ -226,8 +218,7 @@ const syncParticipantCounts = async function (req, res) {
             error: error.message
         });
     }
-};
-
+}
 
 module.exports = {
     createLobby,

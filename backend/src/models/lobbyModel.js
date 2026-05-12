@@ -8,7 +8,7 @@ const lobbySchema = new mongoose.Schema({
     game: {
         type: String,
         required: true,
-        enum: ['pokemon_showdown'],
+        enum: ['pokemon_showdown', 'league_of_legends', 'valorant'],
         default: 'pokemon_showdown'
     },
     description: {
@@ -25,7 +25,7 @@ const lobbySchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['open', 'pending', 'completed', 'cancelled'],
+        enum: ['open', 'pending', 'in_progress', 'completed', 'cancelled'],
         default: 'open'
     },
     maxParticipants: {
