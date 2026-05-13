@@ -59,7 +59,7 @@ function normalizeLobbyForCard(lobby: Lobby): LobbyCardData {
 }
 
 export default function Lobbies() {
-    const { lobbies, myLobbies, userRiotLinked, message, result, handleRegister, handleLeave, handleCreate: submitCreateLobby, handleSubmitReplay } = useLobbies();
+    const { lobbies, myLobbies, userRiotLinked, successMessage, errorMessage, result, handleRegister, handleLeave, handleCreate: submitCreateLobby, handleSubmitReplay } = useLobbies();
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -251,7 +251,18 @@ export default function Lobbies() {
                         </motion.div>
                     )}
 
-                    {message && (
+                    {successMessage && (
+                        <motion.div
+                            className="rounded-xl px-4 py-3 text-sm font-medium"
+                            style={{ border: "1px solid rgba(34,197,94,0.3)", background: "rgba(34,197,94,0.08)", color: "rgb(134,239,172)" }}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            {successMessage}
+                        </motion.div>
+                    )}
+                    {errorMessage && (
                         <motion.div
                             className="rounded-xl px-4 py-3 text-sm font-medium"
                             style={{ border: "1px solid rgba(220,20,60,0.3)", background: "rgba(220,20,60,0.08)", color: "var(--brand-primary)" }}
@@ -259,7 +270,7 @@ export default function Lobbies() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4 }}
                         >
-                            {message}
+                            {errorMessage}
                         </motion.div>
                     )}
                 </section>

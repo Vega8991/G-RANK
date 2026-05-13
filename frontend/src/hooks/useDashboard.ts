@@ -47,7 +47,7 @@ export function useDashboard() {
         void loadProfile();
         getMyLobbies()
             .then(function (res) { setLobbies(res.lobbies); })
-            .catch(function () { setLobbies([]); });
+            .catch(function () { setLobbies([]); setLoadError(true); });
     }, [loadProfile]);
 
     useEffect(function () {

@@ -22,7 +22,7 @@ export interface User {
   winRate?: number;
   winStreak?: number;
   totalMatches?: number;
-  createdAt: string;
+  joinDate?: string;
   updatedAt: string;
   riotGameName?: string | null;
   riotTagLine?: string | null;
@@ -65,7 +65,7 @@ export interface MmrChange {
 
 export interface MatchPlayer {
   username: string;
-  odOld: number;
+  mmrBefore: number;
   mmrChange: MmrChange;
   newRank: string;
 }

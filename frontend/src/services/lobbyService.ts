@@ -31,8 +31,8 @@ export const createLobby = async (
     return response.data as { lobby: Lobby };
 };
 
-export const getAllLobbies = async (): Promise<{ lobbies: Lobby[] }> => {
-    const response = await apiClient.get('/lobbies');
+export const getAllLobbies = async (page = 1, limit = 10): Promise<{ lobbies: Lobby[] }> => {
+    const response = await apiClient.get(`/lobbies?page=${page}&limit=${limit}`);
     return response.data as { lobbies: Lobby[] };
 };
 

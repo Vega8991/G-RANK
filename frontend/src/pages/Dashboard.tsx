@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, TrendingUp, TrendingDown, Zap, Flame, Mail, Calendar, LogOut, BarChart3, Percent } from "lucide-react";
+import { Trophy, TrendingUp, TrendingDown, Zap, Flame, Mail, Calendar, LogOut, BarChart3, Percent, Award, Star, Gem, Crown } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { Award, Star, Gem, Crown } from "lucide-react";
 import Button from "../components/common/Button";
 import DashboardBackground from "../components/dashboard/DashboardBackground";
 import StatCard from "../components/dashboard/StatCard";
@@ -127,7 +126,7 @@ export default function Dashboard() {
                                     </div>
                                     <div className="flex flex-wrap gap-4 text-xs text-white/30">
                                         <span className="flex items-center gap-1.5"><Mail size={11} /> {user.email}</span>
-                                        <span className="flex items-center gap-1.5"><Calendar size={11} /> Joined {new Date(user.createdAt ?? Date.now()).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
+                                        <span className="flex items-center gap-1.5"><Calendar size={11} /> Joined {new Date(user.joinDate ?? Date.now()).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
                                     </div>
                                 </div>
 
