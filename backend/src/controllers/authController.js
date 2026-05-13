@@ -98,9 +98,9 @@ async function loginUser(req, res) {
         const foundUser = await User.findOne({ email: email });
 
         if (!foundUser) {
-            return res.status(404).json({
+            return res.status(401).json({
                 success: false,
-                message: 'User not found'
+                message: 'Invalid credentials'
             });
         }
 
@@ -175,6 +175,8 @@ async function getProfile(req, res) {
                 wins: user.wins,
                 losses: user.losses,
                 role: user.role || 'USER',
+                joinDate: user.joinDate,
+                totalMatches: user.totalMatches,
                 riotGameName: user.riotGameName || null,
                 riotTagLine: user.riotTagLine || null,
                 riotPuuid: user.riotPuuid || null,
@@ -319,7 +321,7 @@ async function getPublicProfile(req, res) {
                 totalMatches: user.totalMatches,
                 role: user.role,
                 status: user.status,
-                createdAt: user.joinDate,
+                joinDate: user.joinDate,
                 riotGameName: user.riotGameName || null,
                 riotTagLine: user.riotTagLine || null,
                 riotPlatform: user.riotPlatform || null,

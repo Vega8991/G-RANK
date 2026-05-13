@@ -22,7 +22,6 @@ export default function Login() {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [showPassword, setShowPassword] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [needsVerification, setNeedsVerification] = useState(false);
     const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -247,25 +246,7 @@ export default function Login() {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <label className="flex items-center gap-2.5 cursor-pointer group">
-                                    <div className="relative">
-                                        <input
-                                            type="checkbox"
-                                            checked={rememberMe}
-                                            onChange={function (e) { setRememberMe(e.target.checked); }}
-                                            className="sr-only peer"
-                                        />
-                                        <div className="w-4 h-4 rounded border border-[var(--neutral-border)]/60 bg-[var(--neutral-bg)]/40 peer-checked:bg-[var(--brand-primary)] peer-checked:border-[var(--brand-primary)] transition-all duration-200 flex items-center justify-center">
-                                            {rememberMe && (
-                                                <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 12 12" fill="none">
-                                                    <path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <span className="text-sm text-[var(--neutral-text-muted)] group-hover:text-[var(--neutral-text-secondary)] transition-colors">Remember me</span>
-                                </label>
+                            <div className="flex items-center justify-end">
                                 <NavLink
                                     to="/forgot-password"
                                     className="text-sm font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] transition-colors duration-300"

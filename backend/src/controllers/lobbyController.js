@@ -71,8 +71,7 @@ async function createLobby(req, res) {
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error creating lobby',
-            error: error.message
+            message: 'Error creating lobby'
         });
     }
 }
@@ -121,8 +120,7 @@ async function getLobbyById(req, res) {
     } catch (error) {
         return res.status(500).json({
             success: false,
-            message: 'Error fetching lobby',
-            error: error.message
+            message: 'Error fetching lobby'
         });
     }
 }

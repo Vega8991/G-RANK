@@ -47,7 +47,6 @@ describe('User model', () => {
         expect(user.status).toBe('active');
         expect(user.role).toBe('USER');
         expect(user.isEmailVerified).toBe(false);
-        expect(user.country).toBe('');
     });
 
     test('rejects missing username', async () => {

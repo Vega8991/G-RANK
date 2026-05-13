@@ -116,14 +116,15 @@ describe('authController', () => {
         expect(res.status).toHaveBeenCalledWith(400);
     });
 
-    test('loginUser returns 404 when user is not found', async () => {
+    test('loginUser returns 401 when user is not found', async () => {
         User.findOne.mockResolvedValue(null);
         const req = { body: { email: 'vega@test.com', password: '123456' } };
         const res = buildRes();
 
         await loginUser(req, res);
 
-        expect(res.status).toHaveBeenCalledWith(404);
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Invalid credentials' }));
     });
 
     test('loginUser returns 401 when password is invalid', async () => {

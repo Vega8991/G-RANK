@@ -70,8 +70,13 @@ export function useLobbies() {
             await registerToLobby(id);
             setSuccessMessage("Successfully registered");
             setErrorMessage("");
+            setTimeout(() => setSuccessMessage(""), 4000);
             void loadData();
-        } catch (err) { setErrorMessage(getErrorMessage(err)); setSuccessMessage(""); }
+        } catch (err) {
+            setErrorMessage(getErrorMessage(err));
+            setSuccessMessage("");
+            setTimeout(() => setErrorMessage(""), 4000);
+        }
     }, [loadData]);
 
     const handleLeave = useCallback(async function (id: string) {
@@ -79,8 +84,13 @@ export function useLobbies() {
             await leaveLobby(id);
             setSuccessMessage("Left lobby successfully");
             setErrorMessage("");
+            setTimeout(() => setSuccessMessage(""), 4000);
             void loadData();
-        } catch (err) { setErrorMessage(getErrorMessage(err)); setSuccessMessage(""); }
+        } catch (err) {
+            setErrorMessage(getErrorMessage(err));
+            setSuccessMessage("");
+            setTimeout(() => setErrorMessage(""), 4000);
+        }
     }, [loadData]);
 
     async function handleCreate(params: CreateLobbyParams) {
@@ -96,10 +106,12 @@ export function useLobbies() {
             );
             setSuccessMessage("Lobby created successfully");
             setErrorMessage("");
+            setTimeout(() => setSuccessMessage(""), 4000);
             void loadData({ shouldSync: true });
         } catch (err) {
             setErrorMessage(getErrorMessage(err));
             setSuccessMessage("");
+            setTimeout(() => setErrorMessage(""), 4000);
             throw err;
         }
     }
@@ -110,10 +122,12 @@ export function useLobbies() {
             setResult(res);
             setSuccessMessage("Replay submitted successfully");
             setErrorMessage("");
+            setTimeout(() => setSuccessMessage(""), 4000);
             void loadData();
         } catch (err) {
             setErrorMessage(getErrorMessage(err));
             setSuccessMessage("");
+            setTimeout(() => setErrorMessage(""), 4000);
             throw err;
         }
     }

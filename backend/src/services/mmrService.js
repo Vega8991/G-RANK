@@ -72,7 +72,7 @@ async function updateUserStats(userId, isWinner, mmrChange, session) {
 
     const totalMatches = user.wins + user.losses;
     if (totalMatches > 0) {
-        user.winRate = ((user.wins / totalMatches) * 100).toFixed(2);
+        user.winRate = parseFloat(((user.wins / totalMatches) * 100).toFixed(2));
     } else {
         user.winRate = 0;
     }

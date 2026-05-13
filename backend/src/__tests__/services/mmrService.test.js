@@ -60,7 +60,7 @@ describe('mmrService', () => {
         expect(user.wins).toBe(6);
         expect(user.losses).toBe(3);
         expect(user.winStreak).toBe(3);
-        expect(user.winRate).toBe('66.67');
+        expect(user.winRate).toBe(66.67);
         expect(user.totalMatches).toBe(1);
         expect(save).toHaveBeenCalledTimes(1);
         expect(result.success).toBe(true);
@@ -88,7 +88,7 @@ describe('mmrService', () => {
         expect(user.mmr).toBe(0);
         expect(user.losses).toBe(1);
         expect(user.winStreak).toBe(0);
-        expect(user.winRate).toBe('0.00');
+        expect(user.winRate).toBe(0);
         expect(user.totalMatches).toBe(1);
         expect(result.newRank).toBe('Bronze');
     });
