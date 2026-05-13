@@ -140,6 +140,10 @@ const submitReplay = async function (req, res) {
             };
         });
 
+        if (!submitResult) {
+            return res.status(500).json({ success: false, message: 'Transaction failed' });
+        }
+
         return res.status(201).json(submitResult);
 
     } catch (error) {

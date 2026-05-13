@@ -32,7 +32,8 @@ export function useLobbies() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
     const [myLobbies, setMyLobbies] = useState<Lobby[]>([]);
     const [userRiotLinked, setUserRiotLinked] = useState<boolean | null>(null);
-    const [message, setMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
     const [result, setResult] = useState<MatchResultResponse | null>(null);
 
     useEffect(function () {
@@ -42,7 +43,8 @@ export function useLobbies() {
     }, []);
 
     const loadData = useCallback(async function (options?: { shouldSync?: boolean }) {
-        setMessage("");
+        setSuccessMessage("");
+        setErrorMessage("");
         const shouldSync = options?.shouldSync ?? false;
         if (shouldSync) {
             try { await syncParticipantCounts(); } catch { }
@@ -51,7 +53,8 @@ export function useLobbies() {
         if (allLobbiesResult.status === "fulfilled") {
             setLobbies(Array.isArray(allLobbiesResult.value.lobbies) ? allLobbiesResult.value.lobbies.filter(hasLobbyId) : []);
         } else {
-            setMessage(getErrorMessage(allLobbiesResult.reason));
+            setErrorMessage(getErrorMessage(allLobbiesResult.reason));
+            setSuccessMessage("");
         }
         if (myLobbiesResult.status === "fulfilled") {
             setMyLobbies(Array.isArray(myLobbiesResult.value.lobbies) ? myLobbiesResult.value.lobbies.filter(hasLobbyId) : []);
@@ -65,17 +68,19 @@ export function useLobbies() {
     const handleRegister = useCallback(async function (id: string) {
         try {
             await registerToLobby(id);
-            setMessage("Successfully registered");
+            setSuccessMessage("Successfully registered");
+            setErrorMessage("");
             void loadData();
-        } catch (err) { setMessage(getErrorMessage(err)); }
+        } catch (err) { setErrorMessage(getErrorMessage(err)); setSuccessMessage(""); }
     }, [loadData]);
 
     const handleLeave = useCallback(async function (id: string) {
         try {
             await leaveLobby(id);
-            setMessage("Left lobby successfully");
+            setSuccessMessage("Left lobby successfully");
+            setErrorMessage("");
             void loadData();
-        } catch (err) { setMessage(getErrorMessage(err)); }
+        } catch (err) { setErrorMessage(getErrorMessage(err)); setSuccessMessage(""); }
     }, [loadData]);
 
     async function handleCreate(params: CreateLobbyParams) {
@@ -89,10 +94,12 @@ export function useLobbies() {
                 params.matchDateTime,
                 params.game
             );
-            setMessage("Lobby created successfully");
+            setSuccessMessage("Lobby created successfully");
+            setErrorMessage("");
             void loadData({ shouldSync: true });
         } catch (err) {
-            setMessage(getErrorMessage(err));
+            setErrorMessage(getErrorMessage(err));
+            setSuccessMessage("");
             throw err;
         }
     }
@@ -101,10 +108,12 @@ export function useLobbies() {
         try {
             const res = await submitReplay(lobbyId, replayUrl);
             setResult(res);
-            setMessage("Replay submitted successfully");
+            setSuccessMessage("Replay submitted successfully");
+            setErrorMessage("");
             void loadData();
         } catch (err) {
-            setMessage(getErrorMessage(err));
+            setErrorMessage(getErrorMessage(err));
+            setSuccessMessage("");
             throw err;
         }
     }
@@ -113,7 +122,8 @@ export function useLobbies() {
         lobbies,
         myLobbies,
         userRiotLinked,
-        message,
+        successMessage,
+        errorMessage,
         result,
         loadData,
         handleRegister,
