@@ -27,7 +27,10 @@ jest.mock('../../services/mmrService', () => ({
 
 const mongoose = require('mongoose');
 const Lobby = require('../../models/lobbyModel');
+const LobbyParticipant = require('../../models/lobbyParticipantModel');
 const MatchResult = require('../../models/matchResultModel');
+const axios = require('axios');
+const mmrService = require('../../services/mmrService');
 const {
     submitReplay,
     getLobbyResults
@@ -133,5 +136,74 @@ describe('matchResultController', () => {
 
         expect(res.status).toHaveBeenCalledWith(200);
         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    });
+
+    test('submitReplay returns 201 on success', async () => {
+        const winnerParticipant = {
+            userId: { _id: 'winner-id', username: 'PlayerA', mmr: 250 },
+            mmrAfter: null,
+            mmrChange: null,
+            hasSubmittedResults: false,
+            save: jest.fn().mockResolvedValue(undefined)
+        };
+        const loserParticipant = {
+            userId: { _id: 'loser-id', username: 'PlayerB', mmr: 250 },
+            mmrAfter: null,
+            mmrChange: null,
+            save: jest.fn().mockResolvedValue(undefined)
+        };
+        const submitterParticipant = {
+            lobbyId: 'l1',
+            userId: 'u1',
+            hasSubmittedResults: false,
+            save: jest.fn().mockResolvedValue(undefined)
+        };
+        const lobbyObj = {
+            _id: 'l1',
+            status: 'pending',
+            save: jest.fn().mockResolvedValue(undefined)
+        };
+
+        const session = {
+            withTransaction: jest.fn(async (fn) => { await fn(); }),
+            endSession: jest.fn().mockResolvedValue(undefined)
+        };
+        mongoose.startSession.mockResolvedValue(session);
+
+        Lobby.findById.mockReturnValue({ session: jest.fn().mockResolvedValue(lobbyObj) });
+        LobbyParticipant.findOne.mockReturnValue({ session: jest.fn().mockResolvedValue(submitterParticipant) });
+        axios.get.mockResolvedValue({ data: { log: '|win|PlayerA' } });
+        LobbyParticipant.find.mockReturnValue({
+            populate: jest.fn().mockReturnValue({
+                session: jest.fn().mockResolvedValue([winnerParticipant, loserParticipant])
+            })
+        });
+        MatchResult.create.mockResolvedValue([{}]);
+        mmrService.calculateMMRChange.mockReturnValue(50);
+        mmrService.updateUserStats
+            .mockResolvedValueOnce({ user: { mmr: 300, rank: 'Bronze', wins: 1, losses: 0, winRate: 100, winStreak: 1 } })
+            .mockResolvedValueOnce({ user: { mmr: 225, rank: 'Bronze', wins: 0, losses: 1, winRate: 0, winStreak: 0 } });
+
+        const req = { userId: 'u1', body: { lobbyId: 'l1', replayUrl: 'https://replay.pokemonshowdown.com/test-id' } };
+        const res = buildRes();
+
+        await submitReplay(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(201);
+    });
+
+    test('submitReplay returns 500 when submitResult is undefined after transaction', async () => {
+        const session = {
+            withTransaction: jest.fn().mockResolvedValue(undefined),
+            endSession: jest.fn().mockResolvedValue(undefined)
+        };
+        mongoose.startSession.mockResolvedValue(session);
+
+        const req = { userId: 'u1', body: { lobbyId: 'l1', replayUrl: 'https://replay.pokemonshowdown.com/test' } };
+        const res = buildRes();
+
+        await submitReplay(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(500);
     });
 });

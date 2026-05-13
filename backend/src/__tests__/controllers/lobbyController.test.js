@@ -111,10 +111,12 @@ describe('lobbyController', () => {
     });
 
     test('getAllLobbies returns lobby list', async () => {
-        const req = {};
+        const req = { query: {} };
         const res = buildRes();
 
-        const populate = jest.fn().mockResolvedValue([{ _id: 'l1' }]);
+        const skip = jest.fn().mockReturnThis();
+        const limit = jest.fn().mockResolvedValue([{ _id: 'l1' }]);
+        const populate = jest.fn().mockReturnValue({ skip, limit });
         Lobby.find.mockReturnValue({ populate });
 
         await getAllLobbies(req, res);
