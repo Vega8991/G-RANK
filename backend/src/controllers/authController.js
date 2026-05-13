@@ -42,9 +42,9 @@ async function registerUser(req, res) {
         const savedUser = await newUser.save();
 
         try {
-            sendVerificationEmail(savedUser.email, savedUser.username, verificationToken);
+            await sendVerificationEmail(savedUser.email, savedUser.username, verificationToken);
         } catch (emailError) {
-            // non-critical
+            return res.status(500).json({ success: false, message: 'Failed to send verification email' });
         }
 
         res.status(201).json({
@@ -79,8 +79,7 @@ async function registerUser(req, res) {
 
         res.status(400).json({
             success: false,
-            message: message,
-            error: error.message
+            message: message
         });
     }
 }
@@ -108,7 +107,7 @@ async function loginUser(req, res) {
         if (!comparePassword(password, foundUser.password)) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid password'
+                message: 'Invalid credentials'
             });
         }
 
@@ -147,8 +146,7 @@ async function loginUser(req, res) {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
+            message: 'Server error'
         });
     }
 }
@@ -187,8 +185,7 @@ async function getProfile(req, res) {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
+            message: 'Server error'
         });
     }
 }
@@ -215,8 +212,7 @@ async function verifyEmail(req, res) {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: error.message
+            message: 'Server error'
         });
     }
 }
@@ -250,7 +246,7 @@ async function forgotPassword(req, res) {
             message: 'If that email exists, a reset link has been sent.'
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }
 
@@ -294,7 +290,7 @@ async function resetPassword(req, res) {
             message: 'Password reset successfully. You can now log in.'
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }
 
@@ -331,7 +327,7 @@ async function getPublicProfile(req, res) {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }
 
@@ -364,14 +360,14 @@ async function resendVerificationEmail(req, res) {
         await user.save();
 
         try {
-            sendVerificationEmail(user.email, user.username, verificationToken);
+            await sendVerificationEmail(user.email, user.username, verificationToken);
         } catch (emailError) {
-            // non-critical
+            return res.status(500).json({ success: false, message: 'Failed to send verification email' });
         }
 
         res.status(200).json({ success: true, message: 'Verification email sent. Check your inbox.' });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Server error', error: error.message });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }
 

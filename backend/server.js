@@ -40,4 +40,10 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/riot', riotRoutes);
 app.use('/api/admin', adminRoutes);
 
-app.listen(port);
+app.use((err, req, res, next) => {
+    res.status(500).json({ success: false, message: 'Internal server error' });
+});
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});

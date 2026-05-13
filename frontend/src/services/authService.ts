@@ -15,9 +15,9 @@ interface AuthInfo {
 
 function getAuthInfoCookie(): AuthInfo | null {
     try {
-        const match = document.cookie.split('; ').find(c => c.startsWith('auth_info='));
+        const match = document.cookie.split(';').find(c => c.trim().startsWith('auth_info='));
         if (!match) return null;
-        const raw = decodeURIComponent(match.slice('auth_info='.length));
+        const raw = decodeURIComponent(match.trim().slice('auth_info='.length));
         const info = JSON.parse(raw) as AuthInfo;
         if (!info.username || !info.role || !info.exp) return null;
         if (Date.now() / 1000 > info.exp) return null;

@@ -79,8 +79,14 @@ async function createLobby(req, res) {
 
 async function getAllLobbies(req, res) {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
         const lobbies = await Lobby.find()
-            .populate('createdBy', 'username');
+            .populate('createdBy', 'username')
+            .skip(skip)
+            .limit(limit);
 
         return res.status(200).json({
             success: true,
