@@ -18,32 +18,20 @@ describe('authMiddleware.verifyToken', () => {
         process.env.JWT_SECRET = 'secret-key';
     });
 
-    test('returns 403 when no authorization header', () => {
-        const req = { headers: {} };
+    test('returns 403 when no token in cookies', () => {
+        const req = { cookies: {} };
         const res = buildRes();
         const next = jest.fn();
 
         verifyToken(req, res, next);
 
         expect(res.status).toHaveBeenCalledWith(403);
-        expect(next).not.toHaveBeenCalled();
-    });
-
-    test('returns 403 when token is empty', () => {
-        const req = { headers: { authorization: 'Bearer ' } };
-        const res = buildRes();
-        const next = jest.fn();
-
-        verifyToken(req, res, next);
-
-        expect(res.status).toHaveBeenCalledWith(403);
-        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Invalid token format' }));
         expect(next).not.toHaveBeenCalled();
     });
 
     test('returns 500 when JWT secret is missing', () => {
         delete process.env.JWT_SECRET;
-        const req = { headers: { authorization: 'Bearer abc' } };
+        const req = { cookies: { token: 'abc' } };
         const res = buildRes();
         const next = jest.fn();
 
@@ -56,7 +44,7 @@ describe('authMiddleware.verifyToken', () => {
     test('returns 401 when token is invalid', () => {
         jwt.verify.mockImplementation((token, secret, cb) => cb(new Error('bad token')));
 
-        const req = { headers: { authorization: 'Bearer abc' } };
+        const req = { cookies: { token: 'bad-token' } };
         const res = buildRes();
         const next = jest.fn();
 
@@ -74,7 +62,7 @@ describe('authMiddleware.verifyToken', () => {
             role: 'ADMIN'
         }));
 
-        const req = { headers: { authorization: 'Bearer token-123' } };
+        const req = { cookies: { token: 'good-token' } };
         const res = buildRes();
         const next = jest.fn();
 

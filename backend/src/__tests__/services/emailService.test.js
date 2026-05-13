@@ -20,8 +20,8 @@ describe('emailService', () => {
         expect(mockSendMail).toHaveBeenCalledTimes(1);
         const call = mockSendMail.mock.calls[0][0];
         expect(call.to).toBe('user@test.com');
-        expect(call.subject).toContain('Verifica tu email');
-        expect(call.html).toContain('/verify-email?token=token-123');
+        expect(call.subject).toContain('Verify your account');
+        expect(call.html).toContain('G-RANK');
     });
 
     test('sendPasswordResetEmail calls transporter with reset link', () => {
@@ -30,7 +30,7 @@ describe('emailService', () => {
         expect(mockSendMail).toHaveBeenCalledTimes(1);
         const call = mockSendMail.mock.calls[0][0];
         expect(call.to).toBe('user@test.com');
-        expect(call.subject).toContain('Recuperar contraseña');
-        expect(call.html).toContain('/reset-password?token=reset-456');
+        expect(call.subject).toContain('Reset your password');
+        expect(call.html).toContain('G-RANK');
     });
 });

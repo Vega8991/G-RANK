@@ -21,7 +21,7 @@ describe('mmrService', () => {
     });
 
     test('getRankFromMMR fallback for invalid input', () => {
-        expect(getRankFromMMR(-1)).toBe('Bronce');
+        expect(getRankFromMMR(-1)).toBe('Bronze');
     });
 
     test('calculateMMRChange returns positive for winner and negative for loser', () => {
@@ -47,6 +47,7 @@ describe('mmrService', () => {
             losses: 3,
             winRate: 0,
             winStreak: 2,
+            totalMatches: 0,
             save
         };
 
@@ -60,6 +61,7 @@ describe('mmrService', () => {
         expect(user.losses).toBe(3);
         expect(user.winStreak).toBe(3);
         expect(user.winRate).toBe('66.67');
+        expect(user.totalMatches).toBe(1);
         expect(save).toHaveBeenCalledTimes(1);
         expect(result.success).toBe(true);
         expect(result.mmrChange).toBe(50);
@@ -75,6 +77,7 @@ describe('mmrService', () => {
             losses: 0,
             winRate: 0,
             winStreak: 4,
+            totalMatches: 0,
             save
         };
 
@@ -86,6 +89,30 @@ describe('mmrService', () => {
         expect(user.losses).toBe(1);
         expect(user.winStreak).toBe(0);
         expect(user.winRate).toBe('0.00');
+        expect(user.totalMatches).toBe(1);
         expect(result.newRank).toBe('Bronze');
+    });
+
+    test('updateUserStats saves without session when session is null', async () => {
+        const save = jest.fn().mockResolvedValue(undefined);
+        const user = {
+            _id: 'u3',
+            mmr: 250,
+            rank: 'Bronze',
+            wins: 0,
+            losses: 0,
+            winRate: 0,
+            winStreak: 0,
+            totalMatches: 0,
+            save
+        };
+
+        User.findById.mockResolvedValue(user);
+
+        const result = await updateUserStats('u3', true, 50, null);
+
+        expect(save).toHaveBeenCalledTimes(1);
+        expect(save).not.toHaveBeenCalledWith(expect.objectContaining({ session: expect.anything() }));
+        expect(result.success).toBe(true);
     });
 });
