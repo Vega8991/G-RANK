@@ -72,7 +72,7 @@ describe('lobbyService', () => {
 
         const result = await getAllLobbies();
 
-        expect(mockedApiClient.get).toHaveBeenCalledWith('/lobbies');
+        expect(mockedApiClient.get).toHaveBeenCalledWith('/lobbies?page=1&limit=10');
         expect(result).toEqual({ lobbies: [] });
     });
 
