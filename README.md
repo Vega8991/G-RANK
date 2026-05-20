@@ -16,7 +16,7 @@ Competitive esports tournament platform with an MMR-based ranking system. Player
 - [API Overview](#api-overview)
 - [Ranking System](#ranking-system)
 - [Testing](#testing)
-- [Swagger Docs](#swagger-docs)
+- [Documentation](#documentation)
 
 ---
 
@@ -39,11 +39,12 @@ Competitive esports tournament platform with an MMR-based ranking system. Player
 
 | Layer | Technologies |
 |-------|-------------|
-| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, React Router v7, Framer Motion, Axios |
-| **Backend** | Node.js, Express 5, MongoDB, Mongoose, JWT, Bcrypt, Nodemailer |
+| **Frontend** | React 19.2, TypeScript 5.9, Vite 7, Tailwind CSS v4, React Router v7, Framer Motion, Axios |
+| **Backend** | Node.js 18+, Express 5.2, MongoDB, Mongoose 9, JWT, Bcryptjs, Nodemailer |
 | **Auth** | httpOnly cookies (JWT token + readable auth_info cookie) |
-| **3D / UI** | Three.js, @react-three/fiber, GSAP, Lucide Icons, Radix UI |
-| **Testing** | Vitest + Testing Library (frontend), Jest (backend) |
+| **3D / UI** | Three.js, @react-three/fiber, OGL, GSAP, Lucide Icons, Radix UI, shadcn/ui |
+| **Testing** | Vitest 4 + Testing Library (frontend), Jest 30 + mongodb-memory-server (backend) |
+| **Docs** | Docusaurus 3 — deployed at https://g-rank-docs.vercel.app |
 
 ---
 
@@ -63,14 +64,16 @@ G-RANK/
 │       └── utils/                  # Shared utilities
 ├── frontend/
 │   └── src/
-│       ├── components/             # UI components (admin, auth, dashboard, lobbies…)
+│       ├── components/             # UI components (admin, auth, common, dashboard, lobbies, landing…)
+│       ├── constants/              # App-wide constants
 │       ├── hooks/                  # Custom React hooks
 │       ├── layouts/                # AppLayout wrapper
+│       ├── lib/                    # Utility helpers (cn, etc.)
 │       ├── pages/                  # Page components
 │       ├── services/               # API service functions
 │       ├── types/                  # TypeScript interfaces
 │       └── test/                   # Vitest test suites
-├── Doc_G-RANK/                     # Swagger API documentation server
+├── docs/                           # Docusaurus documentation site
 ├── start.sh                        # Dev startup script (runs both servers)
 └── G-RANK API.postman_collection.json
 ```
@@ -285,22 +288,29 @@ cd backend
 npm test
 
 # Run with coverage
-npm test -- --coverage
+npm run test:coverage
 ```
 
 ---
 
-## Swagger Docs
+## Documentation
 
-Interactive API documentation is available via the included Swagger server:
+Full documentation is hosted with Docusaurus and deployed on Vercel:
+
+**https://g-rank-docs.vercel.app**
+
+To run the docs site locally:
 
 ```bash
-cd Doc_G-RANK
+cd docs
 npm install
 npm start
 ```
 
-Then open:
+Then open **http://localhost:3000**.
 
-- **Swagger UI:** http://localhost:8080/docs
-- **API base URL:** http://localhost:8080
+To build a static production version:
+
+```bash
+cd docs && npm run build
+```
