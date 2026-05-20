@@ -28,15 +28,19 @@
       "clover"
     ]
   },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.13.5",
+    "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
     "nodemailer": "^7.0.13"

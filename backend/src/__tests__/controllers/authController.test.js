@@ -17,7 +17,11 @@ jest.mock('jsonwebtoken', () => ({
 }));
 
 jest.mock('crypto', () => ({
-    randomBytes: jest.fn(() => ({ toString: () => 'verification-token' }))
+    randomBytes: jest.fn(() => ({ toString: () => 'verification-token' })),
+    createHash: jest.fn(() => ({
+        update: jest.fn().mockReturnThis(),
+        digest: jest.fn(() => 'sha256-hashed')
+    }))
 }));
 
 jest.mock('../../services/emailService', () => ({
@@ -162,7 +166,8 @@ describe('authController', () => {
             winStreak: 1,
             wins: 1,
             losses: 2,
-            role: 'USER'
+            role: 'USER',
+            save: jest.fn().mockResolvedValue(undefined)
         });
         bcrypt.compareSync.mockReturnValue(true);
 

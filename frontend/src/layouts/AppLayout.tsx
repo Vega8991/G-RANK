@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Crown, Home, Trophy, Shield, ChevronDown, LogOut, LayoutDashboard } from "lucide-react";
+import { Crown, Home, Trophy, Shield, ChevronDown, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
 import { prefetchRoute } from "../services/routePrefetch";
 import { useViewportPrefetch } from "../hooks/useViewportPrefetch";
 import { getNavInfo, logout, type NavInfo } from "../services/authService";
@@ -21,6 +21,7 @@ export default function AppLayout() {
     const navigate = useNavigate();
     const [navInfo, setNavInfo] = useState<NavInfo | null>(getNavInfo);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         document.documentElement.classList.add('custom-cursor');
@@ -53,8 +54,11 @@ export default function AppLayout() {
     async function handleLogout() {
         await logout();
         setDropdownOpen(false);
+        setMobileMenuOpen(false);
         navigate('/login');
     }
+
+    function closeMobileMenu() { setMobileMenuOpen(false); }
 
     function getPrefetchProps(route: "login" | "register" | "leaderboard" | "lobbies" | "dashboard") {
         return {
@@ -82,11 +86,12 @@ export default function AppLayout() {
             </ErrorBoundary>
 
             <nav className="border-b border-[#2a2a2a] sticky top-0 z-40 backdrop-blur-lg bg-[#0a0a0a]/95">
-                <div className="max-w-[1512px] mx-auto px-6 md:px-20">
+                <div className="max-w-[1512px] mx-auto px-4 md:px-20">
                     <div className="flex items-center justify-between h-16">
 
-                        <div className="flex items-center gap-12">
-                            <NavLink to="/" className="flex items-center gap-2">
+                        {/* Logo + desktop nav */}
+                        <div className="flex items-center gap-8">
+                            <NavLink to="/" onClick={closeMobileMenu} className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded bg-[#dc143c] flex items-center justify-center">
                                     <Crown size={18} className="text-white" />
                                 </div>
@@ -119,7 +124,8 @@ export default function AppLayout() {
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        {/* Right: auth + hamburger */}
+                        <div className="flex items-center gap-2">
                             {navInfo ? (
                                 <div className="relative">
                                     <button
@@ -165,7 +171,7 @@ export default function AppLayout() {
                                     )}
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">
+                                <div className="hidden sm:flex items-center gap-2">
                                     <NavLink to="/login" {...getPrefetchProps("login")} ref={loginViewportRef}>
                                         <button className="px-4 py-2 text-sm font-medium text-white hover:bg-[#111111] rounded-lg transition-colors">
                                             Login
@@ -178,10 +184,83 @@ export default function AppLayout() {
                                     </NavLink>
                                 </div>
                             )}
-                        </div>
 
+                            {/* Hamburger — mobile only */}
+                            <button
+                                className="md:hidden p-2 rounded-lg hover:bg-[#111111] transition-colors text-white"
+                                onClick={() => setMobileMenuOpen(o => !o)}
+                                aria-label="Toggle menu"
+                            >
+                                {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                {/* Mobile drawer */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden border-t border-[#2a2a2a] bg-[#0a0a0a]/98 backdrop-blur-lg">
+                        <div className="px-4 py-4 flex flex-col gap-1">
+                            <NavLink to="/" onClick={closeMobileMenu}
+                                className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? "bg-[#dc143c]/10 text-white" : "text-[#d1d5db] hover:bg-[#111111] hover:text-white"}`}>
+                                <Home size={18} /> Home
+                            </NavLink>
+                            <NavLink to="/lobbies" onClick={closeMobileMenu}
+                                className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? "bg-[#dc143c]/10 text-white" : "text-[#d1d5db] hover:bg-[#111111] hover:text-white"}`}>
+                                <Trophy size={18} /> Lobbies
+                            </NavLink>
+                            <NavLink to="/leaderboard" onClick={closeMobileMenu}
+                                className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? "bg-[#dc143c]/10 text-white" : "text-[#d1d5db] hover:bg-[#111111] hover:text-white"}`}>
+                                <Crown size={18} /> Leaderboard
+                            </NavLink>
+                            {navInfo && (
+                                <NavLink to="/dashboard" onClick={closeMobileMenu}
+                                    className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? "bg-[#dc143c]/10 text-white" : "text-[#d1d5db] hover:bg-[#111111] hover:text-white"}`}>
+                                    <LayoutDashboard size={18} /> Dashboard
+                                </NavLink>
+                            )}
+                            {isAdmin && (
+                                <NavLink to="/admin" onClick={closeMobileMenu}
+                                    className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive ? "bg-[#dc143c]/10 text-[#dc143c]" : "text-[#dc143c] hover:bg-[#111111]"}`}>
+                                    <Shield size={18} /> Admin Panel
+                                </NavLink>
+                            )}
+
+                            {/* Auth section in mobile menu */}
+                            {!navInfo && (
+                                <>
+                                    <div className="border-t border-[#2a2a2a] my-2" />
+                                    <NavLink to="/login" onClick={closeMobileMenu}
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-[#d1d5db] hover:bg-[#111111] hover:text-white transition-colors">
+                                        Login
+                                    </NavLink>
+                                    <NavLink to="/register" onClick={closeMobileMenu}
+                                        className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl text-sm font-bold bg-[#dc143c] text-white hover:bg-[#b01030] transition-colors">
+                                        Sign Up Free
+                                    </NavLink>
+                                </>
+                            )}
+                            {navInfo && (
+                                <>
+                                    <div className="border-t border-[#2a2a2a] my-2" />
+                                    <div className="flex items-center gap-3 px-4 py-2">
+                                        <div className="w-8 h-8 rounded-full bg-[#dc143c] flex items-center justify-center text-sm font-black">
+                                            {initial}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold">{navInfo.username}</p>
+                                            <p className="text-xs text-[#dc143c] font-bold">{isAdmin ? "Admin" : "Player"}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={handleLogout}
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/5 transition-colors w-full">
+                                        <LogOut size={18} /> Sign out
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
             </nav>
 
             <main>

@@ -399,7 +399,7 @@ function CTAInlineSection({ registerViewportRef, lobbiesViewportRef }: CTAInline
 function FooterInlineSection() {
     return (
         <footer className="border-t border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/40 backdrop-blur-xl">
-            <div className="max-w-[1512px] mx-auto px-6 md:px-20 py-12">
+            <div className="max-w-[1512px] mx-auto px-4 md:px-20 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-4 group cursor-pointer">

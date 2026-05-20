@@ -131,7 +131,7 @@ export default function Lobbies() {
             <LobbiesBackground />
 
             <div className="relative z-10 pointer-events-auto">
-                <div className="max-w-[1512px] mx-auto px-6 md:px-20 pt-14 pb-10">
+                <div className="max-w-[1512px] mx-auto px-4 md:px-20 pt-8 md:pt-14 pb-10">
                     <motion.div
                         initial={{ opacity: 0, y: 28 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -140,7 +140,7 @@ export default function Lobbies() {
                         <p className="text-[10px] font-bold tracking-[0.35em] uppercase text-white/25 mb-4">Competitive Arena</p>
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
                             <div>
-                                <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-none mb-3">
+                                <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight leading-none mb-3">
                                     TOURNAMENTS
                                 </h1>
                                 <p className="text-white/40 text-lg">
@@ -169,7 +169,7 @@ export default function Lobbies() {
                     </motion.div>
                 </div>
 
-                <section className="max-w-[1512px] mx-auto px-6 md:px-20 pb-16 space-y-6">
+                <section className="max-w-[1512px] mx-auto px-4 md:px-20 pb-16 space-y-6">
                     <motion.div
                         className="space-y-3"
                         initial={{ opacity: 0, y: 20 }}
@@ -275,7 +275,7 @@ export default function Lobbies() {
                     )}
                 </section>
 
-                <section className="max-w-[1512px] mx-auto px-6 md:px-20 pb-20">
+                <section className="max-w-[1512px] mx-auto px-4 md:px-20 pb-20">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
                         <motion.div
                             ref={createPanelRef}
@@ -352,13 +352,13 @@ export default function Lobbies() {
 
                                     <label className="flex items-center gap-3 text-sm text-white/35">
                                         <Calendar size={16} className="cursor-pointer shrink-0" onClick={function () { registrationDeadlineRef.current?.showPicker(); }} />
-                                        <span className="w-36 shrink-0">Registration deadline</span>
+                                        <span className="w-24 sm:w-36 shrink-0 text-xs sm:text-sm">Reg. deadline</span>
                                         <input ref={registrationDeadlineRef} type="datetime-local" value={registrationDeadline} onChange={function (e) { setRegistrationDeadline(e.target.value); }} className="flex-1 h-10 rounded-xl px-3 text-sm text-white outline-none" style={inputStyle} required />
                                     </label>
 
                                     <label className="flex items-center gap-3 text-sm text-white/35">
                                         <Calendar size={16} className="cursor-pointer shrink-0" onClick={function () { matchDateTimeRef.current?.showPicker(); }} />
-                                        <span className="w-36 shrink-0">Match date</span>
+                                        <span className="w-24 sm:w-36 shrink-0 text-xs sm:text-sm">Match date</span>
                                         <input ref={matchDateTimeRef} type="datetime-local" value={matchDateTime} onChange={function (e) { setMatchDateTime(e.target.value); }} className="flex-1 h-10 rounded-xl px-3 text-sm text-white outline-none" style={inputStyle} required />
                                     </label>
 

@@ -81,6 +81,18 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    refreshTokenHash: {
+        type: String,
+        default: null
+    },
+    refreshTokenExpires: {
+        type: Date,
+        default: null
+    },
+    country: {
+        type: String,
+        default: null
+    },
     riotGameName: {
         type: String,
         default: null

@@ -15,8 +15,21 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const app = express();
 const port = process.env.PORT || 5000;
 
+const ALLOWED_ORIGINS = [
+    process.env.CLIENT_URL,
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173',
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true);
+        if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.devtunnels.ms')) {
+            return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
 }));
 app.use(cookieParser());

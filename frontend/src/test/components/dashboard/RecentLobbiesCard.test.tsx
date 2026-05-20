@@ -22,6 +22,7 @@ const mockLobby: Lobby = {
     prizePool: '$100',
     registrationDeadline: '2026-06-01T00:00:00.000Z',
     matchDateTime: '2026-06-15T00:00:00.000Z',
+    createdBy: 'user1',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
 };

@@ -6,13 +6,14 @@ const mongoose = require('mongoose');
 const { calculateMMRChange, updateUserStats } = require('../services/mmrService');
 
 const ERROR_RESPONSES = {
-    'LOBBY_NOT_FOUND':       { status: 404, message: 'Lobby not found' },
-    'LOBBY_NOT_PENDING':     { status: 400, message: 'Lobby is not in pending status' },
-    'NOT_REGISTERED':        { status: 403, message: 'You are not registered in this lobby' },
-    'ALREADY_SUBMITTED':     { status: 400, message: 'You have already submitted results for this lobby' },
-    'INVALID_REPLAY_URL':    { status: 400, message: 'Invalid replay URL or replay not found' },
-    'WINNER_NOT_FOUND':      { status: 400, message: 'Could not determine match winner' },
-    'PARTICIPANTS_MISMATCH': { status: 400, message: 'Could not match replay participants with lobby participants' }
+    'LOBBY_NOT_FOUND':         { status: 404, message: 'Lobby not found' },
+    'LOBBY_NOT_PENDING':       { status: 400, message: 'Lobby is not in pending status' },
+    'NOT_REGISTERED':          { status: 403, message: 'You are not registered in this lobby' },
+    'ALREADY_SUBMITTED':       { status: 400, message: 'You have already submitted results for this lobby' },
+    'INVALID_REPLAY_URL':      { status: 400, message: 'Invalid replay URL or replay not found' },
+    'WINNER_NOT_FOUND':        { status: 400, message: 'Could not determine match winner' },
+    'PARTICIPANTS_MISMATCH':   { status: 400, message: 'Could not match replay participants with lobby participants' },
+    'GAME_NOT_SUPPORTED':      { status: 400, message: 'Valorant result submission is not yet supported. Use the Riot LoL endpoint for League of Legends.' }
 };
 
 const submitReplay = async function (req, res) {
@@ -27,6 +28,7 @@ const submitReplay = async function (req, res) {
 
             const lobby = await Lobby.findById(lobbyId).session(session);
             if (!lobby) throw new Error('LOBBY_NOT_FOUND');
+            if (lobby.game === 'valorant') throw new Error('GAME_NOT_SUPPORTED');
             if (lobby.status !== 'pending') throw new Error('LOBBY_NOT_PENDING');
 
             const submitterParticipant = await LobbyParticipant.findOne({

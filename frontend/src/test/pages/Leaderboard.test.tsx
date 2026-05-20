@@ -28,10 +28,10 @@ vi.mock('../../services/leaderboardService', () => ({
 const mockedGetLeaderboard = vi.mocked(getLeaderboard);
 
 const mockPlayers = [
-    { _id: 'p1', username: 'alpha', mmr: 3000, rank: 'Elite',   wins: 50, losses: 10, winRate: 83.3 },
-    { _id: 'p2', username: 'beta',  mmr: 2500, rank: 'Master',  wins: 40, losses: 15, winRate: 72.7 },
-    { _id: 'p3', username: 'gamma', mmr: 2000, rank: 'Diamond', wins: 30, losses: 20, winRate: 60.0 },
-    { _id: 'p4', username: 'delta', mmr: 1500, rank: 'Gold',    wins: 20, losses: 25, winRate: 44.4 },
+    { _id: 'p1', username: 'alpha', mmr: 3000, rank: 'Elite',   wins: 50, losses: 10, winRate: 83.3, winStreak: 5, totalMatches: 60 },
+    { _id: 'p2', username: 'beta',  mmr: 2500, rank: 'Master',  wins: 40, losses: 15, winRate: 72.7, winStreak: 2, totalMatches: 55 },
+    { _id: 'p3', username: 'gamma', mmr: 2000, rank: 'Diamond', wins: 30, losses: 20, winRate: 60.0, winStreak: 0, totalMatches: 50 },
+    { _id: 'p4', username: 'delta', mmr: 1500, rank: 'Gold',    wins: 20, losses: 25, winRate: 44.4, winStreak: 0, totalMatches: 45 },
 ];
 
 function renderPage() {

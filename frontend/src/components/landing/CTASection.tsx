@@ -17,7 +17,7 @@ export default function CTASection() {
         <section className="relative py-20 md:py-28 px-4 md:px-20 overflow-hidden">
             <div className="max-w-[1512px] mx-auto relative z-10">
                 <motion.div
-                    className="bg-[var(--neutral-surface)] border-2 border-[var(--brand-primary)]/30 rounded-2xl p-12 md:p-16 text-center"
+                    className="bg-[var(--neutral-surface)] border-2 border-[var(--brand-primary)]/30 rounded-2xl p-6 sm:p-10 md:p-16 text-center"
                     style={{ boxShadow: "var(--shadow-card)" }}
                     initial={{ opacity: 0, scaleY: 0.9, scaleX: 0.97 }}
                     whileInView={{ opacity: 1, scaleY: 1, scaleX: 1 }}
@@ -29,9 +29,9 @@ export default function CTASection() {
                         <span className="text-xs font-bold tracking-wider text-[var(--brand-primary)]">JOIN THE ELITE</span>
                     </div>
 
-                    <h2 className="text-4xl md:text-5xl font-extrabold mb-6">READY TO COMPETE?</h2>
-                    
-                    <p className="text-xl text-[var(--neutral-text-secondary)] max-w-2xl mx-auto leading-relaxed mb-12">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6">READY TO COMPETE?</h2>
+
+                    <p className="text-base sm:text-xl text-[var(--neutral-text-secondary)] max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-12">
                         Join thousands of players competing for glory. Create your account and start your journey to Elite rank today.
                     </p>
 
@@ -94,8 +94,8 @@ export default function CTASection() {
                 </motion.div>
             </div>
 
-            <div className="absolute top-0 left-1/3 w-96 h-96 bg-[var(--brand-primary)] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
-            <div className="absolute bottom-0 right-1/3 w-96 h-96 bg-[var(--rank-elite)] rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
+            <div className="hidden sm:block absolute top-0 left-1/4 w-48 h-48 md:w-96 md:h-96 bg-[var(--brand-primary)] rounded-full blur-[80px] md:blur-[120px] opacity-20 pointer-events-none"></div>
+            <div className="hidden sm:block absolute bottom-0 right-1/4 w-48 h-48 md:w-96 md:h-96 bg-[var(--rank-elite)] rounded-full blur-[80px] md:blur-[120px] opacity-20 pointer-events-none"></div>
         </section>
     );
 }

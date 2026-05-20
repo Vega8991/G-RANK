@@ -174,7 +174,7 @@ export default function HeroSection() {
                                 transition={{ delay: 0.2, duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
                             >
                                 <div className="pointer-events-none absolute -inset-1 rounded-3xl bg-gradient-to-r from-[var(--brand-primary)]/40 via-[var(--rank-elite)]/40 to-[var(--brand-primary)]/40 blur-xl opacity-60 animate-pulse"></div>
-                                <h1 className="relative text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
+                                <h1 className="relative text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
                                     DOMINATE THE
                                     <br />
                                     <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-[var(--brand-primary)] to-[var(--rank-elite)]">
@@ -183,7 +183,7 @@ export default function HeroSection() {
                                 </h1>
                             </motion.div>
 
-                            <p className="text-xl md:text-2xl text-[var(--neutral-text-secondary)] leading-relaxed max-w-lg">
+                            <p className="text-base sm:text-xl md:text-2xl text-[var(--neutral-text-secondary)] leading-relaxed max-w-lg">
                                 Join the ultimate competitive platform. Compete in lobbies, climb ranks, and prove you're elite.
                             </p>
                         </div>
@@ -220,7 +220,7 @@ export default function HeroSection() {
                         </motion.div>
 
                         <motion.div
-                            className="flex gap-8 pt-8"
+                            className="flex flex-wrap gap-6 sm:gap-8 pt-8"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{
@@ -261,7 +261,7 @@ export default function HeroSection() {
                     >
                         <div
                             ref={mainCardRef}
-                            className="bg-[var(--neutral-surface)] border border-[var(--neutral-border)] rounded-2xl p-8 backdrop-blur-sm will-change-transform"
+                            className="bg-[var(--neutral-surface)] border border-[var(--neutral-border)] rounded-2xl p-4 sm:p-8 backdrop-blur-sm will-change-transform"
                             style={{
                                 boxShadow: "var(--shadow-card)",
                                 transition: "transform 200ms ease-out"

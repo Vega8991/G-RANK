@@ -46,11 +46,11 @@ export default function Admin() {
     }
 
     return (
-        <div className="relative bg-[var(--neutral-bg)] text-white min-h-[calc(100vh-64px)]">
+        <div className="relative bg-[var(--neutral-bg)] text-white h-[calc(100vh-64px)] overflow-y-auto overflow-x-hidden">
             <AdminBackground />
 
             <div className="relative z-10 pointer-events-auto">
-                <div className="max-w-[1512px] mx-auto px-6 md:px-20 pt-10 pb-16 space-y-6">
+                <div className="max-w-[1512px] mx-auto px-4 md:px-20 pt-10 pb-16 space-y-6">
 
                     <motion.div className="flex flex-col md:flex-row md:items-end justify-between gap-4"
                         initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
@@ -92,38 +92,39 @@ export default function Admin() {
                         style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))" }}
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
 
-                        <div className="flex items-center justify-between px-6 pt-5 pb-0 border-b border-white/5">
-                            <div className="flex items-center gap-1">
-                                {([
-                                    { key: "users",   label: "Users",       icon: Users,  count: users.length   },
-                                    { key: "lobbies", label: "Tournaments", icon: Trophy, count: lobbies.length },
-                                ] as { key: Tab; label: string; icon: typeof Users; count: number }[]).map(t => (
-                                    <button key={t.key} onClick={() => setTab(t.key)}
-                                        className={`relative flex items-center gap-2 px-4 pb-4 pt-1 text-sm font-semibold transition-colors duration-200 ${tab === t.key ? "text-white" : "text-white/30 hover:text-white/60"}`}>
-                                        <t.icon size={14} />
-                                        {t.label}
-                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-all ${tab === t.key ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]" : "bg-white/5 text-white/25"}`}>
-                                            {t.count}
-                                        </span>
-                                        {tab === t.key && (
-                                            <motion.div layoutId="tab-indicator"
-                                                className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full"
-                                                style={{ background: "var(--brand-primary)" }} />
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="px-3 sm:px-6 pt-4 border-b border-white/5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1">
+                                    {([
+                                        { key: "users",   label: "Users",       icon: Users,  count: users.length   },
+                                        { key: "lobbies", label: "Tournaments", icon: Trophy, count: lobbies.length },
+                                    ] as { key: Tab; label: string; icon: typeof Users; count: number }[]).map(t => (
+                                        <button key={t.key} onClick={() => setTab(t.key)}
+                                            className={`relative flex items-center gap-1.5 px-3 sm:px-4 pb-4 pt-1 text-xs sm:text-sm font-semibold transition-colors duration-200 ${tab === t.key ? "text-white" : "text-white/30 hover:text-white/60"}`}>
+                                            <t.icon size={13} />
+                                            {t.label}
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold transition-all ${tab === t.key ? "bg-[var(--brand-primary)]/20 text-[var(--brand-primary)]" : "bg-white/5 text-white/25"}`}>
+                                                {t.count}
+                                            </span>
+                                            {tab === t.key && (
+                                                <motion.div layoutId="tab-indicator"
+                                                    className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full"
+                                                    style={{ background: "var(--brand-primary)" }} />
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
 
-                            {tab === "users" && (
-                                <button onClick={() => setEditUser("__create__")}
-                                    className="flex items-center gap-2 h-8 px-3.5 rounded-lg text-xs font-bold transition-all mb-3"
+                                <button
+                                    onClick={() => tab === "users" ? setEditUser("__create__") : undefined}
+                                    className={`flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold transition-all mb-3 ${tab !== "users" ? "invisible" : ""}`}
                                     style={{ background: "rgba(220,20,60,0.12)", border: "1px solid rgba(220,20,60,0.3)", color: "#dc143c" }}>
-                                    <Plus size={13} /> Create User
+                                    <Plus size={13} /> <span className="hidden sm:inline">Create </span>User
                                 </button>
-                            )}
+                            </div>
                         </div>
 
-                        <div className="p-6">
+                        <div className="p-3 sm:p-6">
                             <AnimatePresence mode="wait">
                                 <motion.div key={tab}
                                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}

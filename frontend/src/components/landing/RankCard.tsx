@@ -20,7 +20,7 @@ export default function RankCard({ rank, isSelected, onSelect }: RankCardProps) 
         <div
             onClick={onSelect}
             className={
-                "group bg-[var(--neutral-bg)]/60 backdrop-blur-md rounded-xl p-6 text-center cursor-pointer transition-all duration-500 ease-out shadow-md hover:shadow-xl " +
+                "group bg-[var(--neutral-bg)]/60 backdrop-blur-md rounded-xl p-3 sm:p-6 text-center cursor-pointer transition-all duration-500 ease-out shadow-md hover:shadow-xl " +
                 (isSelected
                     ? "border-2 border-[var(--brand-primary)] shadow-2xl shadow-[var(--brand-primary)]/20 -translate-y-2 ring-4 ring-[var(--brand-primary)]/20 scale-105"
                     : "border border-[var(--neutral-border)]/40 hover:border-[var(--brand-primary)]/50 hover:-translate-y-2 hover:scale-102")

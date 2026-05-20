@@ -34,7 +34,7 @@ export default function Login() {
         setResendState("idle");
         setIsLoading(true);
         try {
-            await login(email, password);
+            await login(email.trim(), password.trim());
             navigate("/dashboard");
         } catch (err) {
             const axiosErr = err as AxiosError<{ message?: string }>;
@@ -219,6 +219,10 @@ export default function Login() {
                                     value={email}
                                     onChange={function (e) { setEmail(e.target.value); }}
                                     className={inputClassName}
+                                    autoComplete="email"
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    spellCheck={false}
                                 />
                             </div>
 
@@ -235,6 +239,10 @@ export default function Login() {
                                         value={password}
                                         onChange={function (e) { setPassword(e.target.value); }}
                                         className={inputWithIconClassName}
+                                        autoComplete="current-password"
+                                        autoCapitalize="none"
+                                        autoCorrect="off"
+                                        spellCheck={false}
                                     />
                                     <button
                                         type="button"

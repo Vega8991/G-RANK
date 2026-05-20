@@ -42,7 +42,7 @@ describe('authMiddleware.verifyToken', () => {
     });
 
     test('returns 401 when token is invalid', () => {
-        jwt.verify.mockImplementation((token, secret, cb) => cb(new Error('bad token')));
+        jwt.verify.mockImplementation((token, secret, options, cb) => cb(new Error('bad token')));
 
         const req = { cookies: { token: 'bad-token' } };
         const res = buildRes();
@@ -55,7 +55,7 @@ describe('authMiddleware.verifyToken', () => {
     });
 
     test('sets user fields and calls next when token is valid', () => {
-        jwt.verify.mockImplementation((token, secret, cb) => cb(null, {
+        jwt.verify.mockImplementation((token, secret, options, cb) => cb(null, {
             userId: 'u1',
             email: 'user@test.com',
             username: 'user1',

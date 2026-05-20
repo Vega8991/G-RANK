@@ -65,7 +65,7 @@ export default function Dashboard() {
             <DashboardBackground />
 
             <div className="relative z-10 pointer-events-auto">
-                <div className="max-w-[1512px] mx-auto px-6 md:px-20 pt-12 pb-16 space-y-5">
+                <div className="max-w-[1512px] mx-auto px-4 md:px-20 pt-8 md:pt-12 pb-16 space-y-5">
 
                     <AnimatePresence>
                         {oauthMsg && (

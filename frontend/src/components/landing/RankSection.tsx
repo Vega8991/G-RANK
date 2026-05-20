@@ -30,8 +30,8 @@ export default function RankSection({ ranks }: RankSectionProps) {
                         <Shield size={16} className="text-[var(--brand-primary)]" />
                         <span className="text-xs font-bold tracking-wider text-[var(--brand-primary)]">7-TIER PROGRESSION</span>
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-extrabold">CLIMB THE RANKS</h2>
-                    <p className="text-xl text-[var(--neutral-text-secondary)] max-w-2xl mx-auto leading-relaxed">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">CLIMB THE RANKS</h2>
+                    <p className="text-base sm:text-xl text-[var(--neutral-text-secondary)] max-w-2xl mx-auto leading-relaxed">
                         Progress through seven distinct competitive ranks. Each victory brings you closer to Elite status.
                     </p>
                 </motion.div>
@@ -57,7 +57,7 @@ export default function RankSection({ ranks }: RankSectionProps) {
                 </motion.div>
 
                 <motion.div
-                    className="bg-[var(--neutral-bg)] border border-[var(--neutral-border)] rounded-xl p-8 max-w-3xl mx-auto transition-transform duration-500 hover:-translate-y-1 hover:shadow-xl"
+                    className="bg-[var(--neutral-bg)] border border-[var(--neutral-border)] rounded-xl p-4 sm:p-8 max-w-3xl mx-auto transition-transform duration-500 hover:-translate-y-1 hover:shadow-xl"
                     initial={{ opacity: 0, y: 40, scaleY: 0.9 }}
                     whileInView={{ opacity: 1, y: 0, scaleY: 1 }}
                     style={{ originY: 0 }}

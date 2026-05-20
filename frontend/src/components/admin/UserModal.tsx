@@ -62,7 +62,7 @@ export default function UserModal({ user, onSave, onClose }: UserModalProps) {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <motion.div
-                className="relative z-10 rounded-2xl w-full max-w-lg border border-white/8 overflow-hidden"
+                className="relative z-10 rounded-2xl w-full max-w-lg border border-white/8 overflow-hidden max-h-[92vh] overflow-y-auto"
                 style={{ background: "linear-gradient(135deg,rgba(14,4,8,0.98),rgba(10,2,5,0.96))" }}
                 initial={{ scale: 0.93, y: 20 }} animate={{ scale: 1, y: 0 }}
             >
@@ -86,7 +86,7 @@ export default function UserModal({ user, onSave, onClose }: UserModalProps) {
                     </div>
 
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                                 <label className={labelCls}>Username</label>
                                 <input className={inputCls} value={form.username} onChange={e => setField("username", e.target.value)} placeholder="ProPlayer" />
@@ -102,7 +102,7 @@ export default function UserModal({ user, onSave, onClose }: UserModalProps) {
                             <input className={inputCls} type="password" value={form.password} onChange={e => setField("password", e.target.value)} placeholder={isCreate ? "Min 6 characters" : "Leave blank to keep current"} />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
                             <div>
                                 <label className={labelCls}>Role</label>
                                 <select className={inputCls + " cursor-pointer"} value={form.role} onChange={e => setField("role", e.target.value)}>

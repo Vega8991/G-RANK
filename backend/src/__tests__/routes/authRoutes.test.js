@@ -2,6 +2,7 @@ jest.mock('../../controllers/authController', () => ({
     registerUser: (req, res) => res.status(200).json({ success: true }),
     loginUser: (req, res) => res.status(200).json({ success: true }),
     logoutUser: (req, res) => res.status(200).json({ success: true }),
+    refreshTokens: (req, res) => res.status(200).json({ success: true }),
     getProfile: (req, res) => res.status(200).json({ success: true }),
     verifyEmail: (req, res) => res.status(200).json({ success: true }),
     forgotPassword: (req, res) => res.status(200).json({ success: true }),

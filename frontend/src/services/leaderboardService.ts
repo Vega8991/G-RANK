@@ -9,7 +9,7 @@ export interface LeaderboardPlayer {
     losses: number;
     winRate: number;
     winStreak: number;
-    country: string;
+    country?: string | null;
     totalMatches: number;
 }
 

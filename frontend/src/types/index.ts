@@ -23,7 +23,9 @@ export interface User {
   winStreak?: number;
   totalMatches?: number;
   joinDate?: string;
+  createdAt?: string;
   updatedAt: string;
+  country?: string | null;
   riotGameName?: string | null;
   riotTagLine?: string | null;
   riotPuuid?: string | null;

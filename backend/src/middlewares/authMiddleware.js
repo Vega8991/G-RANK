@@ -14,7 +14,7 @@ function verifyToken(req, res, next) {
         return;
     }
 
-    jwt.verify(token, secretKey, (err, decoded) => {
+    jwt.verify(token, secretKey, { algorithms: ['HS256'] }, (err, decoded) => {
         if (err) {
             res.status(401).json({ success: false, message: 'Invalid or expired token' });
             return;

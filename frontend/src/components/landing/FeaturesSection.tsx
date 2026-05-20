@@ -115,10 +115,10 @@ export default function FeaturesSection({ features }: FeaturesSectionProps) {
                     viewport={{ amount: 0.4 }}
                     transition={{ duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
                 >
-                    <h2 className="text-4xl md:text-5xl font-extrabold">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">
                         EVERYTHING YOU NEED TO <span className="text-[var(--brand-primary)]">COMPETE</span>
                     </h2>
-                    <p className="text-xl text-[var(--neutral-text-secondary)] max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-base sm:text-xl text-[var(--neutral-text-secondary)] max-w-2xl mx-auto leading-relaxed">
                         Professional-grade tools and features designed for competitive esports excellence.
                     </p>
                 </motion.div>

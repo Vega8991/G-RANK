@@ -15,7 +15,7 @@ export default function ReactiveBackground() {
             </div>
 
             <div
-                className="absolute w-72 h-72 bg-[radial-gradient(circle,rgba(220,20,60,0.3),transparent_60%)] blur-[80px]"
+                className="absolute w-32 h-32 sm:w-48 sm:h-48 md:w-72 md:h-72 bg-[radial-gradient(circle,rgba(220,20,60,0.3),transparent_60%)] blur-[50px] md:blur-[80px]"
                 style={{
                     top: "10%",
                     left: "5%",
@@ -23,10 +23,10 @@ export default function ReactiveBackground() {
                 }}
             />
             <div
-                className="absolute w-80 h-80 bg-[radial-gradient(circle,rgba(14,165,233,0.25),transparent_60%)] blur-[80px]"
+                className="absolute w-36 h-36 sm:w-52 sm:h-52 md:w-80 md:h-80 bg-[radial-gradient(circle,rgba(14,165,233,0.25),transparent_60%)] blur-[50px] md:blur-[80px]"
                 style={{
-                    bottom: "-5%",
-                    right: "-5%",
+                    bottom: "0",
+                    right: "0",
                     opacity: 0.7
                 }}
             />

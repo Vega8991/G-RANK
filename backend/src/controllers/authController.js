@@ -4,6 +4,52 @@ const crypto = require('crypto');
 const { hashPassword, comparePassword } = require('../utils/passwordUtils');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 
+const ACCESS_TOKEN_TTL  = '15m';
+const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in ms
+
+function hashToken(raw) {
+    return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+function issueTokens(req, res, user) {
+    const role = user.role || 'USER';
+    const accessToken = jwt.sign(
+        { userId: user._id, email: user.email, username: user.username, role },
+        process.env.JWT_SECRET,
+        { expiresIn: ACCESS_TOKEN_TTL, algorithm: 'HS256' }
+    );
+
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const cookieOpts = {
+        secure: isSecure,
+        sameSite: isSecure ? 'none' : 'lax',
+    };
+
+    res.cookie('token', accessToken, {
+        ...cookieOpts,
+        httpOnly: true,
+        maxAge: 15 * 60 * 1000,
+    });
+
+    const refreshRaw = crypto.randomBytes(64).toString('hex');
+    const refreshExpires = new Date(Date.now() + REFRESH_TOKEN_TTL);
+
+    res.cookie('refresh_token', refreshRaw, {
+        ...cookieOpts,
+        httpOnly: true,
+        maxAge: REFRESH_TOKEN_TTL,
+    });
+
+    // Readable cookie for navbar display — no authorization decisions made server-side
+    res.cookie('auth_info', JSON.stringify({ username: user.username, role, exp: Math.floor(refreshExpires.getTime() / 1000) }), {
+        ...cookieOpts,
+        httpOnly: false,
+        maxAge: REFRESH_TOKEN_TTL,
+    });
+
+    return { refreshRaw, refreshExpires };
+}
+
 async function registerUser(req, res) {
     try {
         const { username, email, password } = req.body;
@@ -86,7 +132,8 @@ async function registerUser(req, res) {
 
 async function loginUser(req, res) {
     try {
-        const { email, password } = req.body;
+        const email    = (req.body.email    ?? '').trim();
+        const password = (req.body.password ?? '').trim();
 
         if (!email || !password) {
             return res.status(400).json({
@@ -95,7 +142,7 @@ async function loginUser(req, res) {
             });
         }
 
-        const foundUser = await User.findOne({ email: email });
+        const foundUser = await User.findOne({ email });
 
         if (!foundUser) {
             return res.status(401).json({
@@ -118,32 +165,14 @@ async function loginUser(req, res) {
             });
         }
 
-        const role = foundUser.role || 'USER';
-        const token = jwt.sign(
-            { userId: foundUser._id, email: foundUser.email, username: foundUser.username, role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRE }
-        );
-
-        const decoded = jwt.decode(token);
-        const maxAge = (decoded.exp - Math.floor(Date.now() / 1000)) * 1000;
-
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge,
-        });
-
-        res.cookie('auth_info', JSON.stringify({ username: foundUser.username, role, exp: decoded.exp }), {
-            httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge,
-        });
+        const { refreshRaw, refreshExpires } = issueTokens(req, res, foundUser);
+        foundUser.refreshTokenHash = hashToken(refreshRaw);
+        foundUser.refreshTokenExpires = refreshExpires;
+        await foundUser.save();
 
         res.status(200).json({ success: true, message: 'Login successful' });
     } catch (error) {
+        console.error('[loginUser]', error);
         res.status(500).json({
             success: false,
             message: 'Server error'
@@ -373,16 +402,56 @@ async function resendVerificationEmail(req, res) {
     }
 }
 
-function logoutUser(req, res) {
-    res.clearCookie('token',     { httpOnly: true,  secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
-    res.clearCookie('auth_info', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' });
+async function logoutUser(req, res) {
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const cookieOpts = { secure: isSecure, sameSite: isSecure ? 'none' : 'lax' };
+    const refreshRaw = req.cookies?.refresh_token;
+    if (refreshRaw) {
+        try {
+            await User.updateOne(
+                { refreshTokenHash: hashToken(refreshRaw) },
+                { $set: { refreshTokenHash: null, refreshTokenExpires: null } }
+            );
+        } catch { /* best-effort */ }
+    }
+    res.clearCookie('token',         { ...cookieOpts, httpOnly: true });
+    res.clearCookie('refresh_token', { ...cookieOpts, httpOnly: true });
+    res.clearCookie('auth_info',     { ...cookieOpts, httpOnly: false });
     res.status(200).json({ success: true, message: 'Logged out' });
+}
+
+async function refreshTokens(req, res) {
+    const refreshRaw = req.cookies?.refresh_token;
+    if (!refreshRaw) {
+        return res.status(401).json({ success: false, message: 'No refresh token' });
+    }
+
+    try {
+        const user = await User.findOne({
+            refreshTokenHash: hashToken(refreshRaw),
+            refreshTokenExpires: { $gt: new Date() },
+        });
+
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
+        }
+
+        const { refreshRaw: newRefreshRaw, refreshExpires } = issueTokens(req, res, user);
+        user.refreshTokenHash = hashToken(newRefreshRaw);
+        user.refreshTokenExpires = refreshExpires;
+        await user.save();
+
+        res.status(200).json({ success: true });
+    } catch {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
 }
 
 module.exports = {
     registerUser,
     loginUser,
     logoutUser,
+    refreshTokens,
     getProfile,
     verifyEmail,
     forgotPassword,

@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 export default function DashboardFooter() {
     return (
         <footer style={{ borderTop: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(20px)" }}>
-            <div className="max-w-[1512px] mx-auto px-6 md:px-20 py-12">
+            <div className="max-w-[1512px] mx-auto px-4 md:px-20 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-4">

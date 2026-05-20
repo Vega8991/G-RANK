@@ -197,7 +197,7 @@ function RowSkeleton({ index }: { index: number }) {
 function LeaderboardFooter() {
     return (
         <footer className="border-t border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/40 backdrop-blur-xl">
-            <div className="max-w-[1512px] mx-auto px-6 md:px-20 py-12">
+            <div className="max-w-[1512px] mx-auto px-4 md:px-20 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-4 group cursor-pointer">
@@ -260,7 +260,7 @@ export default function Leaderboard() {
             <LeaderboardBackground />
 
             <div className="relative z-10 pointer-events-auto">
-                <section className="max-w-[1512px] mx-auto px-6 md:px-20 pt-12 pb-4">
+                <section className="max-w-[1512px] mx-auto px-4 md:px-20 pt-12 pb-4">
                     <motion.div
                         initial={{ opacity: 0, y: 28 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -275,7 +275,7 @@ export default function Leaderboard() {
                     </motion.div>
                 </section>
 
-                <section className="max-w-[1512px] mx-auto px-6 md:px-20 py-10">
+                <section className="max-w-[1512px] mx-auto px-4 md:px-20 py-10">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
                         {loading
                             ? [0, 1, 2].map(i => <PodiumSkeleton key={i} />)
@@ -291,7 +291,7 @@ export default function Leaderboard() {
                         </div>
                     ) : (
                         <motion.div
-                            className="rounded-2xl border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/35 backdrop-blur-xl overflow-hidden"
+                            className="rounded-2xl border border-[var(--neutral-border)]/40 bg-[var(--neutral-surface)]/35 backdrop-blur-xl overflow-x-auto"
                             initial={{ opacity: 0, y: 30, scaleY: 0.97 }}
                             animate={{ opacity: 1, y: 0, scaleY: 1 }}
                             style={{ originY: 0 }}
