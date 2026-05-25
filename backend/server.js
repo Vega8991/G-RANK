@@ -15,6 +15,8 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const app = express();
 const port = process.env.PORT || 5000;
 
+app.set('trust proxy', 1);
+
 const ALLOWED_ORIGINS = [
     process.env.CLIENT_URL,
     'https://grank.vega8991.com',
