@@ -40,14 +40,13 @@ function issueTokens(req, res, user) {
         maxAge: REFRESH_TOKEN_TTL,
     });
 
-    // Readable cookie for navbar display — no authorization decisions made server-side
     res.cookie('auth_info', JSON.stringify({ username: user.username, role, exp: Math.floor(refreshExpires.getTime() / 1000) }), {
         ...cookieOpts,
         httpOnly: false,
         maxAge: REFRESH_TOKEN_TTL,
     });
 
-    return { refreshRaw, refreshExpires };
+    return { refreshRaw, refreshExpires, accessToken };
 }
 
 async function registerUser(req, res) {
@@ -165,7 +164,7 @@ async function loginUser(req, res) {
             });
         }
 
-        const { refreshRaw, refreshExpires } = issueTokens(req, res, foundUser);
+        const { refreshRaw, refreshExpires, accessToken } = issueTokens(req, res, foundUser);
         foundUser.refreshTokenHash = hashToken(refreshRaw);
         foundUser.refreshTokenExpires = refreshExpires;
         await foundUser.save();
@@ -173,6 +172,8 @@ async function loginUser(req, res) {
         res.status(200).json({
             success: true,
             message: 'Login successful',
+            accessToken,
+            refreshToken: refreshRaw,
             user: {
                 username: foundUser.username,
                 role: foundUser.role || 'USER',
@@ -435,7 +436,7 @@ async function logoutUser(req, res) {
 }
 
 async function refreshTokens(req, res) {
-    const refreshRaw = req.cookies?.refresh_token;
+    const refreshRaw = req.cookies?.refresh_token || req.body?.refreshToken;
     if (!refreshRaw) {
         return res.status(401).json({ success: false, message: 'No refresh token' });
     }
@@ -450,12 +451,12 @@ async function refreshTokens(req, res) {
             return res.status(401).json({ success: false, message: 'Invalid or expired refresh token' });
         }
 
-        const { refreshRaw: newRefreshRaw, refreshExpires } = issueTokens(req, res, user);
+        const { refreshRaw: newRefreshRaw, refreshExpires, accessToken } = issueTokens(req, res, user);
         user.refreshTokenHash = hashToken(newRefreshRaw);
         user.refreshTokenExpires = refreshExpires;
         await user.save();
 
-        res.status(200).json({ success: true });
+        res.status(200).json({ success: true, accessToken, refreshToken: newRefreshRaw });
     } catch {
         res.status(500).json({ success: false, message: 'Server error' });
     }

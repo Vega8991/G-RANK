@@ -1,7 +1,14 @@
 let jwt = require('jsonwebtoken');
 
 function verifyToken(req, res, next) {
-    const token = req.cookies?.token;
+    let token = req.cookies?.token;
+
+    if (!token) {
+        const authHeader = req.headers['authorization'];
+        if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+            token = authHeader.slice(7);
+        }
+    }
 
     if (!token) {
         res.status(403).json({ success: false, message: 'No token provided' });
