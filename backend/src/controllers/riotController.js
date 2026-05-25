@@ -415,7 +415,7 @@ const getRiotOAuthUrl = async function (req, res) {
 };
 
 const handleRiotOAuthCallback = async function (req, res) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://grank.vega8991.com';
 
     try {
         const code = req.query.code;
