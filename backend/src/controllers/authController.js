@@ -270,13 +270,19 @@ async function forgotPassword(req, res) {
         user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000);
         await user.save();
 
-        sendPasswordResetEmail(user.email, user.username, resetToken);
+        try {
+            await sendPasswordResetEmail(user.email, user.username, resetToken);
+        } catch (emailError) {
+            console.error('[forgotPassword] Failed to send reset email:', emailError);
+            return res.status(500).json({ success: false, message: 'Failed to send reset email. Try again later.' });
+        }
 
         res.status(200).json({
             success: true,
             message: 'If that email exists, a reset link has been sent.'
         });
     } catch (error) {
+        console.error('[forgotPassword]', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 }

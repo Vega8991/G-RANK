@@ -38,9 +38,9 @@ describe('Lobby routes', () => {
         expect(res.status).toBe(200);
     });
 
-    test('POST /api/lobbies/sync-counts is reachable', async () => {
+    test('POST /api/lobbies/sync-counts returns 403 without token', async () => {
         const res = await request(app).post('/api/lobbies/sync-counts').send({});
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(403);
     });
 
     test('POST /api/lobbies returns 403 without token', async () => {

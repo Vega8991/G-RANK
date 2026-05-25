@@ -85,7 +85,9 @@ const linkRiotAccount = async function (req, res) {
         try {
             const profile = await riotService.getFullLolProfile(accountData.puuid, platform.toLowerCase());
             updateData.riotCachedProfile = riotService.buildCachedProfile(profile);
-        } catch (cacheError) {}
+        } catch (cacheError) {
+            console.warn('[linkRiotAccount] Could not cache LoL profile (non-fatal):', cacheError.message);
+        }
 
         await User.findByIdAndUpdate(userId, updateData);
 
@@ -152,8 +154,15 @@ const getMyRiotProfile = async function (req, res) {
 
 const getRiotProfileByRiotId = async function (req, res) {
     try {
-        const riotId = req.params.riotId;
-        const platform = req.query.platform || 'na1';
+        const riotId  = req.params.riotId;
+        const platform = (req.query.platform || 'na1').toLowerCase();
+
+        if (!VALID_PLATFORMS.includes(platform)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid platform. Valid options: ${VALID_PLATFORMS.join(', ')}`
+            });
+        }
 
         const lastDashIndex = riotId.lastIndexOf('-');
         if (lastDashIndex === -1) {
@@ -496,7 +505,9 @@ const handleRiotOAuthCallback = async function (req, res) {
         try {
             const profile = await riotService.getFullLolProfile(puuid, platform);
             updateData.riotCachedProfile = riotService.buildCachedProfile(profile);
-        } catch (cacheError) {}
+        } catch (cacheError) {
+            console.warn('[handleRiotOAuthCallback] Could not cache LoL profile (non-fatal):', cacheError.message);
+        }
 
         await User.findByIdAndUpdate(userId, updateData);
 

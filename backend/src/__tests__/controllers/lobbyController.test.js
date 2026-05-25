@@ -92,8 +92,8 @@ describe('lobbyController', () => {
         const req = {
             userId: 'u1',
             body: {
-                name: 'Lobby',
-                description: 'Desc',
+                name: 'Test Lobby',
+                description: 'Valid description for lobby test',
                 registrationDeadline: registration,
                 matchDateTime: match,
                 maxParticipants: 4,

@@ -2,6 +2,12 @@ const User  = require('../models/userModel');
 const Lobby = require('../models/lobbyModel');
 const { hashPassword } = require('../utils/passwordUtils');
 
+const VALID_ROLES    = ['USER', 'ADMIN'];
+const VALID_RANKS    = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Elite'];
+const VALID_STATUSES = ['active', 'suspended', 'banned'];
+const VALID_LOBBY_STATUSES = ['open', 'pending', 'in_progress', 'completed', 'cancelled'];
+const VALID_GAMES    = ['pokemon_showdown', 'league_of_legends'];
+
 async function getAllUsers(req, res) {
     try {
         const users = await User.find({}, '-password -emailVerificationToken').sort({ createdAt: -1 });
@@ -22,14 +28,32 @@ async function createUser(req, res) {
             });
         }
 
+        const resolvedRole   = role   || 'USER';
+        const resolvedRank   = rank   || 'Bronze';
+        const resolvedStatus = status || 'active';
+        const resolvedMmr    = mmr !== undefined ? parseInt(mmr) : 250;
+
+        if (!VALID_ROLES.includes(resolvedRole)) {
+            return res.status(400).json({ success: false, message: `Invalid role. Valid values: ${VALID_ROLES.join(', ')}` });
+        }
+        if (!VALID_RANKS.includes(resolvedRank)) {
+            return res.status(400).json({ success: false, message: `Invalid rank. Valid values: ${VALID_RANKS.join(', ')}` });
+        }
+        if (!VALID_STATUSES.includes(resolvedStatus)) {
+            return res.status(400).json({ success: false, message: `Invalid status. Valid values: ${VALID_STATUSES.join(', ')}` });
+        }
+        if (isNaN(resolvedMmr) || resolvedMmr < 0 || resolvedMmr > 99999) {
+            return res.status(400).json({ success: false, message: 'MMR must be a number between 0 and 99999' });
+        }
+
         const newUser = new User({
             username: username,
             email: email,
             password: hashPassword(password),
-            role: role || 'USER',
-            rank: rank || 'Bronze',
-            mmr: mmr !== undefined ? mmr : 250,
-            status: status || 'active',
+            role: resolvedRole,
+            rank: resolvedRank,
+            mmr: resolvedMmr,
+            status: resolvedStatus,
             isEmailVerified: true
         });
 
@@ -72,10 +96,35 @@ async function updateUser(req, res) {
 
         if (req.body.username !== undefined) fieldsToUpdate.username = req.body.username;
         if (req.body.email    !== undefined) fieldsToUpdate.email    = req.body.email;
-        if (req.body.role     !== undefined) fieldsToUpdate.role     = req.body.role;
-        if (req.body.rank     !== undefined) fieldsToUpdate.rank     = req.body.rank;
-        if (req.body.mmr      !== undefined) fieldsToUpdate.mmr      = req.body.mmr;
-        if (req.body.status   !== undefined) fieldsToUpdate.status   = req.body.status;
+
+        if (req.body.role !== undefined) {
+            if (!VALID_ROLES.includes(req.body.role)) {
+                return res.status(400).json({ success: false, message: `Invalid role. Valid values: ${VALID_ROLES.join(', ')}` });
+            }
+            fieldsToUpdate.role = req.body.role;
+        }
+
+        if (req.body.rank !== undefined) {
+            if (!VALID_RANKS.includes(req.body.rank)) {
+                return res.status(400).json({ success: false, message: `Invalid rank. Valid values: ${VALID_RANKS.join(', ')}` });
+            }
+            fieldsToUpdate.rank = req.body.rank;
+        }
+
+        if (req.body.mmr !== undefined) {
+            const mmrVal = parseInt(req.body.mmr);
+            if (isNaN(mmrVal) || mmrVal < 0 || mmrVal > 99999) {
+                return res.status(400).json({ success: false, message: 'MMR must be a number between 0 and 99999' });
+            }
+            fieldsToUpdate.mmr = mmrVal;
+        }
+
+        if (req.body.status !== undefined) {
+            if (!VALID_STATUSES.includes(req.body.status)) {
+                return res.status(400).json({ success: false, message: `Invalid status. Valid values: ${VALID_STATUSES.join(', ')}` });
+            }
+            fieldsToUpdate.status = req.body.status;
+        }
 
         if (req.body.password) {
             fieldsToUpdate.password = hashPassword(req.body.password);
@@ -127,14 +176,33 @@ async function adminUpdateLobby(req, res) {
     try {
         const fieldsToUpdate = {};
 
-        if (req.body.name                !== undefined) fieldsToUpdate.name                = req.body.name;
-        if (req.body.description         !== undefined) fieldsToUpdate.description         = req.body.description;
-        if (req.body.game                !== undefined) fieldsToUpdate.game                = req.body.game;
-        if (req.body.maxParticipants     !== undefined) fieldsToUpdate.maxParticipants     = req.body.maxParticipants;
-        if (req.body.status              !== undefined) fieldsToUpdate.status              = req.body.status;
-        if (req.body.prizePool           !== undefined) fieldsToUpdate.prizePool           = req.body.prizePool;
+        if (req.body.name        !== undefined) fieldsToUpdate.name        = req.body.name;
+        if (req.body.description !== undefined) fieldsToUpdate.description = req.body.description;
+        if (req.body.prizePool   !== undefined) fieldsToUpdate.prizePool   = req.body.prizePool;
         if (req.body.registrationDeadline !== undefined) fieldsToUpdate.registrationDeadline = req.body.registrationDeadline;
-        if (req.body.matchDateTime       !== undefined) fieldsToUpdate.matchDateTime       = req.body.matchDateTime;
+        if (req.body.matchDateTime        !== undefined) fieldsToUpdate.matchDateTime        = req.body.matchDateTime;
+
+        if (req.body.game !== undefined) {
+            if (!VALID_GAMES.includes(req.body.game)) {
+                return res.status(400).json({ success: false, message: `Invalid game. Valid values: ${VALID_GAMES.join(', ')}` });
+            }
+            fieldsToUpdate.game = req.body.game;
+        }
+
+        if (req.body.maxParticipants !== undefined) {
+            const mp = parseInt(req.body.maxParticipants);
+            if (isNaN(mp) || mp < 2 || mp > 100) {
+                return res.status(400).json({ success: false, message: 'maxParticipants must be between 2 and 100' });
+            }
+            fieldsToUpdate.maxParticipants = mp;
+        }
+
+        if (req.body.status !== undefined) {
+            if (!VALID_LOBBY_STATUSES.includes(req.body.status)) {
+                return res.status(400).json({ success: false, message: `Invalid status. Valid values: ${VALID_LOBBY_STATUSES.join(', ')}` });
+            }
+            fieldsToUpdate.status = req.body.status;
+        }
 
         const updatedLobby = await Lobby.findByIdAndUpdate(
             req.params.id,

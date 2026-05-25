@@ -22,12 +22,14 @@ const ALLOWED_ORIGINS = [
     'http://localhost:4173',
 ].filter(Boolean);
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
-        if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.devtunnels.ms')) {
-            return callback(null, true);
-        }
+        if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        // Allow VS Code / Azure dev tunnels only in development
+        if (isDev && origin.endsWith('.devtunnels.ms')) return callback(null, true);
         callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
@@ -54,6 +56,7 @@ app.use('/api/riot', riotRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use((err, req, res, next) => {
+    console.error('[GlobalErrorHandler]', err.stack || err.message || err);
     res.status(500).json({ success: false, message: 'Internal server error' });
 });
 

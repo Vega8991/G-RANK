@@ -143,7 +143,7 @@ describe('authController', () => {
     });
 
     test('loginUser returns 403 when email is not verified', async () => {
-        User.findOne.mockResolvedValue({ password: 'hashed', isEmailVerified: false });
+        User.findOne.mockResolvedValue({ password: '$2b$10$fakehashfakehashfakeha', isEmailVerified: false });
         bcrypt.compareSync.mockReturnValue(true);
         const req = { body: { email: 'vega@test.com', password: '123456' } };
         const res = buildRes();
@@ -158,7 +158,7 @@ describe('authController', () => {
             _id: 'u1',
             username: 'vega',
             email: 'vega@test.com',
-            password: 'hashed',
+            password: '$2b$10$fakehashfakehashfakeha',
             isEmailVerified: true,
             rank: 'Bronze',
             mmr: 250,
@@ -171,7 +171,7 @@ describe('authController', () => {
         });
         bcrypt.compareSync.mockReturnValue(true);
 
-        const req = { body: { email: 'vega@test.com', password: '123456' } };
+        const req = { body: { email: 'vega@test.com', password: '123456' }, headers: {}, secure: false };
         const res = buildRes();
 
         await loginUser(req, res);
@@ -242,7 +242,7 @@ describe('authController', () => {
     });
 
     test('logoutUser clears cookies and returns 200', async () => {
-        const req = {};
+        const req = { headers: {}, cookies: {} };
         const res = buildRes();
 
         await logoutUser(req, res);

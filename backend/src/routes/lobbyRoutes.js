@@ -6,7 +6,7 @@ const { verifyToken } = require('../middlewares/authMiddleware');
 router.post('/', verifyToken, lobbyController.createLobby);
 router.get('/', lobbyController.getAllLobbies);
 router.get('/my-created', verifyToken, lobbyController.getMyCreatedLobbies);
-router.post('/sync-counts', lobbyController.syncParticipantCounts);
+router.post('/sync-counts', verifyToken, lobbyController.syncParticipantCounts);
 router.get('/:id', lobbyController.getLobbyById);
 router.patch('/:id/status', verifyToken, lobbyController.updateLobbyStatus);
 

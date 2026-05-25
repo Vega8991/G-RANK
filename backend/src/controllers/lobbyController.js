@@ -12,6 +12,20 @@ async function createLobby(req, res) {
             });
         }
 
+        if (req.body.name.length < 3 || req.body.name.length > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name must be between 3 and 100 characters'
+            });
+        }
+
+        if (req.body.description.length < 10 || req.body.description.length > 1000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Description must be between 10 and 1000 characters'
+            });
+        }
+
         if (!req.body.registrationDeadline || !req.body.matchDateTime) {
             return res.status(400).json({
                 success: false,
@@ -51,13 +65,21 @@ async function createLobby(req, res) {
             });
         }
 
+        const maxParticipants = parseInt(req.body.maxParticipants) || 2;
+        if (isNaN(maxParticipants) || maxParticipants < 2 || maxParticipants > 100) {
+            return res.status(400).json({
+                success: false,
+                message: 'maxParticipants must be a number between 2 and 100'
+            });
+        }
+
         const newLobby = await Lobby.create({
             name: req.body.name,
             game: req.body.game || 'pokemon_showdown',
             description: req.body.description,
             registrationDeadline: registrationDeadline,
             matchDateTime: matchDateTime,
-            maxParticipants: req.body.maxParticipants || 2,
+            maxParticipants: maxParticipants,
             prizePool: req.body.prizePool || '',
             createdBy: userId
         });
@@ -78,9 +100,9 @@ async function createLobby(req, res) {
 
 async function getAllLobbies(req, res) {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
+        const page  = Math.max(1, parseInt(req.query.page)  || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+        const skip  = (page - 1) * limit;
 
         const lobbies = await Lobby.find()
             .populate('createdBy', 'username')
