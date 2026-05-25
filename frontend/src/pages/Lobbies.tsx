@@ -384,9 +384,9 @@ export default function Lobbies() {
 
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <select value={selectedLobby} onChange={function (e) { setSelectedLobby(e.target.value); }} className={inputCls} style={inputStyle} required>
-                                        <option value="">Select a lobby</option>
+                                        <option value="" style={{ background: '#1a1a1a', color: '#ffffff' }}>Select a lobby</option>
                                         {myLobbies.map(function (lobby) {
-                                            return <option key={lobby._id} value={lobby._id}>{lobby.name}</option>;
+                                            return <option key={lobby._id} value={lobby._id} style={{ background: '#1a1a1a', color: '#ffffff' }}>{lobby.name}</option>;
                                         })}
                                     </select>
                                     <input type="url" placeholder="https://..." value={replayUrl} onChange={function (e) { setReplayUrl(e.target.value); }} className={inputCls} style={inputStyle} required />

@@ -106,22 +106,22 @@ export default function UserModal({ user, onSave, onClose }: UserModalProps) {
                             <div>
                                 <label className={labelCls}>Role</label>
                                 <select className={inputCls + " cursor-pointer"} value={form.role} onChange={e => setField("role", e.target.value)}>
-                                    <option value="USER">User</option>
-                                    <option value="ADMIN">Admin</option>
+                                    <option value="USER" style={{ background: '#1a1a1a', color: '#ffffff' }}>User</option>
+                                    <option value="ADMIN" style={{ background: '#1a1a1a', color: '#ffffff' }}>Admin</option>
                                 </select>
                             </div>
                             <div>
                                 <label className={labelCls}>Rank</label>
                                 <select className={inputCls + " cursor-pointer"} value={form.rank} onChange={e => setField("rank", e.target.value)}>
-                                    {RANKS.map(r => <option key={r} value={r}>{r}</option>)}
+                                    {RANKS.map(r => <option key={r} value={r} style={{ background: '#1a1a1a', color: '#ffffff' }}>{r}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className={labelCls}>Status</label>
                                 <select className={inputCls + " cursor-pointer"} value={form.status} onChange={e => setField("status", e.target.value)}>
-                                    <option value="active">Active</option>
-                                    <option value="suspended">Suspended</option>
-                                    <option value="banned">Banned</option>
+                                    <option value="active" style={{ background: '#1a1a1a', color: '#ffffff' }}>Active</option>
+                                    <option value="suspended" style={{ background: '#1a1a1a', color: '#ffffff' }}>Suspended</option>
+                                    <option value="banned" style={{ background: '#1a1a1a', color: '#ffffff' }}>Banned</option>
                                 </select>
                             </div>
                         </div>

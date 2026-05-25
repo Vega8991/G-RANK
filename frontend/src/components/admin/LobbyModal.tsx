@@ -96,15 +96,15 @@ export default function LobbyModal({ lobby, onSave, onClose }: LobbyModalProps) 
                             <div>
                                 <label className={labelCls}>Game</label>
                                 <select className={inputCls + " cursor-pointer"} value={form.game} onChange={e => setField("game", e.target.value)}>
-                                    <option value="pokemon_showdown">Pokémon Showdown</option>
-                                    <option value="league_of_legends">League of Legends</option>
-                                    <option value="valorant">Valorant</option>
+                                    <option value="pokemon_showdown" style={{ background: '#1a1a1a', color: '#ffffff' }}>Pokémon Showdown</option>
+                                    <option value="league_of_legends" style={{ background: '#1a1a1a', color: '#ffffff' }}>League of Legends</option>
+                                    <option value="valorant" style={{ background: '#1a1a1a', color: '#ffffff' }}>Valorant</option>
                                 </select>
                             </div>
                             <div>
                                 <label className={labelCls}>Status</label>
                                 <select className={inputCls + " cursor-pointer"} value={form.status} onChange={e => setField("status", e.target.value)}>
-                                    {LOBBY_STATUS.map(s => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+                                    {LOBBY_STATUS.map(s => <option key={s} value={s} style={{ background: '#1a1a1a', color: '#ffffff' }}>{s.replace("_", " ")}</option>)}
                                 </select>
                             </div>
                         </div>
