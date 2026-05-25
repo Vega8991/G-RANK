@@ -170,7 +170,15 @@ async function loginUser(req, res) {
         foundUser.refreshTokenExpires = refreshExpires;
         await foundUser.save();
 
-        res.status(200).json({ success: true, message: 'Login successful' });
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            user: {
+                username: foundUser.username,
+                role: foundUser.role || 'USER',
+                exp: Math.floor(refreshExpires.getTime() / 1000)
+            }
+        });
     } catch (error) {
         console.error('[loginUser]', error);
         res.status(500).json({
