@@ -17,6 +17,9 @@
       "**/__tests__/**/*.test.js",
       "**/*.test.js"
     ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/__tests__/setup.js"
+    ],
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "src/**/*.js",
