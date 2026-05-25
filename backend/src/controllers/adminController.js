@@ -6,7 +6,7 @@ const VALID_ROLES    = ['USER', 'ADMIN'];
 const VALID_RANKS    = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Elite'];
 const VALID_STATUSES = ['active', 'suspended', 'banned'];
 const VALID_LOBBY_STATUSES = ['open', 'pending', 'in_progress', 'completed', 'cancelled'];
-const VALID_GAMES    = ['pokemon_showdown', 'league_of_legends'];
+const VALID_GAMES    = ['pokemon_showdown', 'league_of_legends']; // valorant not yet supported
 
 async function getAllUsers(req, res) {
     try {

@@ -1,6 +1,9 @@
 const axios = require('axios');
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
+if (!RIOT_API_KEY) {
+    console.warn('[RiotService] WARNING: RIOT_API_KEY is not set. All Riot API calls will fail with 401.');
+}
 
 const PLATFORM_TO_CLUSTER = {
     'na1':  'americas',

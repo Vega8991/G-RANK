@@ -10,9 +10,10 @@ async function getLeaderboard(req, res) {
             .limit(limit)
             .lean();
 
-        res.status(200).json({ players });
+        res.status(200).json({ success: true, players });
     } catch (err) {
-        res.status(500).json({ message: 'Server error', error: err.message });
+        console.error('[getLeaderboard]', err);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }
 

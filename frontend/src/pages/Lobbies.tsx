@@ -324,7 +324,7 @@ export default function Lobbies() {
 
                                     <div className="relative">
                                         <Users size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
-                                        <input type="number" placeholder="Max participants" min={2} value={maxParticipants} onChange={function (e) { setMaxParticipants(e.target.value); }} className={inputCls + " pl-9"} style={inputStyle} required />
+                                        <input type="number" placeholder="Max participants" min={2} max={100} value={maxParticipants} onChange={function (e) { setMaxParticipants(e.target.value); }} className={inputCls + " pl-9"} style={inputStyle} required />
                                     </div>
 
                                     <div className="flex items-center justify-between h-11 rounded-xl px-4" style={inputStyle}>

@@ -15,6 +15,7 @@ export interface User {
   username: string;
   email: string;
   role: "USER" | "ADMIN";
+  status?: "active" | "suspended" | "banned";
   mmr: number;
   rank: string;
   wins?: number;
@@ -67,9 +68,8 @@ export interface MmrChange {
 
 export interface MatchPlayer {
   username: string;
-  mmrBefore: number;
   mmrChange: MmrChange;
-  newRank: string;
+  newRank?: string;
 }
 
 export interface MatchResult {

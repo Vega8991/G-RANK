@@ -47,7 +47,10 @@ export function useLobbies() {
         setErrorMessage("");
         const shouldSync = options?.shouldSync ?? false;
         if (shouldSync) {
-            try { await syncParticipantCounts(); } catch { }
+            try { await syncParticipantCounts(); } catch (syncErr) {
+                // Non-fatal: sync fails for unauthenticated users or server errors
+                console.warn('[useLobbies] syncParticipantCounts failed (non-fatal):', (syncErr as { message?: string })?.message);
+            }
         }
         const [allLobbiesResult, myLobbiesResult] = await Promise.allSettled([getAllLobbies(), getMyLobbies()]);
         if (allLobbiesResult.status === "fulfilled") {

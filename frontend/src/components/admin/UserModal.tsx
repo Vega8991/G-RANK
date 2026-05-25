@@ -21,7 +21,7 @@ export default function UserModal({ user, onSave, onClose }: UserModalProps) {
         role:     user?.role     ?? "USER",
         rank:     user?.rank     ?? "Bronze",
         mmr:      String(user?.mmr ?? 250),
-        status:   (user as unknown as Record<string, string>)?.status ?? "active",
+        status:   user?.status ?? "active",
     });
     const [loading, setLoading] = useState(false);
     const [error, setError]     = useState<string | null>(null);

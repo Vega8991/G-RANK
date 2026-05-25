@@ -38,7 +38,13 @@ const submitReplay = async function (req, res) {
             if (!submitterParticipant) throw new Error('NOT_REGISTERED');
             if (submitterParticipant.hasSubmittedResults) throw new Error('ALREADY_SUBMITTED');
 
+            if (!replayUrl.includes('pokemonshowdown.com/')) {
+                throw new Error('INVALID_REPLAY_URL');
+            }
             const replayId = replayUrl.split('pokemonshowdown.com/')[1];
+            if (!replayId) {
+                throw new Error('INVALID_REPLAY_URL');
+            }
             const replayJsonUrl = `https://replay.pokemonshowdown.com/${replayId}.json`;
 
             let replayData;

@@ -190,6 +190,8 @@ export default function Register() {
                                     id="username"
                                     type="text"
                                     required
+                                    minLength={3}
+                                    maxLength={30}
                                     placeholder="Choose a username"
                                     value={username}
                                     onChange={function (e) { setUsername(e.target.value); }}
@@ -222,6 +224,7 @@ export default function Register() {
                                         id="password"
                                         type={showPassword ? "text" : "password"}
                                         required
+                                        minLength={6}
                                         placeholder="Create a strong password"
                                         value={password}
                                         onChange={function (e) { setPassword(e.target.value); }}
@@ -235,7 +238,7 @@ export default function Register() {
                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
-                                <p className="text-xs text-[var(--neutral-text-muted)]">Minimum 8 characters</p>
+                                <p className="text-xs text-[var(--neutral-text-muted)]">Minimum 6 characters</p>
                             </div>
 
                             <div className="space-y-1.5">
