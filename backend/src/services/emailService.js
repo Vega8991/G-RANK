@@ -1,18 +1,7 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-const emailUser = process.env.EMAIL_USER;
-const emailPass = process.env.EMAIL_PASS;
-const emailFrom = process.env.EMAIL_FROM;
-
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: emailUser,
-        pass: emailPass
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+const emailFrom = process.env.EMAIL_FROM || 'G-Rank <noreply@grank.vega8991.com>';
 
 function emailWrapper(content) {
     return `<!DOCTYPE html>
@@ -187,36 +176,22 @@ ${securityBox(securityRows)}`;
 function sendVerificationEmail(userEmail, userName, verificationToken) {
     const verificationLink = process.env.FRONTEND_URL + '/verify-email?token=' + verificationToken;
 
-    const mailOptions = {
+    return resend.emails.send({
         from: emailFrom,
-        to: userEmail,
+        to: [userEmail],
         subject: 'G-RANK — Verify your account',
         html: emailWrapper(verificationEmailBody(userName, verificationLink))
-    };
-
-    return new Promise((resolve, reject) => {
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) reject(err);
-            else resolve(info);
-        });
     });
 }
 
 function sendPasswordResetEmail(userEmail, userName, resetToken) {
     const resetLink = process.env.FRONTEND_URL + '/reset-password?token=' + resetToken;
 
-    const mailOptions = {
+    return resend.emails.send({
         from: emailFrom,
-        to: userEmail,
+        to: [userEmail],
         subject: 'G-RANK — Reset your password',
         html: emailWrapper(resetPasswordEmailBody(userName, resetLink))
-    };
-
-    return new Promise((resolve, reject) => {
-        transporter.sendMail(mailOptions, (err, info) => {
-            if (err) reject(err);
-            else resolve(info);
-        });
     });
 }
 

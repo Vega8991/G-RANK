@@ -40,7 +40,7 @@ Competitive esports tournament platform with an MMR-based ranking system. Player
 | Layer | Technologies |
 |-------|-------------|
 | **Frontend** | React 19.2, TypeScript 5.9, Vite 7, Tailwind CSS v4, React Router v7, Framer Motion, Axios |
-| **Backend** | Node.js 18+, Express 5.2, MongoDB, Mongoose 9, JWT, Bcryptjs, Nodemailer |
+| **Backend** | Node.js 18+, Express 5.2, MongoDB, Mongoose 9, JWT, Bcryptjs, Resend |
 | **Auth** | httpOnly cookies (JWT token + readable auth_info cookie) |
 | **3D / UI** | Three.js, @react-three/fiber, OGL, GSAP, Lucide Icons, Radix UI, shadcn/ui |
 | **Testing** | Vitest 4 + Testing Library (frontend), Jest 30 + mongodb-memory-server (backend) |
@@ -84,7 +84,7 @@ G-RANK/
 
 - **Node.js** 18+
 - **MongoDB** (local instance or [MongoDB Atlas](https://www.mongodb.com/atlas))
-- **Gmail account** with App Password enabled (for email verification)
+- **Resend account** (free tier at [resend.com](https://resend.com) — for email verification and password reset)
 - **Riot Games API key** (optional — required for Riot account linking)
 
 ---
@@ -120,10 +120,9 @@ MONGO_URI=mongodb://localhost:27017/grank
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRE=7d
 
-# Email (Gmail)
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-gmail-app-password
-EMAIL_FROM=G-Rank <your-email@gmail.com>
+# Email (Resend)
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+EMAIL_FROM=G-Rank <noreply@grank.vega8991.com>
 
 # URLs
 FRONTEND_URL=http://localhost:5173
@@ -136,12 +135,13 @@ RIOT_CLIENT_SECRET=your_rso_client_secret
 RIOT_REDIRECT_URI=http://localhost:5000/api/riot/oauth/callback
 ```
 
-### Getting Gmail App Password
+### Getting a Resend API Key
 
-1. Enable 2-Factor Authentication on your Google account
-2. Go to **Google Account → Security → App passwords**
-3. Generate a new app password for "G-Rank"
-4. Paste it as `EMAIL_PASS` in your `.env`
+1. Create a free account at [resend.com](https://resend.com)
+2. Go to **Domains → Add Domain** and add your sending domain
+3. Add the DNS records provided by Resend in your DNS provider
+4. Once the domain is verified, go to **API Keys → Create API Key**
+5. Paste the key as `RESEND_API_KEY` in your `.env`
 
 ---
 
@@ -167,6 +167,46 @@ cd frontend && npm run dev
 |---------|-----|
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:5000 |
+
+---
+
+## Production Deployment
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://grank.vega8991.com |
+| Backend API | https://grank-backend.onrender.com |
+| Docs | https://g-rank-docs.vercel.app |
+
+### Render — Backend environment variables
+
+| Key | Value |
+|-----|-------|
+| `NODE_ENV` | `production` |
+| `PORT` | `10000` |
+| `MONGO_URI` | MongoDB Atlas connection string |
+| `JWT_SECRET` | Long random secret |
+| `JWT_EXPIRE` | `7d` |
+| `RESEND_API_KEY` | Resend API key (`re_...`) |
+| `EMAIL_FROM` | `G-Rank <noreply@grank.vega8991.com>` |
+| `FRONTEND_URL` | `https://grank.vega8991.com` |
+| `CLIENT_URL` | `https://grank.vega8991.com` |
+| `RIOT_API_KEY` | Riot Games API key |
+| `RIOT_CLIENT_ID` | Riot OAuth client ID |
+| `RIOT_CLIENT_SECRET` | Riot OAuth client secret |
+| `RIOT_REDIRECT_URI` | `https://grank-backend.onrender.com/api/riot/oauth/callback` |
+
+### Render — Frontend environment variables (build time)
+
+| Key | Value |
+|-----|-------|
+| `VITE_API_URL` | `https://grank-backend.onrender.com/api` |
+
+> The frontend also ships a `frontend/.env.production` file with this value as a fallback for builds where the env var is not explicitly set.
+
+### MongoDB Atlas
+
+Allow network access from any IP (`0.0.0.0/0`) since Render uses dynamic IPs.
 
 ---
 
