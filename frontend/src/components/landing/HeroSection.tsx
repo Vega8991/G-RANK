@@ -44,9 +44,9 @@ interface Counters {
 }
 
 const TOP_PLAYERS: TopPlayer[] = [
-    { rank: 1, name: "Garrax", mmr: 3420, winRate: "85%", icon: Crown },
-    { rank: 2, name: "ProGamer99", mmr: 3280, winRate: "78%", icon: Star },
-    { rank: 3, name: "NinjaStrike", mmr: 3150, winRate: "76%", icon: Flame }
+    { rank: 1, name: "PepinoGamer", mmr: 3480, winRate: "85%", icon: Crown },
+    { rank: 2, name: "Achichocraft", mmr: 3280, winRate: "78%", icon: Star },
+    { rank: 3, name: "kokeflax", mmr: 3150, winRate: "67%", icon: Flame }
 ];
 
 function getPrefetchProps(route: "login" | "register" | "leaderboard") {
