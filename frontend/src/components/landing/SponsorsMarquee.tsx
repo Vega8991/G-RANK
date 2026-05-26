@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Trophy, Gamepad2, Joystick, Rocket, Crosshair, type LucideIcon } from "lucide-react";
+import { Trophy, Gamepad2, Joystick, Crosshair, type LucideIcon } from "lucide-react";
 
 interface MarqueeItem {
     label: string;
@@ -7,7 +7,6 @@ interface MarqueeItem {
 }
 
 const items: MarqueeItem[] = [
-    { label: "Rocket League", icon: Rocket },
     { label: "League of Legends", icon: Gamepad2 },
     { label: "Valorant", icon: Crosshair },
     { label: "Pokemon Showdown", icon: Trophy },

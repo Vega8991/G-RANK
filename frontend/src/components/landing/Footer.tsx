@@ -21,7 +21,7 @@ export default function Footer() {
                         <h4 className="font-bold text-sm mb-4">GAMES</h4>
                         <div className="space-y-2">
                             <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white transition-colors">
-                                Rocket League
+                                Pokemon Showdown
                             </NavLink>
                             <NavLink to="/" className="block text-sm text-[var(--neutral-text-secondary)] hover:text-white transition-colors">
                                 League of Legends
